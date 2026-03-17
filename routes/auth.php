@@ -11,6 +11,14 @@ Route::middleware('guest')->group(function () {
     Volt::route('login', 'pages.auth.login')
         ->name('login');
 
+    // Traditional POST fallback for login (if Livewire fails)
+    Route::post('login', function (\App\Livewire\Forms\LoginForm $form) {
+        $form->validate();
+        $form->authenticate();
+        session()->regenerate();
+        return redirect()->intended(route('dashboard'));
+    });
+
     Volt::route('forgot-password', 'pages.auth.forgot-password')
         ->name('password.request');
 

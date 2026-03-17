@@ -22,6 +22,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->environment('production') || env('APP_ENV') === 'production') {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         Gate::define('admin', fn (User $user) => $user->isAdmin());
         Gate::define('doctor', fn (User $user) => $user->isDoctor());
         Gate::define('secretary', fn (User $user) => $user->isSecretary());
