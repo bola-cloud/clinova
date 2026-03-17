@@ -12,11 +12,20 @@ Route::middleware('guest')->group(function () {
         ->name('login');
 
     // Traditional POST fallback for login (if Livewire fails)
-    Route::post('login', function (\App\Livewire\Forms\LoginForm $form) {
-        $form->validate();
-        $form->authenticate();
-        session()->regenerate();
-        return redirect()->intended(route('dashboard'));
+    Route::post('login', function (\Illuminate\Http\Request $request) {
+        $credentials = $request->validate([
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            session()->regenerate();
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
+
+        return back()->withErrors([
+            'email' => __('auth.failed'),
+        ])->onlyInput('email');
     });
 
     Volt::route('forgot-password', 'pages.auth.forgot-password')
