@@ -28,7 +28,9 @@ new #[Layout('layouts.guest')] class extends Component
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" wire:submit="login">
+    <form method="POST" wire:submit="register">
+        @csrf
+        @csrf
         <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Email')" />
