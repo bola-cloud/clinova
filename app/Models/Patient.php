@@ -19,11 +19,17 @@ class Patient extends Model
         'address',
         'family_history',
         'tags',
+        'doctor_id',
     ];
 
     protected $casts = [
         'tags' => 'array',
     ];
+
+    public function doctor()
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
 
     public function appointments(): HasMany
     {

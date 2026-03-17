@@ -1,3 +1,4 @@
+<?php
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 use App\Models\Patient;
@@ -11,10 +12,18 @@ new class extends Component
     use WithPagination;
 
     public $search = '';
-    public $doctorSearch = '';
     public $showAddPatient = false;
     public $selectedDate;
     
+    // Assigned Doctor
+    public $assignedDoctorId;
+    public $assignedDoctorName;
+
+    // Booking Details
+    public $bookingPatientId = null;
+    public $bookingTime = '';
+    public $bookingType = 'consultation';
+
     // New patient fields
     public $name, $phone, $age, $weight, $address, $gender;
     
@@ -26,6 +35,18 @@ new class extends Component
     public function mount()
     {
         $this->selectedDate = now()->format('Y-m-d');
+        $this->bookingTime = now()->addMinutes(15)->format('H:i');
+        
+        $user = auth()->user();
+        if ($user->doctor_id) {
+            $this->assignedDoctorId = $user->doctor_id;
+            $this->assignedDoctorName = $user->assignedDoctor->name;
+        } else {
+            // Fallback to first doctor if none assigned (safety)
+            $firstDoctor = \App\Models\User::where('role', 'doctor')->first();
+            $this->assignedDoctorId = $firstDoctor?->id;
+            $this->assignedDoctorName = $firstDoctor?->name;
+        }
     }
 
     public function with()
@@ -33,12 +54,9 @@ new class extends Component
         $date = Carbon::parse($this->selectedDate);
 
         return [
-            'patients' => $this->search ? Patient::where('name', 'like', '%'.$this->search.'%')->orWhere('phone', 'like', '%'.$this->search.'%')->take(10)->get() : [],
-            'doctors' => \App\Models\User::where('role', 'doctor')
-                ->where('subscription_active', true)
-                ->when($this->doctorSearch, fn($q) => $q->where('name', 'like', '%'.$this->doctorSearch.'%'))
-                ->take(5)
-                ->get(),
+            'patients' => $this->search ? Patient::where('doctor_id', $this->assignedDoctorId)->where(function($q) {
+                $q->where('name', 'like', '%'.$this->search.'%')->orWhere('phone', 'like', '%'.$this->search.'%');
+            })->take(5)->get() : [],
             'dailyAppointments' => Appointment::with(['patient', 'doctor'])
                 ->whereDate('scheduled_at', $date)
                 ->orderBy('scheduled_at', 'asc')
@@ -46,6 +64,7 @@ new class extends Component
             'dayCount' => Appointment::whereDate('scheduled_at', $date)->count(),
             'pendingCount' => Appointment::whereDate('scheduled_at', $date)->where('status', 'pending')->count(),
             'preparedCount' => Appointment::whereDate('scheduled_at', $date)->where('status', 'checked-in')->count(),
+            'doctors' => \App\Models\User::where('role', 'doctor')->get(),
         ];
     }
 
@@ -62,6 +81,7 @@ new class extends Component
             'age' => $this->age,
             'weight' => $this->weight,
             'address' => $this->address,
+            'doctor_id' => $this->assignedDoctorId,
         ]);
 
         $this->reset(['name', 'phone', 'age', 'weight', 'address', 'showAddPatient']);
@@ -74,23 +94,42 @@ new class extends Component
         app(AppointmentService::class)->updateStatus($appointment, 'checked-in');
     }
 
-    public function bookFor($patientId, $doctorId)
+    public function selectForBooking($patientId)
     {
-        $time = Carbon::parse($this->selectedDate)->setHour(now()->hour)->setMinute(now()->minute);
-        if ($time->isPast() && $this->selectedDate === now()->format('Y-m-d')) {
-            $time = now();
-        } elseif ($time->isPast()) {
-            $time = Carbon::parse($this->selectedDate)->setHour(9)->setMinute(0); // Default to 9 AM for future dates
+        $this->bookingPatientId = $patientId;
+        // Default time to current time rounded to next 5 mins if it's today
+        if ($this->selectedDate === now()->format('Y-m-d')) {
+            $this->bookingTime = now()->addMinutes(5)->format('H:i');
+        } else {
+            $this->bookingTime = '09:00';
         }
+    }
+
+    public function confirmBooking()
+    {
+        $this->validate([
+            'bookingTime' => 'required',
+            'bookingType' => 'required|in:consultation,followup',
+        ]);
+
+        $scheduledAt = Carbon::parse($this->selectedDate . ' ' . $this->bookingTime);
 
         app(AppointmentService::class)->bookAppointment([
-            'patient_id' => $patientId,
-            'doctor_id' => $doctorId,
-            'scheduled_at' => $time,
+            'patient_id' => $this->bookingPatientId,
+            'doctor_id' => $this->assignedDoctorId,
+            'scheduled_at' => $scheduledAt,
+            'type' => $this->bookingType,
             'status' => 'pending'
         ]);
-        $this->search = '';
+
+        $this->clearSearch();
         $this->resetPage();
+    }
+
+    public function clearSearch()
+    {
+        $this->search = '';
+        $this->bookingPatientId = null;
     }
     
     public function setDate($date)
@@ -120,20 +159,20 @@ new class extends Component
         
         $auditLog = $appointment->audit_log ?? [];
         $auditLog[] = [
-            'action' => 'modifed',
+            'action' => 'modified',
             'by_user_id' => auth()->id(),
             'by_user_name' => auth()->user()->name,
             'timestamp' => now()->toDateTimeString(),
             'changes' => [
                 'doctor_id_from' => $appointment->doctor_id,
-                'doctor_id_to' => $this->editDoctorId,
+                'doctor_id_to' => $this->assignedDoctorId ?? $this->editDoctorId,
                 'time_from' => $appointment->scheduled_at->toDateTimeString(),
                 'time_to' => $newScheduledAt->toDateTimeString(),
             ]
         ];
 
         $appointment->update([
-            'doctor_id' => $this->editDoctorId,
+            'doctor_id' => $this->assignedDoctorId ?? $this->editDoctorId,
             'scheduled_at' => $newScheduledAt,
             'audit_log' => $auditLog
         ]);
@@ -146,9 +185,25 @@ new class extends Component
         $this->editingAppointmentId = null;
     }
 };
-?>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+?><div class="grid grid-cols-1 lg:grid-cols-3 gap-8" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+    @pushOnce('styles')
+    <style>
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInTop {
+            from { opacity: 0; max-height: 0; overflow: hidden; }
+            to { opacity: 1; max-height: 500px; overflow: visible; }
+        }
+        .animate-fade-in-down {
+            animation: fadeInDown 0.3s ease-out forwards;
+        }
+        .animate-slide-in-top {
+            animation: slideInTop 0.4s ease-out forwards;
+        }
+    </style>
+    @endPushOnce
     <div class="lg:col-span-2 space-y-8">
         <!-- Patient Control Center -->
         <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
@@ -183,34 +238,78 @@ new class extends Component
             </form>
             @endif
 
-            <div class="relative">
+            <div class="relative group">
+                <div class="absolute inset-y-0 {{ app()->getLocale() === 'ar' ? 'right-0 pr-4' : 'left-0 pl-4' }} flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400 group-focus-within:text-purple-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
                 <input wire:model.live="search" type="text" placeholder="{{ __('Search by patient name or phone to book...') }}" 
-                       class="w-full px-5 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all">
+                       class="w-full {{ app()->getLocale() === 'ar' ? 'pr-11 pl-12' : 'pl-11 pr-12' }} py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-purple-500 transition-all shadow-inner text-lg">
                 
+                @if($search)
+                <button wire:click="clearSearch" class="absolute inset-y-0 {{ app()->getLocale() === 'ar' ? 'left-0 pl-4' : 'right-0 pr-4' }} flex items-center text-gray-400 hover:text-red-500 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                @endif
+
                 @if($search && count($patients) > 0)
-                <div class="absolute w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl z-20 overflow-hidden divide-y divide-gray-50">
-                    <div class="p-3 bg-gray-50 border-b border-gray-100">
-                        <input wire:model.live="doctorSearch" type="text" placeholder="{{ __('Filter Doctors') }}..." 
-                               class="w-full px-3 py-1 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-purple-500">
-                    </div>
+                <div class="absolute w-full mt-3 bg-white border border-gray-100 rounded-3xl shadow-2xl z-20 overflow-hidden divide-y divide-gray-50 animate-fade-in-down">
                     @foreach($patients as $patient)
-                    <div class="p-4 hover:bg-gray-50 flex items-center justify-between transition-colors">
-                        <div>
-                            <span class="block font-bold text-gray-800">{{ $patient->name }}</span>
-                            <span class="text-sm text-gray-500">{{ $patient->phone }}</span>
+                    <div class="p-0 transition-all">
+                        <div class="p-4 hover:bg-gray-50 flex items-center justify-between cursor-pointer" wire:click="selectForBooking({{ $patient->id }})">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xl">
+                                    {{ mb_substr($patient->name, 0, 1) }}
+                                </div>
+                                <div>
+                                    <span class="block font-bold text-gray-900 text-lg">{{ $patient->name }}</span>
+                                    <div class="flex items-center gap-3 mt-1">
+                                        <span class="text-sm text-gray-500 flex items-center gap-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                                            {{ $patient->phone }}
+                                        </span>
+                                        <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">{{ __('ID') }}: #{{ $patient->id }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm font-medium text-purple-600 group-hover:underline">{{ __('Record Appointment') }}</span>
+                                <svg class="w-5 h-5 text-gray-300 transform translate-x-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </div>
                         </div>
-                        <div class="flex flex-wrap gap-2 justify-end max-w-[50%]">
-                            @forelse($doctors as $doctor)
-                            <button wire:click="bookFor({{ $patient->id }}, {{ $doctor->id }})" 
-                                    class="px-3 py-1 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-lg hover:bg-purple-600 hover:text-white transition-all">
-                                {{ __('Book with Dr.') }} {{ $doctor->name }}
-                            </button>
-                            @empty
-                            <span class="text-[10px] text-gray-400 italic">{{ __('No active doctors found.') }}</span>
-                            @endforelse
+
+                        @if($bookingPatientId == $patient->id)
+                        <div class="bg-purple-50/50 p-5 border-t border-purple-100 animate-slide-in-top">
+                            <div class="flex items-center gap-3 mb-4 text-purple-900">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span class="font-bold">{{ __('Book with Dr.') }} {{ $assignedDoctorName }}</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-[11px] font-bold text-purple-700 uppercase">{{ __('Time') }}</label>
+                                    <input wire:model="bookingTime" type="time" class="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 shadow-sm text-sm">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[11px] font-bold text-purple-700 uppercase">{{ __('Type') }}</label>
+                                    <select wire:model="bookingType" class="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 shadow-sm text-sm">
+                                        <option value="consultation">{{ __('Consultation Case') }}</option>
+                                        <option value="followup">{{ __('Follow-up Case') }}</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-end">
+                                    <button wire:click="confirmBooking" class="w-full py-2 bg-purple-600 text-white rounded-xl font-bold shadow-lg shadow-purple-100 hover:bg-purple-700 transition-all flex items-center justify-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        {{ __('Confirm') }}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+                        @endif
                     </div>
                     @endforeach
+                    <div class="p-3 bg-gray-50 text-center text-xs text-gray-400">
+                        {{ __('To register a new patient, use the "Add Patient" button above.') }}
+                    </div>
                 </div>
                 @elseif($search)
                 <div class="absolute w-full mt-2 bg-white p-4 text-center text-gray-400 border border-gray-100 rounded-2xl shadow-xl z-20">
@@ -360,3 +459,4 @@ new class extends Component
     </div>
     @endif
 </div>
+

@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
         );
 
         // Doctor Account
-        User::updateOrCreate(
+        $doctor = User::updateOrCreate(
             ['email' => 'doctor@clinova.com'],
             [
                 'name' => 'Dr. Ahmed Ali',
@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Sara Secretary',
                 'password' => bcrypt('password'),
                 'role' => 'secretary',
+                'doctor_id' => $doctor->id,
                 'subscription_active' => true,
             ]
         );

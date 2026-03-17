@@ -16,6 +16,7 @@
         body { font-family: 'Outfit', 'Cairo', sans-serif; }
         .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
     </style>
+    @stack('styles')
 </head>
 <body class="bg-[#f8fafc] text-slate-800 overflow-x-hidden selection:bg-purple-500 selection:text-white">
     <div class="flex h-screen overflow-hidden">
@@ -155,6 +156,7 @@
     </div>
 
     @livewireScripts
+    @stack('scripts')
 
     <script>
     function queueSortable() {

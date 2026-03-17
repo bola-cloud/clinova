@@ -43,12 +43,15 @@ new class extends Component
             'phone' => 'required|numeric',
         ]);
 
+        $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
+
         app(PatientService::class)->createPatient([
             'name' => $this->name,
             'phone' => $this->phone,
             'age' => $this->age,
             'weight' => $this->weight,
             'address' => $this->address,
+            'doctor_id' => $doctorId,
         ]);
 
         $this->reset(['name', 'phone', 'age', 'weight', 'address', 'showAddPatient']);
@@ -155,15 +158,9 @@ new class extends Component
 
     public function render(): mixed
     {
-        $basePatientQuery = Patient::when(auth()->user()->role === 'doctor', function($query) {
-            $query->where(function($q) {
-                $q->whereHas('appointments', function($sq) {
-                    $sq->where('doctor_id', auth()->id());
-                })->orWhereHas('visits', function($sq) {
-                    $sq->where('doctor_id', auth()->id());
-                });
-            });
-        });
+        $doctorId = auth()->user()->role === 'doctor' ? auth()->id() : auth()->user()->doctor_id;
+
+        $basePatientQuery = Patient::where('doctor_id', $doctorId);
 
         $patients = (clone $basePatientQuery)->withCount(['appointments', 'visits', 'files'])
             ->when($this->search, function($query) {

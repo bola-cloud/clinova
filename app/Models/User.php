@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'doctor_id',
         'consultation_fee',
         'followup_fee',
         'subscription_active',
@@ -66,5 +67,15 @@ class User extends Authenticatable
     public function isSecretary(): bool
     {
         return $this->role === 'secretary';
+    }
+
+    public function assignedDoctor()
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function patients()
+    {
+        return $this->hasMany(Patient::class, 'doctor_id');
     }
 }
