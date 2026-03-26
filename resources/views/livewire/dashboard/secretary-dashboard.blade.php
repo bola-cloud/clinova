@@ -58,12 +58,20 @@ new class extends Component
                 $q->where('name', 'like', '%'.$this->search.'%')->orWhere('phone', 'like', '%'.$this->search.'%');
             })->take(5)->get() : [],
             'dailyAppointments' => Appointment::with(['patient', 'doctor'])
+                ->where('doctor_id', $this->assignedDoctorId)
+                ->whereHas('patient', function ($query) {
+                    $query->where('doctor_id', $this->assignedDoctorId);
+                })
                 ->whereDate('scheduled_at', $date)
                 ->orderBy('scheduled_at', 'asc')
+                ->orderBy('queue_order', 'asc')
                 ->paginate(15),
-            'dayCount' => Appointment::whereDate('scheduled_at', $date)->count(),
-            'pendingCount' => Appointment::whereDate('scheduled_at', $date)->where('status', 'pending')->count(),
-            'preparedCount' => Appointment::whereDate('scheduled_at', $date)->where('status', 'checked-in')->count(),
+            'dayCount' => Appointment::where('doctor_id', $this->assignedDoctorId)
+                ->whereDate('scheduled_at', $date)->count(),
+            'pendingCount' => Appointment::where('doctor_id', $this->assignedDoctorId)
+                ->whereDate('scheduled_at', $date)->where('status', 'pending')->count(),
+            'preparedCount' => Appointment::where('doctor_id', $this->assignedDoctorId)
+                ->whereDate('scheduled_at', $date)->where('status', 'checked-in')->count(),
             'doctors' => \App\Models\User::where('role', 'doctor')->get(),
         ];
     }
@@ -209,8 +217,8 @@ new class extends Component
         <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <div class="flex items-center justify-between mb-6">
                 <h3 class="font-bold text-lg">{{ __('Patients & Booking Management') }}</h3>
-                <button wire:click="$toggle('showAddPatient')" class="px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-bold">
-                    {{ $showAddPatient ? __('Close') : __('Add Patient') . ' +' }}
+                <button wire:click="$toggle('showAddPatient')" class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-base font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                    {{ $showAddPatient ? __('Close') : __('New Patient') . ' +' }}
                 </button>
             </div>
 
@@ -219,18 +227,22 @@ new class extends Component
                 <div class="space-y-1">
                     <label class="text-sm font-bold text-purple-900">{{ __('Full Name') }} *</label>
                     <input wire:model="name" type="text" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                    @error('name') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 <div class="space-y-1">
                     <label class="text-sm font-bold text-purple-900">{{ __('Phone') }} *</label>
                     <input wire:model="phone" type="text" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                    @error('phone') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 <div class="space-y-1">
                     <label class="text-sm font-bold text-purple-900">{{ __('Age') }}</label>
                     <input wire:model="age" type="number" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                    @error('age') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 <div class="space-y-1">
                     <label class="text-sm font-bold text-purple-900">{{ __('Address') }}</label>
                     <input wire:model="address" type="text" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                    @error('address') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 <div class="md:col-span-2">
                     <button type="submit" class="w-full py-3 bg-purple-600 text-white rounded-xl font-bold mt-2 shadow-lg shadow-purple-200">{{ __('Save Patient') }}</button>
@@ -346,7 +358,6 @@ new class extends Component
                         <tr>
                             <th class="px-6 py-4 font-medium w-24">{{ __('Time') }}</th>
                             <th class="px-6 py-4 font-medium">{{ __('Patient') }}</th>
-                            <th class="px-6 py-4 font-medium">{{ __('Doctor') }}</th>
                             <th class="px-6 py-4 font-medium">{{ __('Status') }}</th>
                             <th class="px-6 py-4 font-medium">{{ __('Actions') }}</th>
                         </tr>
@@ -361,7 +372,6 @@ new class extends Component
                                 <a href="{{ route('patients.show', $appointment->patient_id) }}" class="block font-bold hover:text-purple-600 transition-colors">{{ $appointment->patient->name }}</a>
                                 <span class="text-xs text-gray-400">{{ $appointment->patient->phone }}</span>
                             </td>
-                            <td class="px-6 py-4 text-gray-600">{{ __('Dr.') }} {{ $appointment->doctor->name }}</td>
                             <td class="px-6 py-4">
                                 @if($appointment->status === 'checked-in')
                                     <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-bold">{{ __('Checked In') }}</span>
@@ -382,7 +392,7 @@ new class extends Component
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-gray-400">
+                            <td colspan="4" class="px-6 py-12 text-center text-gray-400">
                                 <div class="flex flex-col items-center justify-center space-y-3">
                                     <svg class="w-12 h-12 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                     <p>{{ __('No appointments scheduled for this date.') }}</p>
@@ -416,14 +426,6 @@ new class extends Component
                     <span class="font-bold">{{ $preparedCount }}</span>
                 </div>
             </div>
-        </div>
-
-        <!-- System Tips -->
-        <div class="bg-white p-6 rounded-2xl border border-dashed border-purple-200">
-            <h4 class="font-bold text-purple-900 mb-2">{{ __('Quick Instructions') }}</h4>
-            <p class="text-sm text-gray-600 leading-relaxed">
-                {{ __('You can prepare the patient directly by clicking Prepare. The patient will appear instantly in the respective doctor queue. Ask the patient to go to the examination room.') }}
-            </p>
         </div>
     </div>
 

@@ -7,10 +7,11 @@ use App\Models\User;
 use App\Services\PatientService;
 use App\Services\AppointmentService;
 use Carbon\Carbon;
+use Livewire\WithFileUploads;
 
 new class extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     public $search = '';
     public $showAddPatient = false;
@@ -29,11 +30,19 @@ new class extends Component
     public $bookingPatientId = null;
     public $bookingDoctorId = '';
     public $bookingDate = '';
+    public $bookingTime = '';
     public $bookingType = 'checkup';
+
+    // File Upload fields
+    public $showUploadModal = false;
+    public $uploadPatientId = null;
+    public $newFile;
+    public $fileType = 'lab';
 
     public function mount()
     {
         $this->bookingDate = now()->format('Y-m-d');
+        $this->bookingTime = now()->addMinutes(5)->format('H:i');
     }
 
     public function createPatient()
@@ -87,13 +96,14 @@ new class extends Component
         $this->validate([
             'bookingDoctorId' => 'required|exists:users,id',
             'bookingDate' => 'required|date',
+            'bookingTime' => 'required',
             'bookingType' => 'required|in:checkup,follow_up',
         ]);
 
         app(AppointmentService::class)->bookAppointment([
             'patient_id' => $this->bookingPatientId,
             'doctor_id' => $this->bookingDoctorId,
-            'scheduled_at' => Carbon::parse($this->bookingDate)->startOfDay(),
+            'scheduled_at' => Carbon::parse($this->bookingDate . ' ' . $this->bookingTime),
             'status' => 'pending',
             'type' => $this->bookingType,
         ]);
@@ -104,7 +114,14 @@ new class extends Component
     
     public function exportCSV()
     {
-        $patients = Patient::withCount(['appointments', 'visits', 'files'])
+        $basePatientQuery = Patient::query();
+
+        if (!auth()->user()->isAdmin()) {
+            $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
+            $basePatientQuery->where('doctor_id', $doctorId);
+        }
+
+        $patients = (clone $basePatientQuery)->withCount(['appointments', 'visits', 'files'])
             ->when($this->search, function($query) {
                 $query->where(function($q) {
                     $q->where('name', 'like', '%'.$this->search.'%')
@@ -116,7 +133,7 @@ new class extends Component
             ->when($this->filterHasFiles === 'yes', fn($q) => $q->has('files'))
             ->when($this->filterHasFiles === 'no', fn($q) => $q->doesntHave('files'))
             ->when($this->filterMinVisits !== '', fn($q) => $q->having('visits_count', '>=', (int)$this->filterMinVisits))
-            ->orderBy('created_at', 'desc')
+            ->orderBy('name', 'asc')
             ->get();
 
         return response()->streamDownload(function () use ($patients) {
@@ -156,17 +173,60 @@ new class extends Component
     public function updatingFilterHasFiles() { $this->resetPage(); }
     public function updatingFilterMinVisits() { $this->resetPage(); }
 
+    public function uploadFile()
+    {
+        $this->validate([
+            'newFile' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
+            'fileType' => 'required|in:investigation,lab,other',
+        ]);
+
+        $patient = \App\Models\Patient::findOrFail($this->uploadPatientId);
+        $this->authorize('update', $patient);
+
+        $path = $this->newFile->store('patient_files', 'public');
+
+        \App\Models\PatientFile::create([
+            'patient_id' => $patient->id,
+            'file_name' => $this->newFile->getClientOriginalName(),
+            'file_path' => $path,
+            'file_type' => $this->fileType,
+            'uploaded_by' => auth()->id(),
+        ]);
+
+        $this->showUploadModal = false;
+        $this->uploadPatientId = null;
+        $this->reset(['newFile']);
+        session()->flash('message', __('File uploaded successfully.'));
+    }
+
+    public function openUploadModal($id)
+    {
+        $this->uploadPatientId = $id;
+        $this->resetValidation();
+        $this->reset(['newFile']);
+        $this->fileType = 'lab';
+        $this->showUploadModal = true;
+    }
+
+    public function closeUploadModal() { $this->showUploadModal = false; }
+
     public function render(): mixed
     {
-        $doctorId = auth()->user()->role === 'doctor' ? auth()->id() : auth()->user()->doctor_id;
+        $basePatientQuery = Patient::query();
 
-        $basePatientQuery = Patient::where('doctor_id', $doctorId);
+        if (!auth()->user()->isAdmin()) {
+            $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
+            $basePatientQuery->where('doctor_id', $doctorId);
+        }
 
         $patients = (clone $basePatientQuery)->withCount(['appointments', 'visits', 'files'])
             ->when($this->search, function($query) {
                 $query->where(function($q) {
                     $q->where('name', 'like', '%'.$this->search.'%')
-                      ->orWhere('phone', 'like', '%'.$this->search.'%');
+                      ->orWhere('phone', 'like', '%'.$this->search.'%')
+                      ->orWhereHas('visits', function($vq) {
+                          $vq->where('diagnosis', 'like', '%'.$this->search.'%');
+                      });
                 });
             })
             ->when($this->filterDateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->filterDateFrom))
@@ -174,14 +234,16 @@ new class extends Component
             ->when($this->filterHasFiles === 'yes', fn($q) => $q->has('files'))
             ->when($this->filterHasFiles === 'no', fn($q) => $q->doesntHave('files'))
             ->when($this->filterMinVisits !== '', fn($q) => $q->having('visits_count', '>=', (int)$this->filterMinVisits))
-            ->orderBy('created_at', 'desc')
+            ->orderBy('name', 'asc')
             ->paginate(15);
 
         $stats = [
             'total' => (clone $basePatientQuery)->count(),
             'this_month' => (clone $basePatientQuery)->whereMonth('created_at', now()->month)->count(),
             'with_files' => (clone $basePatientQuery)->has('files')->count(),
-            'total_visits' => \App\Models\Visit::when(auth()->user()->role === 'doctor', fn($q) => $q->where('doctor_id', auth()->id()))->count(),
+            'total_visits' => \App\Models\Visit::when(!auth()->user()->isAdmin(), function($q) {
+                $q->where('doctor_id', auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id);
+            })->count(),
         ];
 
         return view('livewire.shared.patients-list', [
@@ -255,8 +317,8 @@ new class extends Component
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 {{ __('Export CSV') }}
             </button>
-            <button wire:click="$toggle('showAddPatient')" class="w-full lg:w-auto px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition-all flex items-center justify-center gap-2 text-sm hover:-translate-y-0.5 group">
-                <svg class="w-5 h-5 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <button wire:click="$toggle('showAddPatient')" class="w-full lg:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black rounded-2xl shadow-xl shadow-purple-200 transition-all flex items-center justify-center gap-3 text-base hover:-translate-y-1 hover:shadow-2xl active:scale-95 group">
+                <svg class="w-6 h-6 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
                 <span class="inline-block">{{ $showAddPatient ? __('Close Form') : __('New Patient') }}</span>
             </button>
         </div>
@@ -348,7 +410,9 @@ new class extends Component
                 <tbody class="divide-y divide-gray-50">
                     @forelse($patients as $patient)
                     <tr wire:key="patient-{{ $patient->id }}" class="hover:bg-purple-50/30 transition-colors group">
-                        <td class="px-6 py-5 text-sm font-bold text-gray-400">{{ $patient->id }}</td>
+                        <td class="px-6 py-5 text-sm font-bold text-gray-400">
+                            {{ ($patients->currentPage() - 1) * $patients->perPage() + $loop->iteration }}
+                        </td>
                         <td class="px-6 py-5">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-100 to-purple-50 flex items-center justify-center text-purple-600 font-bold shrink-0">
@@ -387,15 +451,16 @@ new class extends Component
                         </td>
                         <td class="px-6 py-5 text-center">
                             <div class="flex items-center justify-center gap-2">
-                                <a href="{{ route('patients.show', $patient->id) }}" class="inline-flex items-center justify-center px-3 py-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 rounded-lg text-xs font-bold transition-all" title="{{ __('Open File') }}">
-                                    <svg class="w-4 h-4 mr-1 {{ app()->getLocale() === 'ar' ? 'ml-1 mr-0' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                    {{ __('Profile') }}
+                                <a href="{{ route('patients.show', $patient->id) }}" class="inline-flex items-center justify-center w-10 h-10 bg-purple-100 text-purple-700 hover:bg-purple-600 hover:text-white rounded-xl transition-all shadow-sm border border-purple-200" title="{{ __('Open Profile') }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 </a>
-                                <button wire:click="openBooking({{ $patient->id }})" class="inline-flex items-center justify-center px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-600 hover:text-white rounded-lg text-xs font-bold transition-all shadow-sm group-hover:shadow-md" title="{{ __('Add Booking') }}">
-                                    <svg class="w-4 h-4 mr-1 {{ app()->getLocale() === 'ar' ? 'ml-1 mr-0' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                    {{ __('Book') }}
+                                <button wire:click="openUploadModal({{ $patient->id }})" class="inline-flex items-center justify-center w-10 h-10 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white rounded-xl transition-all shadow-sm border border-blue-200" title="{{ __('Upload File') }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                 </button>
-                            </div>
+                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $patient->phone) }}" target="_blank" class="inline-flex items-center justify-center w-10 h-10 bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-xl transition-all shadow-sm border border-emerald-200" title="{{ __('WhatsApp') }}">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                    </a>
+                                </div>
                         </td>
                     </tr>
                     @empty
@@ -447,7 +512,7 @@ new class extends Component
             </div>
             
             <form wire:submit="confirmBooking" class="space-y-5">
-                @if(auth()->user()->role !== 'doctor')
+                @if(auth()->user()->isAdmin())
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('Select Doctor') }} <span class="text-red-500">*</span></label>
                     <select wire:model="bookingDoctorId" class="w-full px-4 py-3 bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors">
@@ -488,6 +553,44 @@ new class extends Component
                     </button>
                     <button type="submit" class="flex-[2] px-4 py-3 bg-purple-600 text-white rounded-xl font-bold font-bold shadow-lg shadow-purple-200 hover:bg-purple-700 hover:-translate-y-0.5 transition-all text-sm">
                         {{ __('Confirm Booking') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
+
+    <!-- Upload File Modal -->
+    @if($showUploadModal)
+    <div wire:key="upload-modal-container" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div wire:click="closeUploadModal" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl relative overflow-hidden animate-zoom-in p-8">
+            <h3 class="text-xl font-bold mb-6 flex items-center gap-3 text-gray-900">
+                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                </div>
+                {{ __('Upload Medical File') }}
+            </h3>
+            <form wire:submit.prevent="uploadFile" class="space-y-5">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">{{ __('File Type') }}</label>
+                    <select wire:model="fileType" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-3">
+                        <option value="lab">{{ __('Lab Result') }}</option>
+                        <option value="investigation">{{ __('Investigation') }}</option>
+                        <option value="other">{{ __('Other Document') }}</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">{{ __('Choose File') }}</label>
+                    <input type="file" wire:model="newFile" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500 file:me-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer">
+                    <div wire:loading wire:target="newFile" class="text-xs text-blue-600 font-bold mt-2">{{ __('Preparing file...') }}</div>
+                    @error('newFile') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror
+                </div>
+                <div class="pt-6 flex gap-3">
+                    <button type="button" wire:click="closeUploadModal" class="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-colors">{{ __('Cancel') }}</button>
+                    <button type="submit" class="flex-[2] py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex justify-center items-center gap-2">
+                        <span wire:loading.remove wire:target="uploadFile">{{ __('Upload') }}</span>
+                        <span wire:loading wire:target="uploadFile">{{ __('Saving...') }}</span>
                     </button>
                 </div>
             </form>

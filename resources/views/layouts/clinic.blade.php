@@ -4,17 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ isset($title) ? __($title) : 'Clinova' }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('Clinova Logo.png') }}">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
+    
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     <style>
         body { font-family: 'Outfit', 'Cairo', sans-serif; }
         .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        @keyframes morph {
+            0% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+            50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+            100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+        }
+        
+        @keyframes drift {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(30px, -50px) rotate(10deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        @keyframes sweep {
+            0% { transform: translateX(-100%) skewX(-15deg); opacity: 0; }
+            50% { opacity: 0.1; }
+            100% { transform: translateX(200%) skewX(-15deg); opacity: 0; }
+        }
+
+        .animate-morph { animation: morph 8s ease-in-out infinite; }
+        .animate-drift { animation: drift 15s ease-in-out infinite; }
+        .navbar-sweep::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 30%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
+            animation: sweep 5s infinite;
+        }
+        /* header.h-52.bg-white\/95.backdrop-blur-3xl.border-b-4.border-gray-50.flex.items-center.px-12.md\:px-24.sticky.top-0.z-50.shadow-2xl.transition-all.duration-300.navbar-sweep.overflow-hidden {
+            padding: 10px 28px;
+        } */
+        .p-10.pb-4.flex.flex-col.items-center.gap-4{
+            margin: 20px;
+        }
     </style>
     @stack('styles')
 </head>
@@ -24,13 +59,14 @@
         <!-- Premium Sidebar -->
         <aside class="w-72 bg-gradient-to-b from-[#8A2BE2] via-[#4A26AB] to-[#0C3E8A] text-white shrink-0 hidden md:flex flex-col shadow-2xl relative z-20">
             <!-- Logo Section -->
-            <div class="p-8 pb-6 flex items-center gap-4">
-                <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg text-[#4A26AB] transform rotate-3 hover:rotate-0 transition-transform duration-300">
-                    <span class="text-3xl font-extrabold tracking-tighter">C</span>
+            <div class="p-10 pb-4 flex flex-col items-center gap-4">
+                <div class="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-[0_15px_45px_rgba(0,0,0,0.2)] border-2 border-white/20 group hover:scale-110 transition-all duration-500 overflow-hidden relative group/logo">
+                    <div class="absolute inset-0 bg-gradient-to-br from-white via-white to-purple-50 opacity-0 group-hover/logo:opacity-100 transition-opacity"></div>
+                    <img src="{{ asset('Clinova Logo.png') }}" alt="Clinova" class="w-16 h-16 object-contain relative z-10 drop-shadow-lg group-hover/logo:rotate-3 transition-transform">
                 </div>
-                <div>
-                    <h1 class="text-3xl font-bold tracking-tight text-white leading-none">Clinova</h1>
-                    <p class="text-[10px] text-purple-200 mt-1 uppercase tracking-widest opacity-80 font-medium">{{ __('Run Your Clinic Smarter') }}</p>
+                <div class="text-center">
+                    <h1 class="text-3xl font-black tracking-tight text-white leading-none drop-shadow-md">Clinova</h1>
+                    <p class="text-[10px] text-purple-200 mt-1 uppercase tracking-[0.3em] opacity-80 font-black italic">{{ __('Smart Clinic') }}</p>
                 </div>
             </div>
             
@@ -80,9 +116,18 @@
             </nav>
 
             <div class="p-6 border-t border-white/10 space-y-4 glass-panel m-4 rounded-3xl mt-auto">
+                @php
+                    $user = auth()->user();
+                    $displayUser = $user->isSecretary() ? $user->assignedDoctor : $user;
+                    $profileImage = $displayUser?->profile_image;
+                @endphp
                 <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-400 to-pink-300 flex items-center justify-center font-bold text-white shadow-inner border border-white/20">
-                        {{ auth()->user()->name[0] ?? 'U' }}
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-400 to-pink-300 flex items-center justify-center font-bold text-white shadow-inner border border-white/20 overflow-hidden">
+                        @if($profileImage)
+                            <img src="{{ asset('storage/' . $profileImage) }}" class="w-full h-full object-cover">
+                        @else
+                            {{ $displayUser->name[0] ?? ($user->name[0] ?? 'U') }}
+                        @endif
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-bold truncate text-white">{{ auth()->user()->name ?? 'User' }}</p>
@@ -112,36 +157,53 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 flex flex-col min-w-0 bg-[#f4f7fc] overflow-y-auto relative">
-            <!-- Decorative Background blob -->
-            <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-200/40 rounded-full blur-[100px] -z-10 pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
+        <main class="flex-1 flex flex-col min-w-0 bg-[#f4f7fc] overflow-y-auto overflow-x-hidden relative">
+            <!-- Decorative Background Blobs (Soft Radial Gradients) -->
+            <div class="fixed top-0 right-0 w-[800px] h-[800px] animate-morph animate-drift -z-10 pointer-events-none opacity-50 blur-3xl" style="background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%);"></div>
+            <div class="fixed bottom-0 left-0 w-[700px] h-[700px] animate-morph animate-drift -z-10 pointer-events-none opacity-40 blur-3xl" style="background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, transparent 70%); animation-delay: -5s;"></div>
+            <div class="absolute top-0 right-0 w-[1000px] h-[1000px] -z-10 pointer-events-none -translate-y-1/2 translate-x-1/3 blur-[100px]" style="background: radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%);"></div>
             
             <!-- Header -->
-            <header class="h-20 bg-white/80 backdrop-blur-xl border-b border-gray-100/50 flex items-center px-6 md:px-10 sticky top-0 z-50 shadow-sm transition-all duration-300">
-                <!-- Left: Title & Mobile Toggle -->
-                <div class="flex-1 flex items-center gap-4">
-                    <button class="md:hidden p-2 text-gray-500 hover:text-[#4A26AB] transition-colors rounded-xl hover:bg-purple-50">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                    </button>
-                    <h2 class="text-lg md:text-xl font-black text-gray-800 tracking-tight hidden sm:block">
-                        <span class="bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-gray-700 to-gray-500">
-                            {{ isset($title) ? __($title) : __('Dashboard') }}
-                        </span>
-                    </h2>
-                </div>
-                
-                <!-- Center: Centered Logo -->
-                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none sm:pointer-events-auto">
-                    <div class="flex items-center gap-2 group">
-                        <img src="{{ asset('Clinova Logo.png') }}" alt="Clinova" class="h-10 md:h-12 w-auto object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-500">
+            <header class="h-24 bg-white/95 backdrop-blur-2xl border-b border-gray-100 flex items-center px-8 md:px-12 sticky top-0 z-40 shadow-sm transition-all duration-300">
+                <div class="flex items-center justify-between w-full h-full py-2 relative">
+                    <!-- Left: Title & Mobile Toggle -->
+                    <div class="flex items-center gap-4 w-1/4">
+                        <button class="md:hidden p-2 text-gray-500 hover:text-[#4A26AB] transition-colors rounded-xl hover:bg-purple-50">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        </button>
+                        <div class="hidden lg:flex flex-col">
+                            <h2 class="text-[10px] font-black text-purple-600 tracking-[0.3em] uppercase opacity-50">
+                                {{ isset($title) ? __($title) : __('Dashboard') }}
+                            </h2>
+                        </div>
                     </div>
-                </div>
+                    
+                    <!-- Center: Centered Doctor Name -->
+                    <div class="flex flex-col items-center justify-center text-center cursor-default w-2/4">
+                        <span class="text-[10px] font-black text-purple-600/60 uppercase tracking-widest leading-none mb-1">
+                            {{ __('Welcome Doctor') }}
+                        </span>
+                        <h1 class="text-2xl font-black tracking-tight leading-none text-slate-900">
+                            @if(auth()->user()->isSecretary())
+                                {{ __('Dr.') }} {{ auth()->user()->assignedDoctor->name ?? '' }}
+                            @else
+                                {{ __('Dr.') }} {{ auth()->user()->name }}
+                            @endif
+                        </h1>
+                    </div>
 
-                <!-- Right: Status / User Actions -->
-                <div class="flex-1 flex items-center justify-end gap-4">
-                    <div class="hidden lg:flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-md rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group">
-                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] animate-pulse"></div>
-                        <span class="text-emerald-700 text-[10px] font-black uppercase tracking-[0.15em]">{{ __('Online') }}</span>
+                    <!-- Right: Premium Status -->
+                    <div class="flex items-center justify-end gap-6 w-1/4">
+                        <div class="flex items-center gap-3 px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100/50">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                            <div class="flex flex-col text-right">
+                                <span class="text-emerald-700 text-[9px] font-bold uppercase tracking-wider leading-none mb-0.5 opacity-70">{{ __('System Status') }}</span>
+                                <span class="text-emerald-800 text-xs font-black uppercase tracking-widest leading-none">{{ __('Online') }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>

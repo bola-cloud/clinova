@@ -16,6 +16,8 @@ class VisitForm extends Component
 
     public function mount(Appointment $appointment)
     {
+        $this->authorize('recordVisit', $appointment);
+
         $this->appointment = $appointment->load('patient');
         // Pre-fill history if patient has previous visits
         $this->history = $this->appointment->patient->family_history;

@@ -1,0 +1,2 @@
+<img src="<?php echo e(asset('Clinova Logo.png')); ?>" <?php echo e($attributes->merge(['class' => 'object-contain'])); ?> alt="<?php echo e(config('app.name')); ?>">
+<?php /**PATH C:\Bola\Clinova\resources\views/components/application-logo.blade.php ENDPATH**/ ?>

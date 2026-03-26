@@ -21,6 +21,8 @@ class Visit extends Model
         'treatment_text',
         'treatment_file_path',
         'family_history',
+        'parent_visit_id',
+        'type',
     ];
 
     public function patient(): BelongsTo
@@ -36,5 +38,15 @@ class Visit extends Model
     public function files(): HasMany
     {
         return $this->hasMany(PatientFile::class);
+    }
+
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(Visit::class, 'parent_visit_id');
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Visit::class, 'parent_visit_id');
     }
 }

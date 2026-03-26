@@ -15,8 +15,12 @@ new class extends Component
     public $doctorFilter = '';
     public $showBookingModal = false;
     public $patientSearch = '';
+    public $showCreatePatientForm = false;
+    public $newPatientName = '';
+    public $newPatientPhone = '';
     public $selectedPatient = null;
     public $bookingDate = '';
+    public $bookingTime = '';
     public $bookingType = 'checkup';
     public $bookingDoctorId = '';
     public $splitByType = false;
@@ -25,8 +29,11 @@ new class extends Component
     {
         $this->dateFilter = now()->format('Y-m-d');
         $this->bookingDate = now()->format('Y-m-d');
-        if (auth()->user()->role === 'doctor') {
+        $this->bookingTime = now()->addMinutes(15)->format('H:i');
+        if (auth()->user()->isDoctor()) {
             $this->bookingDoctorId = auth()->id();
+        } elseif (auth()->user()->isSecretary()) {
+            $this->bookingDoctorId = auth()->user()->doctor_id;
         }
     }
 
@@ -52,6 +59,31 @@ new class extends Component
         $this->showBookingModal = false;
         $this->selectedPatient = null;
         $this->patientSearch = '';
+        $this->showCreatePatientForm = false;
+        $this->newPatientName = '';
+        $this->newPatientPhone = '';
+    }
+
+    public function quickCreateAndSelect()
+    {
+        $this->validate([
+            'newPatientName' => 'required|min:3',
+            'newPatientPhone' => 'required|numeric',
+        ]);
+
+        $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
+
+        $patient = app(\App\Services\PatientService::class)->createPatient([
+            'name' => $this->newPatientName,
+            'phone' => $this->newPatientPhone,
+            'doctor_id' => $doctorId,
+        ]);
+
+        $this->selectedPatient = $patient;
+        $this->showCreatePatientForm = false;
+        $this->newPatientName = '';
+        $this->newPatientPhone = '';
+        $this->patientSearch = '';
     }
 
     public function confirmBooking()
@@ -68,7 +100,7 @@ new class extends Component
         app(\App\Services\AppointmentService::class)->bookAppointment([
             'patient_id' => $this->selectedPatient->id,
             'doctor_id' => $this->bookingDoctorId,
-            'scheduled_at' => $this->bookingDate,
+            'scheduled_at' => Carbon::parse($this->bookingDate . ' ' . $this->bookingTime),
             'type' => $this->bookingType,
         ]);
 
@@ -108,10 +140,22 @@ new class extends Component
             $query->where('status', $this->statusFilter);
         }
 
-        if (auth()->user()->role === 'doctor') {
-            $query->where('doctor_id', auth()->id());
+        if (auth()->user()->isDoctor()) {
+            $query->where('doctor_id', auth()->id())
+                  ->whereHas('patient', fn($q) => $q->where('doctor_id', auth()->id()));
+        } elseif (auth()->user()->isSecretary()) {
+            $query->where('doctor_id', auth()->user()->doctor_id)
+                  ->whereHas('patient', fn($q) => $q->where('doctor_id', auth()->user()->doctor_id));
         } elseif ($this->doctorFilter) {
-            $query->where('doctor_id', $this->doctorFilter);
+            $query->where('doctor_id', $this->doctorFilter)
+                  ->whereHas('patient', fn($q) => $q->where('doctor_id', $this->doctorFilter));
+        }
+
+        if ($this->patientSearch) {
+            $query->whereHas('patient', function($q) {
+                $q->where('name', 'like', '%' . $this->patientSearch . '%')
+                  ->orWhere('phone', 'like', '%' . $this->patientSearch . '%');
+            });
         }
 
         return view('livewire.shared.appointments-list', [
@@ -122,11 +166,12 @@ new class extends Component
                     $q->where('name', 'like', '%' . $this->patientSearch . '%')
                       ->orWhere('phone', 'like', '%' . $this->patientSearch . '%');
                 })
-                ->when(auth()->user()->role === 'doctor', function($q) {
-                    $q->whereHas('appointments', function($query) {
-                        $query->where('doctor_id', auth()->id());
-                    })->orWhereHas('visits', function($query) {
-                        $query->where('doctor_id', auth()->id());
+                ->when(!auth()->user()->isAdmin(), function($q) {
+                    $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
+                    $q->where(function($sq) use ($doctorId) {
+                        $sq->where('doctor_id', $doctorId)
+                          ->orWhereHas('appointments', fn($query) => $query->where('doctor_id', $doctorId))
+                          ->orWhereHas('visits', fn($query) => $query->where('doctor_id', $doctorId));
                     });
                 })
                 ->limit(5)->get() 
@@ -181,6 +226,33 @@ new class extends Component
                                 @endif
                             </div>
                             @error('selectedPatient') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
+                            
+                            @if($patientSearch && empty($patients))
+                                <div class="mt-4 p-4 bg-purple-50 rounded-2xl border border-purple-100 text-center">
+                                    <p class="text-sm text-purple-800 font-bold mb-3">{{ __('Patient not found.') }}</p>
+                                    <button type="button" wire:click="$toggle('showCreatePatientForm')" class="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold shadow-md hover:bg-purple-700 transition-all">
+                                        {{ $showCreatePatientForm ? __('Cancel') : __('Add as New Patient') }}
+                                    </button>
+                                </div>
+
+                                @if($showCreatePatientForm)
+                                    <div class="mt-4 space-y-4 p-4 bg-white rounded-2xl border border-purple-100 animate-slide-in-top">
+                                        <div class="space-y-1">
+                                            <label class="text-[10px] font-black text-purple-600 uppercase tracking-widest">{{ __('Patient Name') }}</label>
+                                            <input type="text" wire:model="newPatientName" class="w-full bg-slate-50 border-gray-200 rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-purple-500">
+                                            @error('newPatientName') <span class="text-xs text-red-500 font-bold block">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[10px] font-black text-purple-600 uppercase tracking-widest">{{ __('Phone Number') }}</label>
+                                            <input type="text" wire:model="newPatientPhone" class="w-full bg-slate-50 border-gray-200 rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-purple-500">
+                                            @error('newPatientPhone') <span class="text-xs text-red-500 font-bold block">{{ $message }}</span> @enderror
+                                        </div>
+                                        <button type="button" wire:click="quickCreateAndSelect" class="w-full py-2 bg-emerald-600 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all">
+                                            {{ __('Create & Select') }}
+                                        </button>
+                                    </div>
+                                @endif
+                            @endif
                         </div>
                     @else
                         <div class="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center justify-between flex-row-reverse">
@@ -199,21 +271,25 @@ new class extends Component
                         </div>
                     @endif
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest block">{{ __('Date') }}</label>
                             <input type="date" wire:model="bookingDate" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
                         </div>
                         <div class="space-y-2">
-                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest block">{{ __('Visit Type') }}</label>
-                            <select wire:model="bookingType" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
-                                <option value="checkup">{{ __('Checkup') }}</option>
-                                <option value="follow_up">{{ __('Follow-up') }}</option>
-                            </select>
+                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest block">{{ __('Time') }}</label>
+                            <input type="time" wire:model="bookingTime" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
                         </div>
                     </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-gray-500 uppercase tracking-widest block">{{ __('Visit Type') }}</label>
+                        <select wire:model="bookingType" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
+                            <option value="checkup">{{ __('Checkup') }}</option>
+                            <option value="follow_up">{{ __('Follow-up') }}</option>
+                        </select>
+                    </div>
 
-                    @if(auth()->user()->role !== 'doctor')
+                    @if(auth()->user()->isAdmin())
                     <div class="space-y-2">
                         <label class="text-xs font-black text-gray-500 uppercase tracking-widest block">{{ __('Doctor') }}</label>
                         <select wire:model="bookingDoctorId" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
@@ -243,6 +319,14 @@ new class extends Component
     <div class="bg-white p-4 md:p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow mb-8">
         <div class="flex flex-col gap-6 w-full">
             <div class="flex flex-wrap lg:flex-nowrap items-end gap-4 md:gap-5 w-full">
+            <!-- Patient Search Filter -->
+            <div class="w-full sm:w-[calc(50%-10px)] lg:w-auto flex-1 space-y-1.5 focus-within:text-purple-600 transition-colors">
+                <label class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Search Patient') }}</label>
+                <div class="relative">
+                    <input type="text" wire:model.live.debounce.300ms="patientSearch" placeholder="{{ __('Name or phone...') }}" class="w-full bg-slate-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-sm py-2.5 px-4 shadow-inner transition-all hover:border-purple-300">
+                </div>
+            </div>
+
             <!-- Date Filter -->
             <div class="w-full sm:w-[calc(50%-10px)] lg:w-auto flex-1 space-y-1.5 focus-within:text-purple-600 transition-colors">
                 <label class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Date') }}</label>
@@ -263,7 +347,7 @@ new class extends Component
             </div>
 
             <!-- Doctor Filter -->
-            @if(auth()->user()->role !== 'doctor')
+            @if(!auth()->user()->isDoctor() && !auth()->user()->isSecretary())
             <div class="w-full sm:w-[calc(50%-10px)] lg:w-auto flex-1 space-y-1.5 focus-within:text-purple-600 transition-colors">
                 <label class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{{ __('Doctor') }}</label>
                 <select wire:model.live="doctorFilter" class="w-full bg-slate-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-sm py-2.5 px-4 shadow-inner transition-all hover:border-purple-300">

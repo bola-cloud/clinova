@@ -16,10 +16,56 @@
 
     <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
         <form wire:submit="saveSettings" class="p-6 md:p-8">
-            <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                {{ __('Financial Settings') }}
-            </h3>
+            <div class="px-6 md:px-8 py-8 border-b border-gray-100 bg-slate-50/50">
+                <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    {{ __('Profile Identity') }}
+                </h3>
+
+                <div class="flex flex-col md:flex-row items-center gap-8">
+                    <!-- Image Preview -->
+                    <div class="relative group">
+                        <div class="w-32 h-32 rounded-3xl overflow-hidden border-4 border-white shadow-xl bg-gradient-to-tr from-purple-100 to-indigo-100 flex items-center justify-center relative">
+                            @if ($profile_image)
+                                <img src="{{ $profile_image->temporaryUrl() }}" class="w-full h-full object-cover">
+                            @elseif ($current_image)
+                                <img src="{{ asset('storage/' . $current_image) }}" class="w-full h-full object-cover">
+                            @else
+                                <span class="text-4xl font-black text-purple-300">{{ auth()->user()->name[0] ?? '?' }}</span>
+                            @endif
+
+                            <!-- Loading Overlay -->
+                            <div wire:loading wire:target="profile_image" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                                <svg class="animate-spin h-8 w-8 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <label class="absolute -bottom-2 -right-2 bg-white p-2 rounded-xl shadow-lg border border-gray-100 cursor-pointer hover:bg-purple-50 transition-colors group-hover:scale-110 duration-300">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <input type="file" wire:model="profile_image" class="hidden" accept="image/*">
+                        </label>
+                    </div>
+
+                    <div class="flex-1 space-y-2 text-center md:text-left">
+                        <h4 class="font-bold text-gray-900">{{ __('Profile Photo') }}</h4>
+                        <p class="text-xs text-gray-500 leading-relaxed max-w-sm">
+                            {{ __('Upload a professional photo to build trust with your patients.') }}
+                            <br>
+                            {{ __('Recommended: Square image, max 2MB.') }}
+                        </p>
+                        @error('profile_image') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 md:p-8">
+                <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    {{ __('Financial Settings') }}
+                </h3>
 
             <div class="space-y-6 max-w-2xl">
                 <!-- Consultation Fee -->
@@ -47,6 +93,27 @@
                     @error('followup_fee') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
                     <p class="text-xs text-gray-400 mt-1">{{ __('The fee charged for a follow-up visit.') }}</p>
                 </div>
+            </div>
+
+            <div class="px-6 md:px-8 py-8 border-t border-gray-100 bg-slate-50/50 -mx-6 md:-mx-8 my-8">
+                <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    {{ __('Secretary Information') }}
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+                    <div class="space-y-1.5">
+                        <label class="text-sm font-bold text-gray-700">{{ __('Secretary Name') }}</label>
+                        <input type="text" wire:model="secretary_name" class="w-full bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-sm py-3 px-4 shadow-sm">
+                        @error('secretary_name') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-sm font-bold text-gray-700">{{ __('Secretary Phone') }}</label>
+                        <input type="text" wire:model="secretary_phone" class="w-full bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-sm py-3 px-4 shadow-sm">
+                        @error('secretary_phone') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+                <p class="text-xs text-gray-400 mt-4 leading-relaxed">{{ __('Provide your secretary\'s contact details for patient management and communication.') }}</p>
             </div>
 
             <div class="mt-8 pt-6 border-t border-gray-100 flex justify-end">

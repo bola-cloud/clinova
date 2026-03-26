@@ -12,6 +12,9 @@ class AppointmentService extends BaseService
     public function getAppointmentsForDoctor(int $doctorId, Carbon $date): Collection
     {
         return Appointment::where('doctor_id', $doctorId)
+            ->whereHas('patient', function ($query) use ($doctorId) {
+                $query->where('doctor_id', $doctorId);
+            })
             ->whereDate('scheduled_at', $date)
             ->with('patient')
             ->orderBy('scheduled_at')
@@ -65,6 +68,49 @@ class AppointmentService extends BaseService
         $oldStatus = $appointment->status;
         $appointment->update(['status' => $status]);
         $this->logAction($appointment, "changed status from {$oldStatus} to {$status}");
+    }
+
+    public function getDoctorStats(int $doctorId): array
+    {
+        $today = now()->startOfDay();
+        $yesterday = now()->subDay()->startOfDay();
+        $weekStart = now()->startOfWeek();
+        $weekEnd = now()->endOfWeek();
+
+        // Yesterday's Performance
+        $yesterdayApps = Appointment::where('doctor_id', $doctorId)
+            ->whereHas('patient', function ($query) use ($doctorId) {
+                $query->where('doctor_id', $doctorId);
+            })
+            ->whereDate('scheduled_at', $yesterday)
+            ->get();
+        $yesterdayTotal = $yesterdayApps->count();
+        $yesterdaySeen = $yesterdayApps->where('status', 'seen')->count();
+        $performance = $yesterdayTotal > 0 ? round(($yesterdaySeen / $yesterdayTotal) * 100) : 0;
+
+        // Remaining Patients Today
+        $remainingToday = Appointment::where('doctor_id', $doctorId)
+            ->whereHas('patient', function ($query) use ($doctorId) {
+                $query->where('doctor_id', $doctorId);
+            })
+            ->whereDate('scheduled_at', $today)
+            ->where('status', '!=', 'seen')
+            ->count();
+
+        // Weekly Appointments
+        $weeklyTotal = Appointment::where('doctor_id', $doctorId)
+            ->whereHas('patient', function ($query) use ($doctorId) {
+                $query->where('doctor_id', $doctorId);
+            })
+            ->whereBetween('scheduled_at', [$weekStart, $weekEnd])
+            ->count();
+
+        return [
+            'yesterdayPerformance' => $performance,
+            'yesterdayCompleted' => $yesterdaySeen,
+            'remainingToday' => $remainingToday,
+            'weeklyTotal' => $weeklyTotal,
+        ];
     }
 
     protected function logAction(Appointment $appointment, string $action): void

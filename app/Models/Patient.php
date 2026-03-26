@@ -18,6 +18,7 @@ class Patient extends Model
         'weight',
         'address',
         'family_history',
+        'personal_history',
         'tags',
         'doctor_id',
     ];

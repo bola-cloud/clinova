@@ -27,6 +27,8 @@ class User extends Authenticatable
         'followup_fee',
         'subscription_active',
         'subscription_expires_at',
+        'secretary_name',
+        'secretary_phone',
     ];
 
     /**
