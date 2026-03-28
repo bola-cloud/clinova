@@ -93,7 +93,29 @@ class PatientProfile extends Component
 
     public function selectSuggestionFor($field, $value)
     {
-        $this->$field = $value;
+        $currentText = $this->$field;
+        
+        $lastComma = mb_strrpos($currentText, ',');
+        $lastNewline = mb_strrpos($currentText, "\n");
+        $lastArabicComma = mb_strrpos($currentText, '،');
+        
+        $lastSeparatorPoint = max(
+            $lastComma !== false ? $lastComma : -1, 
+            $lastNewline !== false ? $lastNewline : -1,
+            $lastArabicComma !== false ? $lastArabicComma : -1
+        );
+        
+        if ($lastSeparatorPoint !== -1) {
+            // Keep everything up to the separator, and add the new value
+            $prefix = mb_substr($currentText, 0, $lastSeparatorPoint + 1);
+            
+            // Add a space if it's a comma (for better formatting)
+            $space = mb_substr($prefix, -1) === "\n" ? "" : " ";
+            $this->$field = $prefix . $space . $value;
+        } else {
+            $this->$field = $value;
+        }
+
         $suggestionField = $field . 'Suggestions';
         if ($field === 'treatmentText') $suggestionField = 'treatmentSuggestions';
         

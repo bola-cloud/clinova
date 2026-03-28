@@ -16,27 +16,27 @@ trait HasMedicalSuggestions
 
     public function getMedicalSuggestions($field, $value, $category)
     {
-        if (strlen($value) < 2) {
+        // Find last separator (comma or newline) to allow multi-select
+        $lastComma = mb_strrpos($value, ',');
+        $lastNewline = mb_strrpos($value, "\n");
+        $lastArabicComma = mb_strrpos($value, '،');
+        
+        $lastSeparatorPoint = max(
+            $lastComma !== false ? $lastComma : -1, 
+            $lastNewline !== false ? $lastNewline : -1,
+            $lastArabicComma !== false ? $lastArabicComma : -1
+        );
+        
+        // Extract only the current term being typed
+        $lastTerm = $lastSeparatorPoint !== -1 ? mb_substr($value, $lastSeparatorPoint + 1) : $value;
+        $lastTerm = trim($lastTerm);
+
+        if (mb_strlen($lastTerm) < 2) {
             return [];
         }
 
-        // Get from Dictionary
-        $dictionaryResults = MedicalDictionary::getSuggestions($category, $value);
-
-        // Get from Database (History)
-        $dbField = ($field === 'investigation' || $field === 'history') ? 'history' : 
-                   (($field === 'treatmentText' || $field === 'treatment_text') ? 'treatment_text' : $field);
-        
-        $dbResults = [];
-        if (in_array($dbField, ['complaint', 'diagnosis', 'history', 'treatment_text'])) {
-            $dbResults = Visit::where($dbField, 'like', '%'.$value.'%')
-                ->distinct()
-                ->pluck($dbField)
-                ->take(5)
-                ->toArray();
-        }
-
-        return array_unique(array_merge($dictionaryResults, $dbResults));
+        // Get Purely from Dynamic Dictionary (NLM/Wikidata/MedlinePlus)
+        return MedicalDictionary::getSuggestions($category, $lastTerm);
     }
 
     public function selectSuggestion($field, $value)
