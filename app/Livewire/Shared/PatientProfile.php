@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 class PatientProfile extends Component
 {
     use WithFileUploads;
+    use \App\Traits\HasMedicalSuggestions;
 
     public Patient $patient;
     
@@ -21,8 +22,8 @@ class PatientProfile extends Component
     public $fileType = 'lab';
     
     // UI Toggles & Edits
-    public $isEditingFH = false; // Family History
-    public $isEditingPH = false; // Personal History
+    public $isEditingFH = false;
+    public $isEditingPH = false;
     public $familyHistoryEdit;
     public $personalHistoryEdit;
     
@@ -40,62 +41,42 @@ class PatientProfile extends Component
     public $parentVisitId = null;
     public $visitType = 'checkup';
 
-    // Autocomplete Suggestions
-    public $complaintSuggestions = [];
-    public $diagnosisSuggestions = [];
-
     // Booking properties
     public $showBookingModal = false;
     public $bookingDoctorId = '';
     public $bookingDate = '';
+    public $bookingTime = '09:00';
     public $bookingType = 'checkup';
 
-    public function mount(Patient $patient)
-    {
-        // Hard security check to prevent accessing other doctors' patients via URL manipulation
-        if (auth()->user()->isDoctor() && auth()->id() !== $patient->doctor_id) {
-            abort(403, __('Unauthorized access to patient profile.'));
-        }
-        if (auth()->user()->isSecretary() && auth()->user()->doctor_id !== $patient->doctor_id) {
-            abort(403, __('Unauthorized access to patient profile.'));
-        }
-
-        $this->patient = $patient->load([
-            'files' => fn($q) => $q->orderBy('created_at', 'desc'),
-            'appointments.doctor'
-        ]);
-        
-        $this->familyHistoryEdit = $this->patient->family_history;
-        $this->personalHistoryEdit = $this->patient->personal_history;
-    }
-
-    // Toggle Methods (to be called by wire:click if not using Alpine, but Blade uses Alpine for some)
-    // However, we keep placeholders or logic if needed.
 
     public function updatedComplaint($value)
     {
-        if (strlen($value) < 2) {
-            $this->complaintSuggestions = [];
-            return;
-        }
-        $this->complaintSuggestions = Visit::where('complaint', 'like', $value.'%')
-            ->distinct()
-            ->pluck('complaint')
-            ->take(5)
-            ->toArray();
+        $this->complaintSuggestions = $this->getMedicalSuggestions('complaint', $value, 'complaints');
     }
 
     public function updatedDiagnosis($value)
     {
-        if (strlen($value) < 2) {
-            $this->diagnosisSuggestions = [];
-            return;
-        }
-        $this->diagnosisSuggestions = Visit::where('diagnosis', 'like', $value.'%')
-            ->distinct()
-            ->pluck('diagnosis')
-            ->take(5)
-            ->toArray();
+        $this->diagnosisSuggestions = $this->getMedicalSuggestions('diagnosis', $value, 'diagnosis');
+    }
+
+    public function updatedInvestigation($value)
+    {
+        $this->investigationSuggestions = $this->getMedicalSuggestions('investigation', $value, 'investigations');
+    }
+
+    public function updatedTreatmentText($value)
+    {
+        $this->treatmentSuggestions = $this->getMedicalSuggestions('treatmentText', $value, 'treatments');
+    }
+
+    public function updatedFamilyHistoryEdit($value)
+    {
+        $this->familyHistorySuggestions = $this->getMedicalSuggestions('familyHistoryEdit', $value, 'history');
+    }
+
+    public function updatedPersonalHistoryEdit($value)
+    {
+        $this->personalHistorySuggestions = $this->getMedicalSuggestions('personalHistoryEdit', $value, 'history');
     }
 
     public function selectComplaint($value)
@@ -109,6 +90,16 @@ class PatientProfile extends Component
         $this->diagnosis = $value;
         $this->diagnosisSuggestions = [];
     }
+
+    public function selectSuggestionFor($field, $value)
+    {
+        $this->$field = $value;
+        $suggestionField = $field . 'Suggestions';
+        if ($field === 'treatmentText') $suggestionField = 'treatmentSuggestions';
+        
+        $this->$suggestionField = [];
+    }
+
 
     public function openVisitModal()
     {

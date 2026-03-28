@@ -44,33 +44,15 @@
             background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
             animation: sweep 5s infinite;
         }
-        /* header.h-52.bg-white\/95.backdrop-blur-3xl.border-b-4.border-gray-50.flex.items-center.px-12.md\:px-24.sticky.top-0.z-50.shadow-2xl.transition-all.duration-300.navbar-sweep.overflow-hidden {
-            padding: 10px 28px;
-        } */
+        [x-cloak] { display: none !important; }
         .p-10.pb-4.flex.flex-col.items-center.gap-4{
             margin: 20px;
         }
     </style>
     @stack('styles')
 </head>
-<body class="bg-[#f8fafc] text-slate-800 overflow-x-hidden selection:bg-purple-500 selection:text-white">
+<body class="bg-[#f8fafc] text-slate-800 overflow-x-hidden selection:bg-purple-500 selection:text-white" x-data="{ mobileMenuOpen: false }">
     <div class="flex h-screen overflow-hidden">
-        
-        <!-- Premium Sidebar -->
-        <aside class="w-72 bg-gradient-to-b from-[#8A2BE2] via-[#4A26AB] to-[#0C3E8A] text-white shrink-0 hidden md:flex flex-col shadow-2xl relative z-20">
-            <!-- Logo Section -->
-            <div class="p-10 pb-4 flex flex-col items-center gap-4">
-                <div class="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-[0_15px_45px_rgba(0,0,0,0.2)] border-2 border-white/20 group hover:scale-110 transition-all duration-500 overflow-hidden relative group/logo">
-                    <div class="absolute inset-0 bg-gradient-to-br from-white via-white to-purple-50 opacity-0 group-hover/logo:opacity-100 transition-opacity"></div>
-                    <img src="{{ asset('Clinova Logo.png') }}" alt="Clinova" class="w-16 h-16 object-contain relative z-10 drop-shadow-lg group-hover/logo:rotate-3 transition-transform">
-                </div>
-                <div class="text-center">
-                    <h1 class="text-3xl font-black tracking-tight text-white leading-none drop-shadow-md">Clinova</h1>
-                    <p class="text-[10px] text-purple-200 mt-1 uppercase tracking-[0.3em] opacity-80 font-black italic">{{ __('Smart Clinic') }}</p>
-                </div>
-            </div>
-            
-            <!-- Navigation Roles -->
             @php
                 $role = auth()->user()->role;
                 $links = [];
@@ -98,6 +80,72 @@
                     ];
                 }
             @endphp
+        <!-- Mobile Sidebar Backdrop -->
+        <div x-show="mobileMenuOpen" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="mobileMenuOpen = false"
+             class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[55] md:hidden"></div>
+
+        <!-- Mobile Sidebar -->
+        <aside x-show="mobileMenuOpen"
+               x-cloak
+               x-transition:enter="transition ease-out duration-300 transform"
+               x-transition:enter-start="-translate-x-full"
+               x-transition:enter-end="translate-x-0"
+               x-transition:leave="transition ease-in duration-200 transform"
+               x-transition:leave-start="translate-x-0"
+               x-transition:leave-end="-translate-x-full"
+               class="fixed inset-y-0 left-0 w-72 bg-gradient-to-b from-[#8A2BE2] via-[#4A26AB] to-[#0C3E8A] text-white z-[60] flex flex-col shadow-2xl md:hidden"
+               dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+            <!-- Reusing Sidebar Content -->
+            <div class="p-10 pb-4 flex flex-col items-center gap-4">
+                <div class="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center shadow-lg overflow-hidden relative">
+                    <img src="{{ asset('Clinova Logo.png') }}" alt="Clinova" class="w-14 h-14 object-contain">
+                </div>
+                <div class="text-center">
+                    <h1 class="text-2xl font-black text-white leading-none">Clinova</h1>
+                    <p class="text-[8px] text-purple-200 mt-1 uppercase tracking-widest font-black italic">{{ __('Smart Clinic') }}</p>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto">
+                <div class="px-4 text-xs font-bold text-purple-300 uppercase tracking-wider mb-4 opacity-70">{{ __('Main Menu') }}</div>
+                @foreach($links as $link)
+                    <a href="{{ route($link['route']) }}" 
+                       class="flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-medium
+                              {{ request()->routeIs($link['route']) ? 'bg-white text-[#4A26AB]' : 'text-purple-100 hover:bg-white/10' }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $link['icon'] }}"></path></svg>
+                        <span>{{ $link['name'] }}</span>
+                    </a>
+                @endforeach
+            </nav>
+
+            <div class="p-6 border-t border-white/10 glass-panel m-4 rounded-3xl mt-auto">
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="{{ route('lang.switch', 'ar') }}" class="flex items-center justify-center p-2 rounded-xl text-xs font-bold {{ app()->getLocale() === 'ar' ? 'bg-white text-[#4A26AB]' : 'bg-white/5 text-purple-100' }}">العربية</a>
+                    <a href="{{ route('lang.switch', 'en') }}" class="flex items-center justify-center p-2 rounded-xl text-xs font-bold {{ app()->getLocale() === 'en' ? 'bg-white text-[#4A26AB]' : 'bg-white/5 text-purple-100' }}">English</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Premium Desktop Sidebar -->
+        <aside class="w-72 bg-gradient-to-b from-[#8A2BE2] via-[#4A26AB] to-[#0C3E8A] text-white shrink-0 hidden md:flex flex-col shadow-2xl relative z-20">
+            <!-- Logo Section -->
+            <div class="p-10 pb-4 flex flex-col items-center gap-4">
+                <div class="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-[0_15px_45px_rgba(0,0,0,0.2)] border-2 border-white/20 group hover:scale-110 transition-all duration-500 overflow-hidden relative group/logo">
+                    <div class="absolute inset-0 bg-gradient-to-br from-white via-white to-purple-50 opacity-0 group-hover/logo:opacity-100 transition-opacity"></div>
+                    <img src="{{ asset('Clinova Logo.png') }}" alt="Clinova" class="w-16 h-16 object-contain relative z-10 drop-shadow-lg group-hover/logo:rotate-3 transition-transform">
+                </div>
+                <div class="text-center">
+                    <h1 class="text-3xl font-black tracking-tight text-white leading-none drop-shadow-md">Clinova</h1>
+                    <p class="text-[10px] text-purple-200 mt-1 uppercase tracking-[0.3em] opacity-80 font-black italic">{{ __('Smart Clinic') }}</p>
+                </div>
+            </div>
 
             <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto custom-scrollbar">
                 <div class="px-4 text-xs font-bold text-purple-300 uppercase tracking-wider mb-4 opacity-70">{{ __('Main Menu') }}</div>
@@ -168,7 +216,7 @@
                 <div class="flex items-center justify-between w-full h-full py-2 relative">
                     <!-- Left: Title & Mobile Toggle -->
                     <div class="flex items-center gap-4 w-1/4">
-                        <button class="md:hidden p-2 text-gray-500 hover:text-[#4A26AB] transition-colors rounded-xl hover:bg-purple-50">
+                        <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 text-gray-500 hover:text-[#4A26AB] transition-colors rounded-xl hover:bg-purple-50">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                         </button>
                         <div class="hidden lg:flex flex-col">
@@ -194,14 +242,14 @@
 
                     <!-- Right: Premium Status -->
                     <div class="flex items-center justify-end gap-6 w-1/4">
-                        <div class="flex items-center gap-3 px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100/50">
-                            <span class="relative flex h-3 w-3">
+                        <div class="flex items-center gap-3 px-4 py-2.5 bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] rounded-2xl border border-emerald-100/30 group/status">
+                            <div class="relative flex h-2.5 w-2.5">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                            </span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span>
+                            </div>
                             <div class="flex flex-col text-right">
-                                <span class="text-emerald-700 text-[9px] font-bold uppercase tracking-wider leading-none mb-0.5 opacity-70">{{ __('System Status') }}</span>
-                                <span class="text-emerald-800 text-xs font-black uppercase tracking-widest leading-none">{{ __('Online') }}</span>
+                                <span class="text-emerald-600 text-[10px] font-black uppercase tracking-wider leading-none mb-1 opacity-80">{{ __('System Status') }}</span>
+                                <span class="text-slate-900 text-xs font-black uppercase tracking-widest leading-none">{{ __('Online') }}</span>
                             </div>
                         </div>
                     </div>

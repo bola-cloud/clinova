@@ -61,10 +61,10 @@ img { display: block; max-width: 100%; }
   border: 1px solid #c4b5fd; letter-spacing: 0.08em; text-transform: uppercase;
 }
 .section-title {
-  font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; line-height: 1.15;
+  font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 900; line-height: 1.15;
   color: #111827; margin: 16px 0;
 }
-.section-sub { color: var(--text-muted); font-size: 1.1rem; line-height: 1.7; }
+.section-sub { color: var(--text-muted); font-size: 1rem; line-height: 1.6; }
 .text-center { text-align: center; }
 
 /* ===== NAVBAR ===== */
@@ -407,8 +407,13 @@ footer {
   .showcase-grid { grid-template-columns: 1fr; gap: 48px; }
   .testimonials-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
-  .nav-links { display: none; }
   .hero { min-height: auto; padding: 100px 0 60px; }
+  .nav-links { display: none !important; }
+  .nav-inner { height: 75px; }
+  .nav-logo img { height: 50px !important; }
+  .mobile-burger-btn { display: flex !important; }
+  .nav-cta .nav-login, .nav-cta .nav-btn { display: none !important; }
+  .hero-h1 { font-size: clamp(1.8rem, 8vw, 2.5rem); }
 }
 @media (max-width: 600px) {
   .features-grid { grid-template-columns: 1fr; }
@@ -417,9 +422,21 @@ footer {
   .hero-btns { flex-direction: column; }
   .hero-btn-main, .hero-btn-sec { width: 100%; padding: 14px 24px; }
 }
+/* Mobile Menu Overlay */
+[x-cloak] { display: none !important; }
+.mobile-menu {
+  position: fixed; inset: 0; z-index: 9999;
+  background-color: white !important; padding: 40px 24px;
+  display: flex; flex-direction: column; gap: 32px;
+}
+.mobile-menu-close {
+  position: absolute; top: 24px; right: 24px;
+  padding: 12px; background: #f3f4f6; border-radius: 12px;
+}
 </style>
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
-<body>
+<body x-data="{ mobileMenu: false }" class="antialiased">
 
 <!-- NAVBAR -->
 <nav id="navbar">
@@ -443,10 +460,47 @@ footer {
             <a href="{{ route('register') }}" class="btn-primary nav-btn">{{ __('Start Free Trial') }}</a>
           @endif
         @endauth
+        
+        <!-- Burger Button -->
+        <button x-on:click="mobileMenu = true" class="mobile-burger-btn" style="padding:10px; background:#f3f4f6; border-radius:12px; border:none; display:none; cursor:pointer; align-items:center; justify-content:center;">
+          <svg style="width:24px;height:24px;stroke:#4b5563;" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
       </div>
     </div>
   </div>
 </nav>
+
+<!-- Mobile Menu Overlay -->
+<div x-show="mobileMenu" 
+     x-cloak 
+     class="mobile-menu"
+     style="background-color: white !important; opacity: 1 !important;"
+     x-transition:enter="transition ease-out duration-300 transform"
+     x-transition:enter-start="translate-x-full"
+     x-transition:enter-end="translate-x-0"
+     x-transition:leave="transition ease-in duration-200 transform"
+     x-transition:leave-start="translate-x-0"
+     x-transition:leave-end="translate-x-full">
+  <button @click="mobileMenu = false" class="mobile-menu-close">
+    <svg style="width:24px;height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+  </button>
+  <div class="nav-logo" style="margin-bottom:32px;">
+    <img src="{{ asset('Clinova Logo 2.png') }}" alt="Clinova" style="height:60px;">
+  </div>
+  <div style="display:flex; flex-direction:column; gap:24px;">
+    <a href="#features" @click="mobileMenu = false" style="font-size:20px; font-weight:700; color:#111827;">{{ __('Features') }}</a>
+    <a href="#hiw" @click="mobileMenu = false" style="font-size:20px; font-weight:700; color:#111827;">{{ __('How It Works') }}</a>
+    <a href="#testimonials" @click="mobileMenu = false" style="font-size:20px; font-weight:700; color:#111827;">{{ __('Testimonials') }}</a>
+    <a href="#cta" @click="mobileMenu = false" style="font-size:20px; font-weight:700; color:#111827;">{{ __('Contact') }}</a>
+    <hr style="border:none; border-top:1px solid #f3f4f6; margin:10px 0;">
+    @auth
+      <a href="{{ url('/dashboard') }}" style="font-size:20px; font-weight:700; color:var(--purple);">{{ __('Dashboard') }}</a>
+    @else
+      <a href="{{ route('login') }}" style="font-size:20px; font-weight:700; color:#111827;">{{ __('Log in') }}</a>
+      <a href="{{ route('register') }}" class="btn-primary" style="padding:16px; margin-top:10px;">{{ __('Start Free Trial') }}</a>
+    @endauth
+  </div>
+</div>
 
 <!-- HERO -->
 <section class="hero">

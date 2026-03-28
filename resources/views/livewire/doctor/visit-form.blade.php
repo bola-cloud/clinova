@@ -15,24 +15,68 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
                     <label class="block font-bold text-gray-700">{{ __('Main Complaint') }} (Complaint)</label>
-                    <textarea wire:model="complaint" rows="3" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all"></textarea>
+                    <div class="relative">
+                        <textarea wire:model.live="complaint" rows="3" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all"></textarea>
+                        @if(!empty($complaint) && count($complaintSuggestions) > 0)
+                        <div class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto">
+                            @foreach($complaintSuggestions as $suggestion)
+                                <button type="button" wire:click="selectSuggestionFor('complaint', '{{ addslashes($suggestion) }}')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    {{ $suggestion }}
+                                </button>
+                            @endforeach
+                        </div>
+                        @endif
+                    </div>
                     @error('complaint') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
                 <div class="space-y-2">
                     <label class="block font-bold text-gray-700">{{ __('Diagnosis') }} (Diagnosis)</label>
-                    <textarea wire:model="diagnosis" rows="3" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all"></textarea>
+                    <div class="relative">
+                        <textarea wire:model.live="diagnosis" rows="3" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all"></textarea>
+                        @if(!empty($diagnosis) && count($diagnosisSuggestions) > 0)
+                        <div class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto">
+                            @foreach($diagnosisSuggestions as $suggestion)
+                                <button type="button" wire:click="selectSuggestionFor('diagnosis', '{{ addslashes($suggestion) }}')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    {{ $suggestion }}
+                                </button>
+                            @endforeach
+                        </div>
+                        @endif
+                    </div>
                     @error('diagnosis') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
             </div>
 
             <div class="space-y-2">
                 <label class="block font-bold text-gray-700">{{ __('Medical & Genetic History') }} (History)</label>
-                <textarea wire:model="history" rows="2" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all text-sm"></textarea>
+                <div class="relative">
+                    <textarea wire:model.live="history" rows="2" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all text-sm"></textarea>
+                    @if(!empty($history) && count($investigationSuggestions) > 0)
+                    <div class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto">
+                        @foreach($investigationSuggestions as $suggestion)
+                            <button type="button" wire:click="selectSuggestionFor('history', '{{ addslashes($suggestion) }}')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                {{ $suggestion }}
+                            </button>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
             </div>
 
             <div class="space-y-2">
                 <label class="block font-bold text-gray-700">{{ __('Treatment Plan & Prescription') }} (Treatment Plan)</label>
-                <textarea wire:model="treatment_text" rows="5" placeholder="{{ __('Write medications and dosages here...') }}" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all font-mono leading-relaxed"></textarea>
+                <div class="relative">
+                    <textarea wire:model.live="treatment_text" rows="5" placeholder="{{ __('Write medications and dosages here...') }}" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all font-mono leading-relaxed"></textarea>
+                    @if(!empty($treatment_text) && count($treatmentSuggestions) > 0)
+                    <div class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto">
+                        @foreach($treatmentSuggestions as $suggestion)
+                            <button type="button" wire:click="selectSuggestionFor('treatment_text', '{{ addslashes($suggestion) }}')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                {{ $suggestion }}
+                            </button>
+                        @endforeach
+                    </div>
+                    @endif
+                </div>
             </div>
 
             <div class="space-y-3">

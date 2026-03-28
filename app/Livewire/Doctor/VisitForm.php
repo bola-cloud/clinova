@@ -10,9 +10,41 @@ use Livewire\WithFileUploads;
 class VisitForm extends Component
 {
     use WithFileUploads;
+    use \App\Traits\HasMedicalSuggestions;
 
     public Appointment $appointment;
     public $complaint, $diagnosis, $history, $treatment_text, $treatment_file;
+
+    public function updatedComplaint($value)
+    {
+        $this->complaintSuggestions = $this->getMedicalSuggestions('complaint', $value, 'complaints');
+    }
+
+    public function updatedDiagnosis($value)
+    {
+        $this->diagnosisSuggestions = $this->getMedicalSuggestions('diagnosis', $value, 'diagnosis');
+    }
+
+    public function updatedHistory($value)
+    {
+        $this->investigationSuggestions = $this->getMedicalSuggestions('history', $value, 'investigations');
+    }
+
+    public function updatedTreatmentText($value)
+    {
+        $this->treatmentSuggestions = $this->getMedicalSuggestions('treatment_text', $value, 'treatments');
+    }
+
+    public function selectSuggestionFor($field, $value)
+    {
+        $this->$field = $value;
+        $suggestionField = $field . 'Suggestions';
+        if ($field === 'history') $suggestionField = 'investigationSuggestions';
+        if ($field === 'treatment_text') $suggestionField = 'treatmentSuggestions';
+        
+        $this->$suggestionField = [];
+    }
+
 
     public function mount(Appointment $appointment)
     {
