@@ -40,6 +40,8 @@ class PatientProfile extends Component
     public $treatmentFile = null;
     public $parentVisitId = null;
     public $visitType = 'checkup';
+    public $chronicIllnesses = [];
+    public $followUpNotes = '';
 
     // Booking properties
     public $showBookingModal = false;
@@ -125,7 +127,8 @@ class PatientProfile extends Component
 
     public function openVisitModal()
     {
-        $this->reset(['complaint', 'diagnosis', 'investigation', 'treatmentText', 'treatmentFile', 'parentVisitId', 'visitType']);
+        $this->reset(['complaint', 'diagnosis', 'investigation', 'treatmentText', 'treatmentFile', 'parentVisitId', 'visitType', 'followUpNotes']);
+        $this->chronicIllnesses = $this->patient->chronic_illnesses ?? [];
         $this->showVisitModal = true;
     }
 
@@ -139,6 +142,7 @@ class PatientProfile extends Component
         $this->openVisitModal();
         $this->parentVisitId = $visitId;
         $this->visitType = 'follow_up';
+        $this->chronicIllnesses = $this->patient->chronic_illnesses ?? [];
         
         $parentVisit = Visit::find($visitId);
         if ($parentVisit) {
@@ -155,6 +159,8 @@ class PatientProfile extends Component
             'investigation' => 'nullable|string|max:5000',
             'treatmentText' => 'nullable|string|max:5000',
             'treatmentFile' => 'nullable|file|max:10240',
+            'followUpNotes' => 'nullable|string|max:5000',
+            'chronicIllnesses' => 'nullable|array',
         ]);
 
         $treatmentFilePath = null;
@@ -171,9 +177,12 @@ class PatientProfile extends Component
             'history' => $this->investigation,
             'treatment_text' => $this->treatmentText,
             'treatment_file_path' => $treatmentFilePath,
+            'follow_up_notes' => $this->followUpNotes,
             'parent_visit_id' => $this->parentVisitId,
             'type' => $this->visitType,
         ]);
+
+        $this->patient->update(['chronic_illnesses' => $this->chronicIllnesses]);
 
         $this->closeVisitModal();
         session()->flash('visit_message', __('Visit recorded successfully.'));

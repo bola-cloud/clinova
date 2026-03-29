@@ -20,6 +20,7 @@ class Visit extends Model
         'history',
         'treatment_text',
         'treatment_file_path',
+        'follow_up_notes',
         'family_history',
         'parent_visit_id',
         'type',

@@ -14,6 +14,7 @@ class VisitForm extends Component
 
     public Appointment $appointment;
     public $complaint, $diagnosis, $history, $treatment_text, $treatment_file;
+    public $chronicIllnesses = [];
 
     public function updatedComplaint($value)
     {
@@ -53,6 +54,7 @@ class VisitForm extends Component
         $this->appointment = $appointment->load('patient');
         // Pre-fill history if patient has previous visits
         $this->history = $this->appointment->patient->family_history;
+        $this->chronicIllnesses = $this->appointment->patient->chronic_illnesses ?? [];
     }
 
     public function saveVisit()
@@ -79,6 +81,7 @@ class VisitForm extends Component
 
         // Mark appointment as seen
         $this->appointment->update(['status' => 'seen']);
+        $this->appointment->patient->update(['chronic_illnesses' => $this->chronicIllnesses]);
 
         session()->flash('success', 'تم تسجيل الزيارة بنجاح');
         return redirect()->route('doctor.dashboard');

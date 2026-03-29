@@ -47,8 +47,20 @@
                 </div>
             </div>
 
+            <div class="space-y-4">
+                <label class="block text-sm font-bold text-gray-700">{{ __('Chronic Illnesses') }}</label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    @foreach(['Diabetes melitus', 'Hypertension', 'Ischemic heart disease', 'Asthma', 'COPD', 'Thyroid disorders', 'Chronic kidney disease', 'Chronic liver disease', 'Osteoporosis', 'Dyslipidemia', 'Anemia'] as $illness)
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" wire:model="chronicIllnesses" value="{{ $illness }}" class="w-4 h-4 text-purple-600 bg-white border-gray-300 rounded focus:ring-purple-500">
+                        <span class="text-sm text-gray-700 group-hover:text-purple-700 transition-colors">{{ __($illness) }}</span>
+                    </label>
+                    @endforeach
+                </div>
+            </div>
+
             <div class="space-y-2">
-                <label class="block font-bold text-gray-700">{{ __('Medical & Genetic History') }} (History)</label>
+                <label class="block font-bold text-gray-700">{{ __('Investigations & Tests') }}</label>
                 <div class="relative">
                     <textarea wire:model.live="history" rows="2" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all text-sm"></textarea>
                     @if(!empty($history) && count($investigationSuggestions) > 0)

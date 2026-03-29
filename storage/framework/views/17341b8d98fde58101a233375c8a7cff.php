@@ -360,6 +360,18 @@ endif;
 unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         </div>
 
+                        <div class="md:col-span-2 space-y-4 pt-4 border-t border-dashed border-gray-200">
+                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest"><?php echo e(__('Chronic Illnesses')); ?></label>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50/50 p-5 rounded-2xl border border-gray-100">
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ['Diabetes melitus', 'Hypertension', 'Ischemic heart disease', 'Asthma', 'COPD', 'Thyroid disorders', 'Chronic kidney disease', 'Chronic liver disease', 'Osteoporosis', 'Dyslipidemia', 'Anemia']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $illness): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="checkbox" wire:model="chronicIllnesses" value="<?php echo e($illness); ?>" class="w-5 h-5 text-emerald-600 bg-white border-gray-300 rounded-xl focus:ring-emerald-500">
+                                    <span class="text-sm font-bold text-gray-600 group-hover:text-emerald-700 transition-colors"><?php echo e(__($illness)); ?></span>
+                                </label>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            </div>
+                        </div>
+
                         <div class="space-y-2">
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest"><?php echo e(__('Investigations & Tests')); ?></label>
                             <div class="relative">
@@ -395,6 +407,14 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             </div>
                         </div>
+
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($visitType === 'follow_up'): ?>
+                        <div class="md:col-span-2 space-y-2 pt-4 border-t border-dashed border-gray-200">
+                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest"><?php echo e(__('Follow Up Notes')); ?></label>
+                            <textarea wire:model.live="followUpNotes" rows="3" placeholder="<?php echo e(__('Notes regarding patient progress...')); ?>"
+                                      class="w-full bg-indigo-50/50 border-indigo-100 rounded-2xl py-4 px-5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"></textarea>
+                        </div>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                         <div class="md:col-span-2 space-y-2">
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest"><?php echo e(__('Attach Treatment File')); ?></label>

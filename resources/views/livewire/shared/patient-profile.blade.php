@@ -321,6 +321,18 @@
                             @error('diagnosis') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
                         </div>
 
+                        <div class="md:col-span-2 space-y-4 pt-4 border-t border-dashed border-gray-200">
+                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Chronic Illnesses') }}</label>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50/50 p-5 rounded-2xl border border-gray-100">
+                                @foreach(['Diabetes melitus', 'Hypertension', 'Ischemic heart disease', 'Asthma', 'COPD', 'Thyroid disorders', 'Chronic kidney disease', 'Chronic liver disease', 'Osteoporosis', 'Dyslipidemia', 'Anemia'] as $illness)
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="checkbox" wire:model="chronicIllnesses" value="{{ $illness }}" class="w-5 h-5 text-emerald-600 bg-white border-gray-300 rounded-xl focus:ring-emerald-500">
+                                    <span class="text-sm font-bold text-gray-600 group-hover:text-emerald-700 transition-colors">{{ __($illness) }}</span>
+                                </label>
+                                @endforeach
+                            </div>
+                        </div>
+
                         <div class="space-y-2">
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Investigations & Tests') }}</label>
                             <div class="relative">
@@ -354,6 +366,14 @@
                                 @endif
                             </div>
                         </div>
+
+                        @if($visitType === 'follow_up')
+                        <div class="md:col-span-2 space-y-2 pt-4 border-t border-dashed border-gray-200">
+                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Follow Up Notes') }}</label>
+                            <textarea wire:model.live="followUpNotes" rows="3" placeholder="{{ __('Notes regarding patient progress...') }}"
+                                      class="w-full bg-indigo-50/50 border-indigo-100 rounded-2xl py-4 px-5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"></textarea>
+                        </div>
+                        @endif
 
                         <div class="md:col-span-2 space-y-2">
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Attach Treatment File') }}</label>

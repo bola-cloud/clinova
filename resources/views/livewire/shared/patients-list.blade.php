@@ -22,6 +22,7 @@ new class extends Component
     public $filterDateTo = '';
     public $filterHasFiles = '';
     public $filterMinVisits = '';
+    public $filterDiagnosis = '';
     
     // New patient fields
     public $name, $phone, $age, $weight, $address, $gender;
@@ -133,6 +134,11 @@ new class extends Component
             ->when($this->filterHasFiles === 'yes', fn($q) => $q->has('files'))
             ->when($this->filterHasFiles === 'no', fn($q) => $q->doesntHave('files'))
             ->when($this->filterMinVisits !== '', fn($q) => $q->having('visits_count', '>=', (int)$this->filterMinVisits))
+            ->when($this->filterDiagnosis !== '', function($q) {
+                $q->whereHas('visits', function($vq) {
+                    $vq->where('diagnosis', 'like', '%'.$this->filterDiagnosis.'%');
+                });
+            })
             ->orderBy('name', 'asc')
             ->get();
 
@@ -172,6 +178,7 @@ new class extends Component
     public function updatingFilterDateTo() { $this->resetPage(); }
     public function updatingFilterHasFiles() { $this->resetPage(); }
     public function updatingFilterMinVisits() { $this->resetPage(); }
+    public function updatingFilterDiagnosis() { $this->resetPage(); }
 
     public function uploadFile()
     {
@@ -234,6 +241,11 @@ new class extends Component
             ->when($this->filterHasFiles === 'yes', fn($q) => $q->has('files'))
             ->when($this->filterHasFiles === 'no', fn($q) => $q->doesntHave('files'))
             ->when($this->filterMinVisits !== '', fn($q) => $q->having('visits_count', '>=', (int)$this->filterMinVisits))
+            ->when($this->filterDiagnosis !== '', function($q) {
+                $q->whereHas('visits', function($vq) {
+                    $vq->where('diagnosis', 'like', '%'.$this->filterDiagnosis.'%');
+                });
+            })
             ->orderBy('name', 'asc')
             ->paginate(15);
 
@@ -327,14 +339,18 @@ new class extends Component
     <!-- Advanced Filters Panel -->
     @if($showAdvancedFilters)
     <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm animate-fade-in-down">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
             <div>
-                <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">{{ __('Registration Date From') }}</label>
+                <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">{{ __('Date From') }}</label>
                 <input type="date" wire:model.live="filterDateFrom" class="w-full bg-gray-50 border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-2 focus:ring-purple-500 py-2.5 px-4">
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">{{ __('Registration Date To') }}</label>
+                <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">{{ __('Date To') }}</label>
                 <input type="date" wire:model.live="filterDateTo" class="w-full bg-gray-50 border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-2 focus:ring-purple-500 py-2.5 px-4">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">{{ __('Diagnosis') }}</label>
+                <input type="text" wire:model.live.debounce.500ms="filterDiagnosis" placeholder="{{ __('e.g., Diabetes') }}" class="w-full bg-gray-50 border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-2 focus:ring-purple-500 py-2.5 px-4">
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">{{ __('Medical Files') }}</label>
@@ -345,7 +361,7 @@ new class extends Component
                 </select>
             </div>
             <div>
-                <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">{{ __('Minimum Visits') }}</label>
+                <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">{{ __('Min. Visits') }}</label>
                 <input type="number" min="0" wire:model.live.debounce.500ms="filterMinVisits" placeholder="{{ __('e.g., 3') }}" class="w-full bg-gray-50 border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-2 focus:ring-purple-500 py-2.5 px-4">
             </div>
         </div>

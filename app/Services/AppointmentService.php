@@ -74,8 +74,6 @@ class AppointmentService extends BaseService
     {
         $today = now()->startOfDay();
         $yesterday = now()->subDay()->startOfDay();
-        $weekStart = now()->startOfWeek();
-        $weekEnd = now()->endOfWeek();
 
         // Yesterday's Performance
         $yesterdayApps = Appointment::where('doctor_id', $doctorId)
@@ -97,19 +95,19 @@ class AppointmentService extends BaseService
             ->where('status', '!=', 'seen')
             ->count();
 
-        // Weekly Appointments
-        $weeklyTotal = Appointment::where('doctor_id', $doctorId)
+        // Today's Appointments
+        $todayTotal = Appointment::where('doctor_id', $doctorId)
             ->whereHas('patient', function ($query) use ($doctorId) {
                 $query->where('doctor_id', $doctorId);
             })
-            ->whereBetween('scheduled_at', [$weekStart, $weekEnd])
+            ->whereDate('scheduled_at', $today)
             ->count();
 
         return [
             'yesterdayPerformance' => $performance,
             'yesterdayCompleted' => $yesterdaySeen,
             'remainingToday' => $remainingToday,
-            'weeklyTotal' => $weeklyTotal,
+            'todayTotal' => $todayTotal,
         ];
     }
 
