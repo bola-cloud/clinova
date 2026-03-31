@@ -208,10 +208,25 @@ class PatientProfile extends Component
     {
         if (!auth()->user()->isDoctor() && !auth()->user()->isSecretary()) return;
 
+        /** @var \App\Models\User $doctor */
+        $doctor = auth()->user()->isDoctor() ? auth()->user() : auth()->user()->assignedDoctor;
+
         $this->validate([
             'newFile' => 'required|file|max:20480',
             'fileType' => 'required|in:lab,investigation,other',
         ]);
+
+        $fileSize = $this->newFile->getSize();
+        
+        // Check storage limit
+        if ($doctor && $doctor->max_storage_gb > 0) {
+            $maxBytes = $doctor->max_storage_gb * 1024 * 1024 * 1024;
+            if (($doctor->used_storage_bytes + $fileSize) > $maxBytes) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'newFile' => [__('Storage limit reached for this clinic. Please contact administration.')]
+                ]);
+            }
+        }
 
         $path = $this->newFile->store('patient-files', 'public');
 
@@ -222,9 +237,39 @@ class PatientProfile extends Component
             'uploaded_by' => auth()->id(),
         ]);
 
+        // Update used_storage_bytes
+        if ($doctor) {
+            $doctor->increment('used_storage_bytes', $fileSize);
+        }
+
         $this->reset(['newFile', 'fileType']);
         $this->patient->load('files');
         session()->flash('file_message', __('Medical file uploaded successfully.'));
+    }
+
+    public function deleteFile($fileId)
+    {
+        if (!auth()->user()->isDoctor() && !auth()->user()->isSecretary()) return;
+
+        $file = PatientFile::findOrFail($fileId);
+        $fileSize = 0;
+
+        if (Storage::disk('public')->exists($file->file_path)) {
+            $fileSize = Storage::disk('public')->size($file->file_path);
+            Storage::disk('public')->delete($file->file_path);
+        }
+
+        $file->delete();
+
+        /** @var \App\Models\User $doctor */
+        $doctor = auth()->user()->isDoctor() ? auth()->user() : auth()->user()->assignedDoctor;
+        
+        if ($doctor && $fileSize > 0) {
+            $doctor->decrement('used_storage_bytes', $fileSize);
+        }
+
+        $this->patient->load('files');
+        session()->flash('file_message', __('File deleted successfully.'));
     }
 
     public function openBooking()

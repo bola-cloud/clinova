@@ -29,6 +29,9 @@ class User extends Authenticatable
         'subscription_expires_at',
         'secretary_name',
         'secretary_phone',
+        'max_patients',
+        'max_storage_gb',
+        'used_storage_bytes',
     ];
 
     /**
@@ -53,6 +56,9 @@ class User extends Authenticatable
             'password' => 'hashed',
             'subscription_active' => 'boolean',
             'subscription_expires_at' => 'datetime',
+            'max_patients' => 'integer',
+            'max_storage_gb' => 'integer',
+            'used_storage_bytes' => 'integer',
         ];
     }
 

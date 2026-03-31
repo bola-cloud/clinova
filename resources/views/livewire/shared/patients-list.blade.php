@@ -182,10 +182,29 @@ new class extends Component
 
     public function uploadFile()
     {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = auth()->user();
+        if (!$currentUser->isDoctor() && !$currentUser->isSecretary()) return;
+
+        /** @var \App\Models\User $doctor */
+        $doctor = $currentUser->isDoctor() ? $currentUser : $currentUser->assignedDoctor;
+
         $this->validate([
             'newFile' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
             'fileType' => 'required|in:investigation,lab,other',
         ]);
+
+        $fileSize = $this->newFile->getSize();
+
+        // Check storage limit
+        if ($doctor && $doctor->max_storage_gb > 0) {
+            $maxBytes = $doctor->max_storage_gb * 1024 * 1024 * 1024;
+            if (($doctor->used_storage_bytes + $fileSize) > $maxBytes) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'newFile' => [__('Storage limit reached for this clinic. Please contact administration.')]
+                ]);
+            }
+        }
 
         $patient = \App\Models\Patient::findOrFail($this->uploadPatientId);
         $this->authorize('update', $patient);
@@ -199,6 +218,11 @@ new class extends Component
             'file_type' => $this->fileType,
             'uploaded_by' => auth()->id(),
         ]);
+
+        // Update used_storage_bytes
+        if ($doctor) {
+            $doctor->increment('used_storage_bytes', $fileSize);
+        }
 
         $this->showUploadModal = false;
         $this->uploadPatientId = null;

@@ -14,6 +14,16 @@ class PatientService extends BaseService
 
     public function createPatient(array $data): Patient
     {
+        $doctorId = $data['doctor_id'] ?? null;
+        if ($doctorId) {
+            $doctor = \App\Models\User::find($doctorId);
+            if ($doctor && $doctor->max_patients > 0 && $doctor->patients()->count() >= $doctor->max_patients) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'name' => [__('The patient limit for this clinic has been reached. Please contact administration.')]
+                ]);
+            }
+        }
+
         return Patient::create($data);
     }
 

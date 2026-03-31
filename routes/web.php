@@ -22,6 +22,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['can:admin'])->group(function () {
         Route::view('admin', 'dashboard.admin')->name('admin.dashboard');
         Route::get('admin/statistics', IncomeStatistics::class)->name('admin.statistics');
+        Route::view('admin/patients', 'dashboard.admin-patients')->name('admin.patients');
+        Route::view('admin/settings', 'dashboard.admin-settings')->name('admin.settings');
     });
 
     // Doctor Dashboard (with subscription guard)
@@ -37,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Secretary Dashboard
     Route::middleware(['can:secretary'])->group(function () {
         Route::view('secretary', 'dashboard.secretary')->name('secretary.dashboard');
+        Route::get('secretary/settings', \App\Livewire\Secretary\SecretarySettings::class)->name('secretary.settings');
     });
 
     Route::view('subscription-inactive', 'subscription.inactive')->name('subscription.inactive');

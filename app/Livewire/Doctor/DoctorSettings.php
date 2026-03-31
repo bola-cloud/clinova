@@ -28,6 +28,11 @@ class DoctorSettings extends Component
     #[Rule('nullable|string|max:20')]
     public $secretary_phone;
 
+    // Security Properties
+    public $current_password = '';
+    public $password = '';
+    public $password_confirmation = '';
+
     public function mount()
     {
         $user = auth()->user();
@@ -40,7 +45,12 @@ class DoctorSettings extends Component
 
     public function saveSettings()
     {
-        $this->validate();
+        $this->validate([
+            'consultation_fee' => 'nullable|numeric|min:0|max:999999',
+            'followup_fee' => 'nullable|numeric|min:0|max:999999',
+            'secretary_name' => 'nullable|string|max:255',
+            'secretary_phone' => 'nullable|string|max:20',
+        ]);
 
         $user = auth()->user();
         
@@ -58,6 +68,21 @@ class DoctorSettings extends Component
         $user->save();
 
         session()->flash('success', __('Settings saved successfully'));
+    }
+
+    public function updatePassword()
+    {
+        $this->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+        ]);
+
+        auth()->user()->update([
+            'password' => \Illuminate\Support\Facades\Hash::make($this->password),
+        ]);
+
+        $this->reset(['current_password', 'password', 'password_confirmation']);
+        session()->flash('success', __('Security settings updated successfully.'));
     }
 
     public function render()
