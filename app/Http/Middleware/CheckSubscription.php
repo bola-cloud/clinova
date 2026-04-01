@@ -15,9 +15,25 @@ class CheckSubscription
     {
         $user = $request->user();
 
-        if ($user && $user->isDoctor()) {
-            if (!$user->subscription_active || ($user->subscription_expires_at && $user->subscription_expires_at->isPast())) {
-                return redirect()->route('subscription.inactive');
+        if ($user) {
+            // Admin is always allowed
+            if ($user->isAdmin()) {
+                return $next($request);
+            }
+
+            // Doctor check
+            if ($user->isDoctor()) {
+                if (!$user->subscription_active || ($user->subscription_expires_at && $user->subscription_expires_at->isPast())) {
+                    return redirect()->route('subscription.inactive');
+                }
+            }
+
+            // Secretary check (Check their doctor's subscription)
+            if ($user->isSecretary()) {
+                $doctor = $user->assignedDoctor;
+                if (!$doctor || !$doctor->subscription_active || ($doctor->subscription_expires_at && $doctor->subscription_expires_at->isPast())) {
+                    return redirect()->route('subscription.inactive');
+                }
             }
         }
 

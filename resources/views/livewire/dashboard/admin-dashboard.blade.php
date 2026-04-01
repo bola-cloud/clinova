@@ -25,6 +25,12 @@ new class extends Component
     public $new_max_patients = 0;
     public $new_max_storage_gb = 0;
 
+    // Subscription management
+    public $editingSubscriptionId = null;
+    public $editPlan = 'trial';
+    public $editPrice = 0;
+    public $editIsPaid = false;
+
     public function with()
     {
         $baseQuery = User::where('role', 'doctor')
@@ -94,10 +100,49 @@ new class extends Component
             'subscription_active' => true,
             'max_patients' => $this->new_max_patients ?: 0,
             'max_storage_gb' => $this->new_max_storage_gb ?: 0,
+            'subscription_plan' => 'trial',
+            'subscription_price' => 0,
+            'is_paid' => false,
+            'subscription_start_at' => now(),
+            'subscription_expires_at' => now()->addDays(14),
         ]);
 
         $this->reset(['showCreateModal', 'new_name', 'new_email', 'new_password', 'new_max_patients', 'new_max_storage_gb']);
         session()->flash('success', __('Doctor account created successfully.'));
+    }
+
+    public function editSubscription($doctorId)
+    {
+        $doctor = User::findOrFail($doctorId);
+        $this->editingSubscriptionId = $doctorId;
+        $this->editPlan = $doctor->subscription_plan ?: 'trial';
+        $this->editPrice = $doctor->subscription_price;
+        $this->editIsPaid = $doctor->is_paid;
+    }
+
+    public function saveSubscription()
+    {
+        $doctor = User::findOrFail($this->editingSubscriptionId);
+        
+        $expiresAt = $doctor->subscription_expires_at;
+        if ($this->editPlan === 'monthly') {
+            $expiresAt = now()->addMonth();
+        } elseif ($this->editPlan === 'yearly') {
+            $expiresAt = now()->addYear();
+        } elseif ($this->editPlan === 'trial') {
+            $expiresAt = now()->addDays(14);
+        }
+
+        $doctor->update([
+            'subscription_plan' => $this->editPlan,
+            'subscription_price' => $this->editPrice,
+            'is_paid' => $this->editIsPaid,
+            'subscription_expires_at' => $expiresAt,
+            'subscription_active' => true,
+        ]);
+
+        $this->editingSubscriptionId = null;
+        session()->flash('success', __('Subscription details updated.'));
     }
 };
 ?>
@@ -208,17 +253,27 @@ new class extends Component
                             </div>
                         </td>
                         <td class="px-6 py-5 text-center">
-                            @if($doctor->subscription_active)
-                                <div class="inline-flex flex-col items-center">
-                                    <span class="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black rounded-full uppercase tracking-widest shadow-sm">نشط</span>
-                                    <span class="text-[9px] text-gray-400 mt-1 font-bold">{{ $doctor->subscription_expires_at?->format('Y-m-d') }}</span>
-                                </div>
-                            @else
-                                <span class="px-3 py-1 bg-rose-100 text-rose-700 text-[10px] font-black rounded-full uppercase tracking-widest shadow-sm">ملغي</span>
-                            @endif
+                            <div class="flex flex-col items-center gap-1">
+                                @if($doctor->subscription_active)
+                                    <span class="px-3 py-1 {{ $doctor->subscription_plan === 'trial' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700' }} text-[10px] font-black rounded-full uppercase tracking-widest shadow-sm">
+                                        {{ __($doctor->subscription_plan === 'trial' ? 'Trial' : ($doctor->subscription_plan === 'monthly' ? 'Monthly' : 'Yearly')) }}
+                                    </span>
+                                    <div class="flex flex-col items-center">
+                                        <span class="text-[10px] font-black {{ $doctor->is_paid ? 'text-emerald-600' : 'text-rose-600' }}">
+                                            {{ number_format($doctor->subscription_price, 2) }} EGP ({{ $doctor->is_paid ? __('Collected') : __('Not Collected') }})
+                                        </span>
+                                        <span class="text-[9px] text-gray-400 font-bold">{{ $doctor->subscription_expires_at?->format('Y-m-d') }}</span>
+                                    </div>
+                                @else
+                                    <span class="px-3 py-1 bg-rose-100 text-rose-700 text-[10px] font-black rounded-full uppercase tracking-widest shadow-sm">{{ __('Inactive') }}</span>
+                                @endif
+                            </div>
                         </td>
                         <td class="px-6 py-5">
                             <div class="flex items-center justify-center gap-2">
+                                <button wire:click="editSubscription({{ $doctor->id }})" class="p-2.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl transition-all" title="{{ __('Manage Subscription') }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                </button>
                                 <button wire:click="editQuotas({{ $doctor->id }})" class="p-2.5 bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white rounded-xl transition-all" title="{{ __('Edit Quotas') }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
                                 </button>
@@ -266,8 +321,8 @@ new class extends Component
                         <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Maximum Patients') }} (0 = {{ __('Infinite') }})</label>
                         <div class="relative">
                             <input type="number" wire:model="editMaxPatients" 
-                                   class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all">
-                            <span class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">{{ __('Slot') }}</span>
+                                   class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all text-center">
+                            <span class="absolute {{ app()->getLocale() === 'ar' ? 'left-5 text-left' : 'right-5 text-right' }} top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">{{ __('Slot') }}</span>
                         </div>
                     </div>
                     
@@ -275,9 +330,10 @@ new class extends Component
                         <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Maximum Storage') }} (GB, 0 = {{ __('Infinite') }})</label>
                         <div class="relative">
                             <input type="number" step="0.1" wire:model="editMaxStorageGb" 
-                                   class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all">
-                            <span class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">GB</span>
+                                   class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-center">
+                            <span class="absolute {{ app()->getLocale() === 'ar' ? 'left-5 text-left' : 'right-5 text-right' }} top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">GB</span>
                         </div>
+
 
                         <p class="text-[10px] text-gray-400 font-medium italic mt-1">{{ __('Used to limit lab results, X-rays, and treatment file uploads.') }}</p>
                     </div>
@@ -360,6 +416,49 @@ new class extends Component
                         </button>
                         <button type="submit" class="flex-[2] py-4 bg-slate-900 text-white rounded-2xl font-black text-sm shadow-xl hover:bg-black hover:-translate-y-1 transition-all">
                             {{ __('Create Doctor Account') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @if($editingSubscriptionId)
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden border border-white animate-zoom-in">
+            <div class="p-10">
+                <div class="flex items-center justify-between mb-8">
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ __('Manage Subscription') }}</h3>
+                    <button wire:click="$set('editingSubscriptionId', null)" class="p-2 text-gray-400 hover:text-rose-500 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                
+                <form wire:submit="saveSubscription" class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Plan') }}</label>
+                        <select wire:model="editPlan" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                            <option value="trial">{{ __('Free Trial') }}</option>
+                            <option value="monthly">{{ __('Standard Monthly') }}</option>
+                            <option value="yearly">{{ __('Standard Yearly') }}</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Payment Price') }} (EGP)</label>
+                        <input type="number" step="0.01" wire:model="editPrice" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all">
+                    </div>
+
+                    <div class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-gray-100">
+                        <input type="checkbox" wire:model="editIsPaid" class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300">
+                        <span class="text-sm font-black text-slate-900">{{ __('Payment Collected') }}</span>
+                    </div>
+
+                    <div class="pt-6 flex gap-3">
+                        <button type="button" wire:click="$set('editingSubscriptionId', null)" class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-sm hover:bg-slate-200 transition-all">
+                            {{ __('Cancel') }}
+                        </button>
+                        <button type="submit" class="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all">
+                            {{ __('Save Configuration') }}
                         </button>
                     </div>
                 </form>

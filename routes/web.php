@@ -27,36 +27,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Doctor Dashboard (with subscription guard)
-    Route::middleware(['can:doctor'])->group(function () {
-        Route::view('doctor', 'dashboard.doctor')
-            ->middleware('subscription.active')
-            ->name('doctor.dashboard');
-        
+    Route::middleware(['can:doctor', 'subscription.active'])->group(function () {
+        Route::view('doctor', 'dashboard.doctor')->name('doctor.dashboard');
         Route::get('doctor/settings', DoctorSettings::class)->name('doctor.settings');
         Route::get('doctor/statistics', IncomeStatistics::class)->name('doctor.statistics');
     });
 
     // Secretary Dashboard
-    Route::middleware(['can:secretary'])->group(function () {
+    Route::middleware(['can:secretary', 'subscription.active'])->group(function () {
         Route::view('secretary', 'dashboard.secretary')->name('secretary.dashboard');
         Route::get('secretary/settings', \App\Livewire\Secretary\SecretarySettings::class)->name('secretary.settings');
     });
 
     Route::view('subscription-inactive', 'subscription.inactive')->name('subscription.inactive');
 
-    // Shared: Management Modules
-    Volt::route('patients', 'shared.patients-list')->name('patients.index');
-    Volt::route('appointments', 'shared.appointments-list')->name('appointments.index');
+    // Shared: Management Modules & Patient Profile (with subscription guard)
+    Route::middleware(['subscription.active'])->group(function () {
+        Volt::route('patients', 'shared.patients-list')->name('patients.index');
+        Volt::route('appointments', 'shared.appointments-list')->name('appointments.index');
 
-    // Shared: Patient Profile
-    Route::get('patients/{patient}', \App\Livewire\Shared\PatientProfile::class)
-        ->middleware(['can:doctor,secretary'])
-        ->name('patients.show');
+        Route::get('patients/{patient}', \App\Livewire\Shared\PatientProfile::class)
+            ->middleware(['can:doctor,secretary'])
+            ->name('patients.show');
 
-    // Doctor Only: Visit Form
-    Route::get('appointments/{appointment}/visit', \App\Livewire\Doctor\VisitForm::class)
-        ->middleware(['can:doctor', 'subscription.active'])
-        ->name('appointments.visit');
+        // Doctor Only: Visit Form
+        Route::get('appointments/{appointment}/visit', \App\Livewire\Doctor\VisitForm::class)
+            ->middleware(['can:doctor'])
+            ->name('appointments.visit');
+    });
 
     Route::view('profile', 'profile')->name('profile');
 

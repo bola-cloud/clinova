@@ -32,6 +32,10 @@ class User extends Authenticatable
         'max_patients',
         'max_storage_gb',
         'used_storage_bytes',
+        'subscription_plan',
+        'subscription_price',
+        'is_paid',
+        'subscription_start_at',
     ];
 
     /**
@@ -59,6 +63,9 @@ class User extends Authenticatable
             'max_patients' => 'integer',
             'max_storage_gb' => 'float',
             'used_storage_bytes' => 'integer',
+            'is_paid' => 'boolean',
+            'subscription_start_at' => 'datetime',
+            'subscription_price' => 'decimal:2',
         ];
     }
 
