@@ -57,7 +57,7 @@ class User extends Authenticatable
             'subscription_active' => 'boolean',
             'subscription_expires_at' => 'datetime',
             'max_patients' => 'integer',
-            'max_storage_gb' => 'integer',
+            'max_storage_gb' => 'float',
             'used_storage_bytes' => 'integer',
         ];
     }

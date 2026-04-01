@@ -4,6 +4,7 @@ use Livewire\Volt\Component;
 use Livewire\WithPagination;
 use App\Models\User;
 use App\Models\Patient;
+use Illuminate\Support\Facades\Hash;
 
 new class extends Component
 {
@@ -15,6 +16,14 @@ new class extends Component
     public $editingDoctorId = null;
     public $editMaxPatients = 0;
     public $editMaxStorageGb = 0;
+
+    // Doctor creation
+    public $showCreateModal = false;
+    public $new_name = '';
+    public $new_email = '';
+    public $new_password = '';
+    public $new_max_patients = 0;
+    public $new_max_storage_gb = 0;
 
     public function with()
     {
@@ -66,6 +75,30 @@ new class extends Component
         $this->editingDoctorId = null;
         $this->reset(['editMaxPatients', 'editMaxStorageGb']);
     }
+
+    public function createDoctor()
+    {
+        $this->validate([
+            'new_name' => 'required|min:3',
+            'new_email' => 'required|email|unique:users,email',
+            'new_password' => 'required|min:6',
+            'new_max_patients' => 'nullable|numeric|min:0',
+            'new_max_storage_gb' => 'nullable|numeric|min:0',
+        ]);
+
+        User::create([
+            'name' => $this->new_name,
+            'email' => $this->new_email,
+            'password' => Hash::make($this->new_password),
+            'role' => 'doctor',
+            'subscription_active' => true,
+            'max_patients' => $this->new_max_patients ?: 0,
+            'max_storage_gb' => $this->new_max_storage_gb ?: 0,
+        ]);
+
+        $this->reset(['showCreateModal', 'new_name', 'new_email', 'new_password', 'new_max_patients', 'new_max_storage_gb']);
+        session()->flash('success', __('Doctor account created successfully.'));
+    }
 };
 ?>
 
@@ -114,12 +147,16 @@ new class extends Component
     <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <h3 class="font-black text-xl text-slate-900 tracking-tight">{{ __('Clinic & Doctor Management') }}</h3>
-            <div class="w-full md:w-80">
-                <div class="relative">
+            <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                <div class="relative w-full md:w-80">
                     <input wire:model.live="search" type="text" placeholder="{{ __('Search doctors...') }}" 
                            class="w-full pl-10 pr-4 py-3 bg-gray-50 border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500 text-sm italic">
                     <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
+                <button wire:click="$set('showCreateModal', true)" class="w-full md:w-auto px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg shadow-slate-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+                    {{ __('Add New Doctor') }}
+                </button>
             </div>
         </div>
         <div class="overflow-x-auto">
@@ -226,7 +263,7 @@ new class extends Component
                 
                 <form wire:submit="saveQuotas" class="space-y-6">
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Maximum Patients') }} (0 = {{ __('Unlimited') }})</label>
+                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Maximum Patients') }} (0 = {{ __('Infinite') }})</label>
                         <div class="relative">
                             <input type="number" wire:model="editMaxPatients" 
                                    class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all">
@@ -235,12 +272,13 @@ new class extends Component
                     </div>
                     
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Maximum Storage') }} (GB)</label>
+                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Maximum Storage') }} (GB, 0 = {{ __('Infinite') }})</label>
                         <div class="relative">
-                            <input type="number" wire:model="editMaxStorageGb" 
+                            <input type="number" step="0.1" wire:model="editMaxStorageGb" 
                                    class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all">
                             <span class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">GB</span>
                         </div>
+
                         <p class="text-[10px] text-gray-400 font-medium italic mt-1">{{ __('Used to limit lab results, X-rays, and treatment file uploads.') }}</p>
                     </div>
 
@@ -250,6 +288,78 @@ new class extends Component
                         </button>
                         <button type="submit" class="flex-[2] py-4 bg-purple-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-purple-200 hover:bg-purple-700 hover:-translate-y-1 transition-all">
                             {{ __('Save Configuration') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Create Doctor Modal -->
+    @if($showCreateModal)
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden border border-white animate-zoom-in">
+            <div class="p-10">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ __('Add New Doctor') }}</h3>
+                        <p class="text-xs text-gray-400 font-medium italic">{{ __('Create a new doctor account with custom quotas.') }}</p>
+                    </div>
+                    <button wire:click="$set('showCreateModal', false)" class="p-2 text-gray-400 hover:text-rose-500 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                
+                <form wire:submit="createDoctor" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h4 class="text-[10px] font-black text-purple-600 uppercase tracking-[0.2em]">{{ __('Doctor Account Details') }}</h4>
+                            
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('Name') }}</label>
+                                <input type="text" wire:model="new_name" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500">
+                                @error('new_name') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('Email') }}</label>
+                                <input type="email" wire:model="new_email" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500">
+                                @error('new_email') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('Password') }}</label>
+                                <input type="password" wire:model="new_password" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500">
+                                @error('new_password') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <h4 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">{{ __('Initial Quotas') }}</h4>
+                            
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('Maximum Patients') }} (0 = {{ __('Infinite') }})</label>
+                                <input type="number" wire:model="new_max_patients" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-emerald-500">
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('Maximum Storage') }} (GB, 0 = {{ __('Infinite') }})</label>
+                                <input type="number" step="0.1" wire:model="new_max_storage_gb" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            
+                            <p class="text-[10px] text-gray-400 font-medium italic bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                                {{ __('Zero or empty values will grant the doctor unlimited usage capacity for that quota.') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 flex gap-3">
+                        <button type="button" wire:click="$set('showCreateModal', false)" class="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black text-sm hover:bg-slate-200 transition-all">
+                            {{ __('Cancel') }}
+                        </button>
+                        <button type="submit" class="flex-[2] py-4 bg-slate-900 text-white rounded-2xl font-black text-sm shadow-xl hover:bg-black hover:-translate-y-1 transition-all">
+                            {{ __('Create Doctor Account') }}
                         </button>
                     </div>
                 </form>

@@ -3,6 +3,8 @@
     "Actions": "الإجراءات",
     "Activate": "تنشيط",
     "Active Subscriptions": "اشتراكات نشطة",
+    "Add Existing Patient": "إضافة مريض مسجل",
+    "Add New Doctor": "إضافة طبيب جديد",
     "Add Patient": "مريض جديد",
     "Add Patients & Book Appointments": "إضافة مرضى وحجز مواعيد",
     "Address": "العنوان",
@@ -167,6 +169,7 @@
     "No results found. You can add a new patient from the button above.": "لم يتم العثور على نتائج. يمكنك إضافة مريض جديد من الزر أعلاه.",
     "Get started by adding a new patient to the system or adjusting your search filters.": "ابدأ بإضافة مريض جديد إلى النظام أو قم بتعديل فلاتر البحث.",
     "None": "لا يوجد",
+    "Infinite": "غير محدود",
     "Online": "متصل",
     "Orthopedic Surgeon": "جراح عظام",
     "Other Document": "مستند آخر",
@@ -418,5 +421,11 @@
     "New Password": "كلمة المرور الجديدة",
     "Confirm Password": "تأكيد كلمة المرور",
     "Update Security": "تحديث الأمان",
-    "Provide your secretary's contact details for patient management and communication.": "أضف بيانات التواصل مع السكرتارية لإدارة المرضى والتواصل."
+    "Provide your secretary's contact details for patient management and communication.": "أضف بيانات التواصل مع السكرتارية لإدارة المرضى والتواصل.",
+    "Initial Quotas": "الحصص الافتراضية",
+    "Doctor Account Details": "بيانات حساب الطبيب",
+    "Create Doctor Account": "إنشاء حساب الطبيب",
+    "Doctor account created successfully.": "تم إنشاء حساب الطبيب بنجاح.",
+    "Zero or empty values will grant the doctor unlimited usage capacity for that quota.": "إدخال القيمة صفر أو ترك الحقل فارغاً يمنح الطبيب سعة استخدام غير محدودة لهذه الحصة.",
+    "Create a new doctor account with custom quotas.": "إنشاء حساب طبيب جديد مع تخصيص حصص الاستخدام."
 }
