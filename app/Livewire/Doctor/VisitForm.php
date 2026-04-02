@@ -66,7 +66,20 @@ class VisitForm extends Component
 
         $filePath = null;
         if ($this->treatment_file) {
+            $fileSize = $this->treatment_file->getSize();
+            if (!auth()->user()->hasStorageSpace($fileSize)) {
+                $this->addError('treatment_file', __('Storage limit reached.'));
+                return;
+            }
+
             $filePath = $this->treatment_file->store('visits', 'public');
+            
+            // Compression
+            \App\Services\FileService::optimizeImageInPlace('public', $filePath);
+            \App\Services\FileService::compressFileInPlace('public', $filePath);
+            
+            $finalSize = \Illuminate\Support\Facades\Storage::disk('public')->size($filePath);
+            auth()->user()->increment('used_storage_bytes', $finalSize);
         }
 
         Visit::create([

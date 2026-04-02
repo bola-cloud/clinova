@@ -55,7 +55,20 @@ class DoctorSettings extends Component
         $user = auth()->user();
         
         if ($this->profile_image) {
+            $fileSize = $this->profile_image->getSize();
+            if (!$user->hasStorageSpace($fileSize)) {
+                $this->addError('profile_image', __('Storage limit reached.'));
+                return;
+            }
+
             $path = $this->profile_image->store('profile-images', 'public');
+            
+            // Optimization
+            \App\Services\FileService::optimizeImageInPlace('public', $path);
+            
+            $finalSize = \Illuminate\Support\Facades\Storage::disk('public')->size($path);
+            $user->increment('used_storage_bytes', $finalSize);
+
             $user->profile_image = $path;
             $this->current_image = $path;
             $this->profile_image = null;

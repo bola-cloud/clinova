@@ -27,6 +27,12 @@ new #[Layout('layouts.guest')] class extends Component
 <div>
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
+    
+    @if (session('error'))
+        <div class="mb-4 font-bold text-sm text-rose-600 bg-rose-50 p-4 rounded-xl border border-rose-100">
+            {{ session('error') }}
+        </div>
+    @endif
 
     <form method="POST" wire:submit="login">
         @csrf

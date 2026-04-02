@@ -166,6 +166,8 @@ class PatientProfile extends Component
         $treatmentFilePath = null;
         if ($this->treatmentFile) {
             $treatmentFilePath = $this->treatmentFile->store('treatments', 'public');
+            \App\Services\FileService::optimizeImageInPlace('public', $treatmentFilePath);
+            \App\Services\FileService::compressFileInPlace('public', $treatmentFilePath);
         }
 
         $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
@@ -219,16 +221,24 @@ class PatientProfile extends Component
         $fileSize = $this->newFile->getSize();
         
         // Check storage limit
-        if ($doctor && $doctor->max_storage_gb > 0) {
-            $maxBytes = $doctor->max_storage_gb * 1024 * 1024 * 1024;
-            if (($doctor->used_storage_bytes + $fileSize) > $maxBytes) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'newFile' => [__('Storage limit reached for this clinic. Please contact administration.')]
-                ]);
-            }
+        if ($doctor && !$doctor->hasStorageSpace($fileSize)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'newFile' => [__('Storage limit reached for this clinic. Please contact administration.')]
+            ]);
         }
 
         $path = $this->newFile->store('patient-files', 'public');
+
+        // Optimize or Compress in place
+        $mime = $this->newFile->getMimeType();
+        if (str_starts_with($mime, 'image/')) {
+            \App\Services\FileService::optimizeImageInPlace('public', $path);
+        } else {
+            \App\Services\FileService::compressFileInPlace('public', $path);
+        }
+
+        // Recalculate size after compression for accurate used_storage_bytes
+        $finalSize = Storage::disk('public')->size($path);
 
         $this->patient->files()->create([
             'file_name' => $this->newFile->getClientOriginalName(),
@@ -237,9 +247,9 @@ class PatientProfile extends Component
             'uploaded_by' => auth()->id(),
         ]);
 
-        // Update used_storage_bytes
+        // Update used_storage_bytes with final (compressed) size
         if ($doctor) {
-            $doctor->increment('used_storage_bytes', $fileSize);
+            $doctor->increment('used_storage_bytes', $finalSize);
         }
 
         $this->reset(['newFile', 'fileType']);

@@ -13,6 +13,7 @@ class IncomeStatistics extends Component
 {
     public $dateFrom;
     public $dateTo;
+    public $doctorId = null;
 
     public function mount()
     {
@@ -29,6 +30,8 @@ class IncomeStatistics extends Component
 
         if (auth()->user()->role === 'doctor') {
             $query->where('doctor_id', auth()->id());
+        } elseif ($this->doctorId) {
+            $query->where('doctor_id', $this->doctorId);
         }
 
         $appointments = $query->get();
@@ -90,7 +93,8 @@ class IncomeStatistics extends Component
             'followupIncome' => $followupIncome,
             'appointmentsCount' => $appointmentsCount,
             'chartLabels' => $chartLabels,
-            'chartData' => $chartData
+            'chartData' => $chartData,
+            'doctors' => \App\Models\User::where('role', 'doctor')->get()
         ]);
     }
 }

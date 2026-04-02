@@ -9,6 +9,7 @@ new class extends Component
 {
     public $clinicName = '';
     public $systemMaintenance = false;
+    public $trialDurationDays = 14;
 
     // Security Properties
     public $current_password = '';
@@ -19,12 +20,14 @@ new class extends Component
     {
         $this->clinicName = Setting::get('clinic_name', 'Clinova Smart Clinic');
         $this->systemMaintenance = Setting::get('system_maintenance', false);
+        $this->trialDurationDays = Setting::get('trial_duration_days', 14);
     }
 
     public function saveSettings()
     {
         Setting::set('clinic_name', $this->clinicName);
         Setting::set('system_maintenance', $this->systemMaintenance, 'boolean');
+        Setting::set('trial_duration_days', (int) $this->trialDurationDays, 'integer');
 
         session()->flash('success', __('System settings updated successfully.'));
     }
@@ -69,6 +72,10 @@ new class extends Component
                     <div class="space-y-2">
                         <label class="block text-sm font-bold text-gray-700">{{ __('Clinic Brand Name') }}</label>
                         <input type="text" wire:model="clinicName" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-6 text-sm focus:ring-4 focus:ring-purple-500/10 transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-gray-700">{{ __('Default Trial Duration (Days)') }}</label>
+                        <input type="number" wire:model="trialDurationDays" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-6 text-sm focus:ring-4 focus:ring-purple-500/10 transition-all">
                     </div>
                 </div>
 

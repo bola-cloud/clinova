@@ -31,6 +31,10 @@ use Illuminate\Validation\Rules\Password;
                         <label class="block text-sm font-bold text-gray-700"><?php echo e(__('Clinic Brand Name')); ?></label>
                         <input type="text" wire:model="clinicName" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-6 text-sm focus:ring-4 focus:ring-purple-500/10 transition-all">
                     </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-gray-700"><?php echo e(__('Default Trial Duration (Days)')); ?></label>
+                        <input type="number" wire:model="trialDurationDays" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-6 text-sm focus:ring-4 focus:ring-purple-500/10 transition-all">
+                    </div>
                 </div>
 
                 <div class="space-y-4">

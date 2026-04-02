@@ -6,20 +6,49 @@
             <p class="text-gray-500 mt-1">{{ __('Track clinic revenue from completed appointments.') }}</p>
         </div>
         
-        <!-- Date Filters -->
-        <div class="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-            <div class="flex items-center gap-2 px-2">
-                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">{{ __('From') }}</span>
-                <input type="date" wire:model.live="dateFrom" class="border-none bg-transparent text-sm font-bold text-gray-700 focus:ring-0 p-0 cursor-pointer">
+        <div class="flex flex-wrap items-center gap-4">
+            <!-- Doctor Filter (Admin Only) -->
+            @if(auth()->user()->role === 'admin')
+            <div wire:ignore class="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-center gap-2 px-2" 
+                     x-data="{
+                        initSelect2() {
+                            $(this.$refs.select).select2({
+                                width: 'resolve',
+                                dropdownAutoWidth: true
+                            });
+                            $(this.$refs.select).on('change', (e) => {
+                                @this.set('doctorId', e.target.value);
+                            });
+                        }
+                     }" 
+                     x-init="initSelect2()">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">{{ __('Doctor') }}</span>
+                    <select x-ref="select" class="border-none bg-transparent text-sm font-bold text-gray-700 focus:ring-0 p-0 cursor-pointer min-w-[150px]">
+                        <option value="">{{ __('All Doctors') }}</option>
+                        @foreach($doctors as $doctor)
+                            <option value="{{ $doctor->id }}">{{ $doctor->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
-            <div class="w-px h-6 bg-gray-200"></div>
-            <div class="flex items-center gap-2 px-2">
-                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">{{ __('To') }}</span>
-                <input type="date" wire:model.live="dateTo" class="border-none bg-transparent text-sm font-bold text-gray-700 focus:ring-0 p-0 cursor-pointer">
+            @endif
+
+            <!-- Date Filters -->
+            <div class="flex items-center gap-2 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-center gap-2 px-2">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">{{ __('From') }}</span>
+                    <input type="date" wire:model.live="dateFrom" class="border-none bg-transparent text-sm font-bold text-gray-700 focus:ring-0 p-0 cursor-pointer">
+                </div>
+                <div class="w-px h-6 bg-gray-200"></div>
+                <div class="flex items-center gap-2 px-2">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">{{ __('To') }}</span>
+                    <input type="date" wire:model.live="dateTo" class="border-none bg-transparent text-sm font-bold text-gray-700 focus:ring-0 p-0 cursor-pointer">
+                </div>
+                <button wire:click="$set('dateFrom', '{{ now()->startOfMonth()->format('Y-m-d') }}'); $set('dateTo', '{{ now()->endOfMonth()->format('Y-m-d') }}')" class="p-2 hover:bg-slate-100 rounded-xl transition-colors text-purple-600" title="{{ __('This Month') }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </button>
             </div>
-            <button wire:click="$set('dateFrom', '{{ now()->startOfMonth()->format('Y-m-d') }}'); $set('dateTo', '{{ now()->endOfMonth()->format('Y-m-d') }}')" class="p-2 hover:bg-slate-100 rounded-xl transition-colors text-purple-600" title="{{ __('This Month') }}">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            </button>
         </div>
     </div>
 

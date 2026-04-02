@@ -3,8 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Livewire\Doctor\DoctorSettings;
+use App\Http\Controllers\FileController;
 use App\Livewire\Admin\IncomeStatistics;
-use App\Livewire\Admin\AdminDashboard; // Added for the new admin dashboard route
+use App\Livewire\Admin\AdminDashboard;
+use App\Livewire\Admin\SystemRevenue;
+use App\Livewire\Admin\DoctorSubscriptionManager;
 
 Route::view('/', 'welcome');
 
@@ -22,6 +25,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['can:admin'])->group(function () {
         Route::view('admin', 'dashboard.admin')->name('admin.dashboard');
         Route::get('admin/statistics', IncomeStatistics::class)->name('admin.statistics');
+        Route::get('admin/revenue', SystemRevenue::class)->name('admin.revenue');
+        Route::get('admin/doctors/{doctor}/subscriptions', DoctorSubscriptionManager::class)->name('admin.doctor.subscriptions');
         Route::view('admin/patients', 'dashboard.admin-patients')->name('admin.patients');
         Route::view('admin/settings', 'dashboard.admin-settings')->name('admin.settings');
     });

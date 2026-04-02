@@ -12,13 +12,14 @@ new class extends Component
     public $noteTitle = '';
     public $noteContent = '';
     public $noteDate = '';
+    public $noteTime = '';
 
     public function mount()
     {
         $this->selectedDate = now()->format('Y-m-d');
         $this->noteDate = now()->format('Y-m-d');
         
-        // Check for notes due today
+        // Check for notes due today (date-only for backward compatibility and general overview)
         $dueToday = DoctorNote::where('doctor_id', auth()->id())
             ->where('is_completed', false)
             ->where('reminder_date', now()->format('Y-m-d'))
@@ -27,6 +28,8 @@ new class extends Component
         if ($dueToday->isNotEmpty()) {
             $this->dispatch('due-notes-alert', notes: $dueToday->pluck('title')->toArray());
         }
+
+        $this->noteTime = now()->addHour()->format('H:00');
     }
 
     public function setDate($date)
@@ -54,6 +57,7 @@ new class extends Component
             'noteTitle' => 'required|string|max:255',
             'noteContent' => 'required|string',
             'noteDate' => 'nullable|date',
+            'noteTime' => 'nullable|string',
         ]);
 
         DoctorNote::create([
@@ -61,6 +65,7 @@ new class extends Component
             'title' => $this->noteTitle,
             'content' => $this->noteContent,
             'reminder_date' => $this->noteDate ?: null,
+            'reminder_time' => $this->noteTime ?: null,
         ]);
 
         $this->reset(['noteTitle', 'noteContent']);
@@ -110,7 +115,7 @@ new class extends Component
 };
 ?>
 
-<div class="space-y-12 pb-24 font-['Cairo']" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+<div wire:poll.30s="checkReminders" class="space-y-12 pb-24 font-['Cairo']" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
     <style>
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         .animate-float { animation: float 5s ease-in-out infinite; }
@@ -339,7 +344,13 @@ new class extends Component
                                     <div class="flex flex-col">
                                         <span class="font-black text-slate-800 text-sm tracking-tight">{{ $note->title }}</span>
                                         @if($note->reminder_date)
-                                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ $note->reminder_date->translatedFormat('d F Y') }}</span>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ $note->reminder_date->translatedFormat('d F Y') }}</span>
+                                                @if($note->reminder_time)
+                                                    <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+                                                    <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">{{ \Carbon\Carbon::parse($note->reminder_time)->format('H:i') }}</span>
+                                                @endif
+                                            </div>
                                         @endif
                                     </div>
                                 </div>
@@ -450,8 +461,11 @@ new class extends Component
                         
                         <textarea rows="3" wire:model="noteContent" class="w-full bg-slate-50 border-0 border-b-2 border-transparent focus:border-indigo-500 focus:ring-0 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 resize-none transition-colors" placeholder="{{ __('Add a reminder or note for a specific day...') }}"></textarea>
                         
-                        <div class="flex items-center justify-between gap-3">
-                            <input type="date" wire:model="noteDate" class="bg-slate-50 border-none rounded-xl text-[11px] font-bold text-slate-600 px-3 py-2 w-auto flex-1 h-10 outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                                <input type="date" wire:model="noteDate" class="bg-slate-50 border-none rounded-xl text-[11px] font-bold text-slate-600 px-3 py-2 flex-1 h-10 outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                <input type="time" wire:model="noteTime" class="bg-slate-50 border-none rounded-xl text-[11px] font-bold text-slate-600 px-3 py-2 w-24 h-10 outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                            </div>
                             
                             <button wire:click="saveNote" class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-lg hover:bg-indigo-600 hover:-translate-y-0.5 transition-all outline-none shrink-0" title="{{ __('Save Note') }}">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
@@ -463,42 +477,6 @@ new class extends Component
             
         </div>
     </div>
-    <!-- Floating Notifications System (Alpine.js) -->
-    <div x-data="{ 
-            notifications: [], 
-            add(msg, subtitle = '') {
-                const id = Date.now();
-                this.notifications.push({ id, msg, subtitle });
-                setTimeout(() => this.remove(id), 6000);
-            },
-            remove(id) {
-                this.notifications = this.notifications.filter(n => n.id !== id);
-            }
-         }" 
-         @due-notes-alert.window="add('{{ __('Reminder: Today\'s Appointments') }}', $event.detail.notes.join(', '))"
-         class="fixed bottom-10 left-10 z-[100] flex flex-col gap-4 pointer-events-none w-full max-w-sm"
-    >
-        <template x-for="n in notifications" :key="n.id">
-            <div x-show="true" 
-                 x-transition:enter="transition ease-out duration-500"
-                 x-transition:enter-start="opacity-0 -translate-x-12 scale-90"
-                 x-transition:enter-end="opacity-100 translate-x-0 scale-100"
-                 x-transition:leave="transition ease-in duration-300"
-                 x-transition:leave-start="opacity-100 translate-x-0 scale-100"
-                 x-transition:leave-end="opacity-0 -translate-x-12 scale-90"
-                 class="pointer-events-auto bg-slate-900 shadow-2xl shadow-slate-200 rounded-[2rem] p-6 border border-slate-800 flex items-center gap-5 group hover:-translate-y-1 transition-transform"
-            >
-                <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0 border border-indigo-500/20 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-white font-black text-sm tracking-tight" x-text="n.msg"></span>
-                    <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-0.5 line-clamp-1" x-text="n.subtitle"></span>
-                </div>
-                <button @click="remove(n.id)" class="ml-auto w-8 h-8 rounded-full flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-        </template>
+        </div>
     </div>
 </div>

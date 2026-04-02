@@ -12,11 +12,13 @@ class DoctorNote extends Model
         'title',
         'content',
         'reminder_date',
+        'reminder_time',
         'is_completed',
     ];
 
     protected $casts = [
         'reminder_date' => 'date',
+        'reminder_time' => 'string',
         'is_completed' => 'boolean',
     ];
 

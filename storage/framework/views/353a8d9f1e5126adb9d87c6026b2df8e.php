@@ -31,6 +31,13 @@ use Livewire\Volt\Component;
 <?php $component = $__componentOriginal7c1bf3a9346f208f66ee83b06b607fb5; ?>
 <?php unset($__componentOriginal7c1bf3a9346f208f66ee83b06b607fb5); ?>
 <?php endif; ?>
+    
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(session('error')): ?>
+        <div class="mb-4 font-bold text-sm text-rose-600 bg-rose-50 p-4 rounded-xl border border-rose-100">
+            <?php echo e(session('error')); ?>
+
+        </div>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
     <form method="POST" wire:submit="login">
         <?php echo csrf_field(); ?>
