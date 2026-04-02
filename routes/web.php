@@ -59,6 +59,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('appointments/{appointment}/visit', \App\Livewire\Doctor\VisitForm::class)
             ->middleware(['can:doctor'])
             ->name('appointments.visit');
+
+        // File Serving with decompression
+        Route::get('files/serve/{path}', [FileController::class, 'serve'])
+            ->where('path', '.*')
+            ->name('files.serve');
     });
 
     Route::view('profile', 'profile')->name('profile');
