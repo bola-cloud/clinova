@@ -7,7 +7,7 @@ use App\Models\DoctorNote;
 
 ?>
 
-<div wire:poll.30s="checkReminders" class="space-y-12 pb-24 font-['Cairo']" dir="<?php echo e(app()->getLocale() === 'ar' ? 'rtl' : 'ltr'); ?>">
+<div class="space-y-12 pb-24 font-['Cairo']" dir="<?php echo e(app()->getLocale() === 'ar' ? 'rtl' : 'ltr'); ?>">
     <style>
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         .animate-float { animation: float 5s ease-in-out infinite; }
