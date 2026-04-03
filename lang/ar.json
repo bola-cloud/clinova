@@ -92,6 +92,7 @@
     "Completed Tasks": "مهمات مكتملة",
     "Completed Visits": "الزيارات المكتملة",
     "Comprehensive revenue dashboards, billing management, and financial growth analytics built-in.": "لوحات بيانات شاملة للإيرادات، إدارة الفواتير، وتحليلات النمو المالي المدمجة.",
+    "Configure consultation fees, add doctors and secretary accounts, and personalize the system to your workflow.": "اضبط رسوم الاستشارة، أضف حسابات الأطباء والسكرتيرة، وخصّص النظام لتناسب سير عملك.",
     "Configure your consultation fees, add doctors and secretary accounts, and personalize the system to your workflow.": "اضبط رسوم الاستشارة، أضف حسابات الأطباء والسكرتيرة، وخصص النظام لتناسب سير عملك.",
     "Confirm": "تأكيد",
     "Confirm Booking": "تأكيد الحجز",
@@ -477,6 +478,10 @@
     "Your clinic's subscription has ended. Access to the management system is currently restricted.": "انتهى اشتراك عيادتك. الدخول إلى نظام الإدارة مقيد حالياً.",
     "Your subscription has expired. Please contact the administrator to renew.": "انتهى اشتراكك. يرجى التواصل مع المسؤول للتجديد.",
     "Your Vision,": "رؤيتك،",
+    "a successful practice": "ممارسة طبية ناجحة",
+    "Ready to transform your clinic?": "هل أنت مستعد لتطوير عيادتك؟",
+    "about Clinova": "عن كلينوفا",
+    "Contact support to get your free trial.": "تواصل مع الدعم لكي تحصل على الفترة التجريبية",
     "Zero or empty values will grant the doctor unlimited usage capacity for that quota.": "إدخال القيمة صفر أو ترك الحقل فارغاً يمنح الطبيب سعة استخدام غير محدودة لهذه الحصة.",
     "Clinic Staff": "طاقم العيادة",
     "Clinic Staff Management": "إدارة طاقم العيادة",
@@ -495,5 +500,9 @@
     "Staff account deleted successfully.": "تم حذف حساب الموظف بنجاح.",
     "Password updated successfully.": "تم تحديث كلمة المرور بنجاح.",
     "Permanently delete this account?": "هل تريد حذف هذا الحساب نهائياً؟",
-    "Delete Account": "حذف الحساب"
+    "Delete Account": "حذف الحساب",
+    "Smart Appointments": "مواعيد ذكية",
+    "Electronic Records": "سجلات إلكترونية",
+    "Finance Insights": "تحليلات مالية",
+    "Secure, digital patient histories with file uploads for labs and investigations. Accessible anywhere, anytime.": "سجلات مرضى رقمية آمنة مع رفع ملفات التحاليل والأشعة. متاحة في أي مكان وزمان."
 }

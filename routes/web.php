@@ -69,13 +69,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::view('profile', 'profile')->name('profile');
-
-    Route::get('lang/{locale}', function ($locale) {
-        if (in_array($locale, ['ar', 'en'])) {
-            session()->put('locale', $locale);
-        }
-        return redirect()->back();
-    })->name('lang.switch');
 });
+
+Route::get('lang/{locale}', function ($locale) {
+    if (in_array($locale, ['ar', 'en'])) {
+        session()->put('locale', $locale);
+    }
+    return redirect()->back();
+})->name('lang.switch');
 
 require __DIR__.'/auth.php';
