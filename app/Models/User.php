@@ -27,8 +27,6 @@ class User extends Authenticatable
         'followup_fee',
         'subscription_active',
         'subscription_expires_at',
-        'secretary_name',
-        'secretary_phone',
         'max_patients',
         'max_storage_gb',
         'used_storage_bytes',
@@ -87,6 +85,11 @@ class User extends Authenticatable
     public function assignedDoctor()
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function secretaries()
+    {
+        return $this->hasMany(User::class, 'doctor_id')->where('role', 'secretary');
     }
 
     public function patients()

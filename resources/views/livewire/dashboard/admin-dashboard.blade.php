@@ -25,6 +25,13 @@ new class extends Component
     public $editMaxPatients = 0;
     public $editMaxStorageGb = 0;
 
+    // Staff management
+    public $managingDoctorId = null;
+    public $editingStaffId = null;
+    public $staff_name = '';
+    public $staff_email = '';
+    public $staff_password = '';
+
     public function with()
     {
         $baseQuery = User::where('role', 'doctor')
@@ -32,6 +39,7 @@ new class extends Component
 
         return [
             'doctors' => $baseQuery->withCount('patients')->paginate(10),
+            'managingDoctor' => $this->managingDoctorId ? User::find($this->managingDoctorId) : null,
             'stats' => [
                 'total_doctors' => User::where('role', 'doctor')->count(),
                 'total_patients' => Patient::count(),
@@ -74,6 +82,75 @@ new class extends Component
     {
         $this->editingDoctorId = null;
         $this->reset(['editMaxPatients', 'editMaxStorageGb']);
+    }
+
+    public function manageStaff($doctorId)
+    {
+        $this->managingDoctorId = $doctorId;
+        $this->resetStaffForm();
+    }
+
+    public function editStaff($staffId)
+    {
+        $staff = User::where('role', 'secretary')->where('id', $staffId)->firstOrFail();
+        $this->editingStaffId = $staffId;
+        $this->staff_name = $staff->name;
+        $this->staff_email = $staff->email;
+        $this->staff_password = '';
+    }
+
+    public function saveSecretary()
+    {
+        $this->validate([
+            'staff_name' => 'required|min:3',
+            'staff_email' => 'required|email|unique:users,email,' . ($this->editingStaffId ?? 'NULL'),
+            'staff_password' => $this->editingStaffId ? 'nullable|min:6' : 'required|min:6',
+        ]);
+
+        if ($this->editingStaffId) {
+            $staff = User::where('role', 'secretary')->where('id', $this->editingStaffId)->firstOrFail();
+            $data = [
+                'name' => $this->staff_name,
+                'email' => $this->staff_email,
+            ];
+            if ($this->staff_password) {
+                $data['password'] = Hash::make($this->staff_password);
+            }
+            $staff->update($data);
+            session()->flash('success', __('Secretary updated successfully.'));
+        } else {
+            User::create([
+                'name' => $this->staff_name,
+                'email' => $this->staff_email,
+                'password' => Hash::make($this->staff_password),
+                'role' => 'secretary',
+                'doctor_id' => $this->managingDoctorId,
+            ]);
+            session()->flash('success', __('Secretary account created.'));
+        }
+
+        $this->resetStaffForm();
+    }
+
+    public function deleteDoctorSecretary($secId)
+    {
+        User::where('role', 'secretary')->where('id', $secId)->delete();
+        session()->flash('success', __('Secretary account deleted.'));
+        if ($this->editingStaffId == $secId) {
+            $this->resetStaffForm();
+        }
+    }
+
+    public function resetStaffForm()
+    {
+        $this->editingStaffId = null;
+        $this->reset(['staff_name', 'staff_email', 'staff_password']);
+    }
+
+    public function closeStaffModal()
+    {
+        $this->managingDoctorId = null;
+        $this->resetStaffForm();
     }
 
     public function createDoctor()
@@ -234,6 +311,9 @@ new class extends Component
                                 <a href="{{ route('admin.doctor.subscriptions', $doctor->id) }}" wire:navigate class="p-2.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-xl transition-all" title="{{ __('Manage Subscription') }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                                 </a>
+                                <button wire:click="manageStaff({{ $doctor->id }})" class="p-2.5 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white rounded-xl transition-all" title="{{ __('Manage Staff') }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                </button>
                                 <button wire:click="editQuotas({{ $doctor->id }})" class="p-2.5 bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white rounded-xl transition-all" title="{{ __('Edit Quotas') }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
                                 </button>
@@ -381,5 +461,96 @@ new class extends Component
                 </form>
             </div>
         </div>
+    @endif
+
+    <!-- Manage Staff Modal -->
+    @if($managingDoctorId && $managingDoctor)
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden border border-white animate-zoom-in">
+            <div class="p-10">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ __('Clinic Staff') }} - {{ $managingDoctor->name }}</h3>
+                        <p class="text-xs text-gray-400 font-medium italic">{{ __('Manage login credentials for this clinic\'s secretaries.') }}</p>
+                    </div>
+                    <button wire:click="closeStaffModal" class="p-2 text-gray-400 hover:text-rose-500 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Staff List -->
+                    <div class="space-y-4">
+                        <h4 class="text-[10px] font-black text-purple-600 uppercase tracking-[0.2em] mb-4">{{ __('Current Staff') }}</h4>
+                        <div class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                            @forelse($managingDoctor->secretaries as $sec)
+                                <div class="p-4 bg-slate-50 rounded-2xl border border-gray-100 flex items-center justify-between group transition-all hover:bg-white hover:shadow-md">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center font-black text-sm">
+                                            {{ mb_substr($sec->name, 0, 1) }}
+                                        </div>
+                                        <div>
+                                            <h5 class="text-sm font-bold text-slate-900 leading-tight">{{ $sec->name }}</h5>
+                                            <p class="text-[10px] text-gray-500">{{ $sec->email }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button wire:click="editStaff({{ $sec->id }})" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                        </button>
+                                        <button wire:click="deleteDoctorSecretary({{ $sec->id }})" wire:confirm="{{ __('Permanently delete this secretary account?') }}" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            @empty
+                                <p class="text-xs text-gray-400 italic text-center py-8">{{ __('No staff added yet.') }}</p>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <!-- Add/Edit Form -->
+                    <div class="space-y-4">
+                        <h4 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-4">
+                            {{ $editingStaffId ? __('Edit Staff Member') : __('Add New Secretary') }}
+                        </h4>
+                        
+                        <form wire:submit="saveSecretary" class="space-y-4">
+                            <div class="space-y-1.5">
+                                <label class="text-[10px] font-black text-gray-500 uppercase px-1">{{ __('Name') }}</label>
+                                <input type="text" wire:model="staff_name" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500">
+                                @error('staff_name') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="text-[10px] font-black text-gray-500 uppercase px-1">{{ __('Email') }}</label>
+                                <input type="email" wire:model="staff_email" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500">
+                                @error('staff_email') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="text-[10px] font-black text-gray-500 uppercase px-1">
+                                    {{ $editingStaffId ? __('New Password (Optional)') : __('Password') }}
+                                </label>
+                                <input type="password" wire:model="staff_password" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500">
+                                @error('staff_password') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="pt-4 flex gap-2">
+                                @if($editingStaffId)
+                                    <button type="button" wire:click="resetStaffForm" class="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">
+                                        {{ __('Cancel') }}
+                                    </button>
+                                @endif
+                                <button type="submit" class="flex-[2] py-3 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-black hover:-translate-y-1 transition-all shadow-lg shadow-slate-200">
+                                    {{ $editingStaffId ? __('Save Changes') : __('Create Account') }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     @endif
 </div>

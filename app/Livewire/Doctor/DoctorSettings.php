@@ -22,12 +22,6 @@ class DoctorSettings extends Component
     #[Rule('nullable|numeric|min:0|max:999999')]
     public $followup_fee;
 
-    #[Rule('nullable|string|max:255')]
-    public $secretary_name;
-
-    #[Rule('nullable|string|max:20')]
-    public $secretary_phone;
-
     // Security Properties
     public $current_password = '';
     public $password = '';
@@ -38,8 +32,6 @@ class DoctorSettings extends Component
         $user = auth()->user();
         $this->consultation_fee = $user->consultation_fee;
         $this->followup_fee = $user->followup_fee;
-        $this->secretary_name = $user->secretary_name;
-        $this->secretary_phone = $user->secretary_phone;
         $this->current_image = $user->profile_image;
     }
 
@@ -48,8 +40,6 @@ class DoctorSettings extends Component
         $this->validate([
             'consultation_fee' => 'nullable|numeric|min:0|max:999999',
             'followup_fee' => 'nullable|numeric|min:0|max:999999',
-            'secretary_name' => 'nullable|string|max:255',
-            'secretary_phone' => 'nullable|string|max:20',
         ]);
 
         $user = auth()->user();
@@ -76,8 +66,6 @@ class DoctorSettings extends Component
 
         $user->consultation_fee = $this->consultation_fee ?: null;
         $user->followup_fee = $this->followup_fee ?: null;
-        $user->secretary_name = $this->secretary_name;
-        $user->secretary_phone = $this->secretary_phone;
         $user->save();
 
         session()->flash('success', __('Settings saved successfully'));

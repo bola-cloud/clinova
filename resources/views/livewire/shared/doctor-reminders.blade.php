@@ -30,10 +30,10 @@ $checkReminders = function () {
     if ($dueNote) {
         $this->lastNotifiedNoteId = $dueNote->id;
         
-        $this->dispatch('reminder-alarm', [
-            'title' => $dueNote->title ?: __('Reminder'),
-            'content' => $dueNote->content
-        ]);
+        $this->dispatch('reminder-alarm', 
+            title: $dueNote->title ?: __('Reminder'),
+            content: $dueNote->content ?: ''
+        );
     }
 };
 

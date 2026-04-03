@@ -95,27 +95,6 @@
                 </div>
             </div>
 
-            <div class="px-6 md:px-8 py-8 border-t border-gray-100 bg-slate-50/50 -mx-6 md:-mx-8 my-8">
-                <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    {{ __('Secretary Information') }}
-                </h3>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
-                    <div class="space-y-1.5">
-                        <label class="text-sm font-bold text-gray-700">{{ __('Secretary Name') }}</label>
-                        <input type="text" wire:model="secretary_name" class="w-full bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-sm py-3 px-4 shadow-sm">
-                        @error('secretary_name') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-sm font-bold text-gray-700">{{ __('Secretary Phone') }}</label>
-                        <input type="text" wire:model="secretary_phone" class="w-full bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-sm py-3 px-4 shadow-sm">
-                        @error('secretary_phone') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
-                    </div>
-                </div>
-                <p class="text-xs text-gray-400 mt-4 leading-relaxed">{{ __('Provide your secretary\'s contact details for patient management and communication.') }}</p>
-            </div>
-
             <div class="mt-8 pt-6 border-t border-gray-100 flex justify-end">
                 <button type="submit" class="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black rounded-xl shadow-xl shadow-indigo-100 transition-all uppercase tracking-widest text-xs flex items-center gap-2 hover:-translate-y-1">
                     <svg wire:loading wire:target="saveSettings" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

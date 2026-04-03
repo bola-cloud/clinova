@@ -8,6 +8,7 @@ use App\Livewire\Admin\IncomeStatistics;
 use App\Livewire\Admin\AdminDashboard;
 use App\Livewire\Admin\SystemRevenue;
 use App\Livewire\Admin\DoctorSubscriptionManager;
+use App\Livewire\Doctor\StaffManagement;
 
 Route::view('/', 'welcome');
 
@@ -35,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['can:doctor', 'subscription.active'])->group(function () {
         Route::view('doctor', 'dashboard.doctor')->name('doctor.dashboard');
         Route::get('doctor/settings', DoctorSettings::class)->name('doctor.settings');
+        Route::get('doctor/staff', StaffManagement::class)->name('doctor.staff');
         Route::get('doctor/statistics', IncomeStatistics::class)->name('doctor.statistics');
     });
 
