@@ -108,8 +108,6 @@
     "Create Your Account": "إنشاء حسابك",
     "Currency": "العملة",
     "Current Password": "كلمة المرور الحالية",
-    "Add Follow-up": "إضافة متابعة",
-    "Add New Doctor": "إضافة طبيب جديد",
     "Customize Your Settings": "تخصيص إعداداتك",
     "Daily": "يومي",
     "Daily Appointments": "حجوزات اليوم",
@@ -499,7 +497,7 @@
     "Create your first secretary account to get started.": "قم بإنشاء أول حساب سكرتارية للبدء.",
     "Change Password": "تغيير كلمة المرور",
     "Update Password": "تحديث كلمة المرور",
-    "Staff account created successfully.": "تم إنشاء حساب המوظف بنجاح.",
+    "Staff account created successfully.": "تم إنشاء حساب الموظف بنجاح.",
     "Staff account deleted successfully.": "تم حذف حساب الموظف بنجاح.",
     "Password updated successfully.": "تم تحديث كلمة المرور بنجاح.",
     "Permanently delete this account?": "هل تريد حذف هذا الحساب نهائياً؟",
@@ -510,5 +508,8 @@
     "Secure, digital patient histories with file uploads for labs and investigations. Accessible anywhere, anytime.": "سجلات مرضى رقمية آمنة مع رفع ملفات التحاليل والأشعة. متاحة في أي مكان وزمان.",
     "The website is honestly wonderful; it changed all the chaos and distraction in the clinic. Bravo Dr. David and Dr. Lauren, best of luck.": "بصراحة الويب سايت حاجة رائعة غيرت كل الدوشة والتشتت اللى ف العيادة برافو دكتور ديفيد ودكتور لورن بالتوفيق فيما قادم ي دكاترة",
     "Truly respectable work, it saved me time, effort, and many patient problems in my clinic. Best of luck, doctors.": "حاجة محترمة والله ووفرت عليا وقت ومجهود ومشاكل مرضى كتير عندى فى العيادة بالتوفيق ان شاء الله ي دكاترة",
-    "I didn't expect the site to be this easy and organized, but it turned out to be very comfortable for both the doctor and the assistant.": "مكنتش متوقع أن السايت يكون بالسهولة والنظام دة بس الموضوع طلع مريح جدا الصراحة سواء للدكتور أو المساعد"
+    "I didn't expect the site to be this easy and organized, but it turned out to be very comfortable for both the doctor and the assistant.": "مكنتش متوقع أن السايت يكون بالسهولة والنظام دة بس الموضوع طلع مريح جدا الصراحة سواء للدكتور أو المساعد",
+    "Dr. Mohamed Ali": "د. محمد علي",
+    "Dr. Mona Mahmoud": "د. منى محمود",
+    "Dr. Essam Hassan": "د. عصام حسن"
 }
