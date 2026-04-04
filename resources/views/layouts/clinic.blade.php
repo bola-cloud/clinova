@@ -170,11 +170,40 @@
                 @endforeach
             </nav>
 
-            <div class="p-6 border-t border-white/10 glass-panel m-4 rounded-3xl mt-auto">
+            <div class="p-6 border-t border-white/10 space-y-4 glass-panel m-4 rounded-3xl mt-auto">
+                @php
+                    $user = auth()->user();
+                    $displayUser = $user->isSecretary() ? $user->assignedDoctor : $user;
+                    $profileImage = $displayUser?->profile_image;
+                @endphp
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-400 to-pink-300 flex items-center justify-center font-bold text-white shadow-inner border border-white/20 overflow-hidden">
+                        @if($profileImage)
+                            <img src="{{ asset('storage/' . $profileImage) }}" class="w-full h-full object-cover">
+                        @else
+                            {{ $displayUser->name[0] ?? ($user->name[0] ?? 'U') }}
+                        @endif
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold truncate text-white">{{ auth()->user()->name ?? 'User' }}</p>
+                        <p class="text-xs text-purple-200 truncate font-medium">
+                            {{ $role === 'admin' ? __('Administration') : ($role === 'doctor' ? __('Medical Staff') : __('Desk Staff')) }}
+                        </p>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-2">
                     <a href="{{ route('lang.switch', 'ar') }}" class="flex items-center justify-center p-2 rounded-xl text-xs font-bold {{ app()->getLocale() === 'ar' ? 'bg-white text-[#4A26AB]' : 'bg-white/5 text-purple-100' }}">العربية</a>
                     <a href="{{ route('lang.switch', 'en') }}" class="flex items-center justify-center p-2 rounded-xl text-xs font-bold {{ app()->getLocale() === 'en' ? 'bg-white text-[#4A26AB]' : 'bg-white/5 text-purple-100' }}">English</a>
                 </div>
+
+                <form method="POST" action="{{ route('logout') }}" class="mt-2">
+                    @csrf
+                    <button type="submit" class="w-full flex items-center justify-center gap-2 p-3 hover:bg-white/10 rounded-xl text-rose-200 hover:text-rose-100 transition-colors text-sm font-bold border border-rose-300/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        <span>{{ __('Logout') }}</span>
+                    </button>
+                </form>
             </div>
         </aside>
 

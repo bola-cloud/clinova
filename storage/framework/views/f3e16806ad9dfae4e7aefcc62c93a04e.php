@@ -861,9 +861,9 @@ footer {
     </div>
     <div class="testimonials-grid">
       <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = [
-        ['د. محمد علي', __('General Practitioner'), '⭐⭐⭐⭐⭐', __('The website is honestly wonderful; it changed all the chaos and distraction in the clinic. Bravo Dr. David and Dr. Lauren, best of luck.'), 'M'],
-        ['د. منى محمود', __('Pediatrician'), '⭐⭐⭐⭐⭐', __('Truly respectable work, it saved me time, effort, and many patient problems in my clinic. Best of luck, doctors.'), 'M'],
-        ['د. عصام حسن', __('Surgeon'), '⭐⭐⭐⭐⭐', __('I didn\'t expect the site to be this easy and organized, but it turned out to be very comfortable for both the doctor and the assistant.'), 'E'],
+        [__('Dr. Mohamed Ali'), __('General Practitioner'), '⭐⭐⭐⭐⭐', __('The website is honestly wonderful; it changed all the chaos and distraction in the clinic. Bravo Dr. David and Dr. Lauren, best of luck.'), 'M'],
+        [__('Dr. Mona Mahmoud'), __('Pediatrician'), '⭐⭐⭐⭐⭐', __('Truly respectable work, it saved me time, effort, and many patient problems in my clinic. Best of luck, doctors.'), 'M'],
+        [__('Dr. Essam Hassan'), __('Surgeon'), '⭐⭐⭐⭐⭐', __('I didn\'t expect the site to be this easy and organized, but it turned out to be very comfortable for both the doctor and the assistant.'), 'E'],
       ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
       <div class="testi-card">
         <div class="testi-stars"><?php echo e($t[2]); ?></div>

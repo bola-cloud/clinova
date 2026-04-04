@@ -172,11 +172,42 @@
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
             </nav>
 
-            <div class="p-6 border-t border-white/10 glass-panel m-4 rounded-3xl mt-auto">
+            <div class="p-6 border-t border-white/10 space-y-4 glass-panel m-4 rounded-3xl mt-auto">
+                <?php
+                    $user = auth()->user();
+                    $displayUser = $user->isSecretary() ? $user->assignedDoctor : $user;
+                    $profileImage = $displayUser?->profile_image;
+                ?>
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-400 to-pink-300 flex items-center justify-center font-bold text-white shadow-inner border border-white/20 overflow-hidden">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($profileImage): ?>
+                            <img src="<?php echo e(asset('storage/' . $profileImage)); ?>" class="w-full h-full object-cover">
+                        <?php else: ?>
+                            <?php echo e($displayUser->name[0] ?? ($user->name[0] ?? 'U')); ?>
+
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold truncate text-white"><?php echo e(auth()->user()->name ?? 'User'); ?></p>
+                        <p class="text-xs text-purple-200 truncate font-medium">
+                            <?php echo e($role === 'admin' ? __('Administration') : ($role === 'doctor' ? __('Medical Staff') : __('Desk Staff'))); ?>
+
+                        </p>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-2">
                     <a href="<?php echo e(route('lang.switch', 'ar')); ?>" class="flex items-center justify-center p-2 rounded-xl text-xs font-bold <?php echo e(app()->getLocale() === 'ar' ? 'bg-white text-[#4A26AB]' : 'bg-white/5 text-purple-100'); ?>">العربية</a>
                     <a href="<?php echo e(route('lang.switch', 'en')); ?>" class="flex items-center justify-center p-2 rounded-xl text-xs font-bold <?php echo e(app()->getLocale() === 'en' ? 'bg-white text-[#4A26AB]' : 'bg-white/5 text-purple-100'); ?>">English</a>
                 </div>
+
+                <form method="POST" action="<?php echo e(route('logout')); ?>" class="mt-2">
+                    <?php echo csrf_field(); ?>
+                    <button type="submit" class="w-full flex items-center justify-center gap-2 p-3 hover:bg-white/10 rounded-xl text-rose-200 hover:text-rose-100 transition-colors text-sm font-bold border border-rose-300/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        <span><?php echo e(__('Logout')); ?></span>
+                    </button>
+                </form>
             </div>
         </aside>
 
