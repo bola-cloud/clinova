@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('admin/revenue', SystemRevenue::class)->name('admin.revenue');
         Route::get('admin/doctors/{doctor}/subscriptions', DoctorSubscriptionManager::class)->name('admin.doctor.subscriptions');
         Route::view('admin/patients', 'dashboard.admin-patients')->name('admin.patients');
+        Route::view('admin/specialties', 'dashboard.admin-specialties')->name('admin.specialties');
         Route::view('admin/settings', 'dashboard.admin-settings')->name('admin.settings');
     });
 

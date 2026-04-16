@@ -81,6 +81,28 @@
                             <p class="text-gray-700 leading-relaxed whitespace-pre-line bg-slate-50 p-4 rounded-xl border border-slate-100">{{ $visit->treatment_text ?: __('No data.') }}</p>
                         </div>
                     </div>
+
+                    @if($visit->specialty_data && count($visit->specialty_data) > 0)
+                    <div class="md:col-span-2 pt-4 border-t border-gray-100">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-purple-50/30 p-4 rounded-2xl border border-purple-100">
+                            @php 
+                                $doctorSpecialty = $visit->doctor->specialty;
+                            @endphp
+                            <h4 class="md:col-span-2 text-[10px] font-black text-purple-600 uppercase tracking-[0.2em] mb-1">
+                                {{ $doctorSpecialty ? $doctorSpecialty->name : __('Specialty Details') }}
+                            </h4>
+                            @foreach($visit->specialty_data as $fieldId => $answer)
+                                @php $field = \App\Models\SpecialtyField::find($fieldId); @endphp
+                                @if($field)
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ $field->label }}</span>
+                                    <span class="text-sm font-bold text-slate-800">{{ $answer }}</span>
+                                </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
                     @if($visit->treatment_file_path)
                     <div class="md:col-span-2">
                         <a href="{{ route('files.serve', ['path' => $visit->treatment_file_path]) }}" target="_blank" class="inline-flex items-center gap-2 text-purple-600 font-bold hover:underline">
@@ -267,14 +289,57 @@
                     </p>
                 </div>
             </div>
+
+            <!-- Chronic Illnesses -->
+            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative" x-data="{ isEditingCI: @entangle('isEditingCI') }">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg">{{ __('Chronic Illnesses') }}</h3>
+                    @if(auth()->user()->isDoctor())
+                    <button @click="isEditingCI = true" x-show="!isEditingCI" class="text-purple-600 hover:bg-purple-50 p-2 rounded-lg transition-colors" title="{{ __('Edit') }}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </button>
+                    @endif
+                </div>
+
+                <div x-show="isEditingCI" x-cloak>
+                    <form wire:submit.prevent="saveChronicIllnesses" class="space-y-4">
+                        <div class="grid grid-cols-1 gap-2">
+                            @foreach(['Diabetes melitus', 'Hypertension', 'Ischemic heart disease', 'Asthma', 'COPD', 'Thyroid disorders', 'Chronic kidney disease', 'Chronic liver disease', 'Osteoporosis', 'Dyslipidemia', 'Anemia'] as $illness)
+                            <label class="flex items-center gap-3 cursor-pointer group p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                <input type="checkbox" wire:model="chronicIllnesses" value="{{ $illness }}" class="w-4 h-4 text-purple-600 bg-white border-gray-300 rounded focus:ring-purple-500">
+                                <span class="text-sm font-bold text-gray-600 group-hover:text-purple-700 transition-colors">{{ __($illness) }}</span>
+                            </label>
+                            @endforeach
+                        </div>
+                        <div class="flex items-center gap-2 justify-end pt-2 border-t border-dashed border-gray-100">
+                            <button type="button" @click="isEditingCI = false" class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">{{ __('Cancel') }}</button>
+                            <button type="submit" class="px-4 py-2 text-sm font-bold bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-200 hover:bg-purple-700 transition-colors">{{ __('Save') }}</button>
+                        </div>
+                    </form>
+                </div>
+                <div x-show="!isEditingCI">
+                    @if($patient->chronic_illnesses && count($patient->chronic_illnesses) > 0)
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($patient->chronic_illnesses as $illness)
+                        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-100 italic">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 me-2"></span>
+                            {{ __($illness) }}
+                        </span>
+                        @endforeach
+                    </div>
+                    @else
+                    <p class="text-gray-400 text-sm italic">{{ __('No chronic illnesses recorded.') }}</p>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Record New Visit Modal -->
     @if($showVisitModal)
-    <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div wire:click="closeVisitModal" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl relative overflow-hidden animate-zoom-in">
+    <div class="fixed inset-0 z-[60] overflow-y-auto flex justify-center items-start p-4 sm:p-6">
+        <div wire:click="closeVisitModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl relative mx-auto my-8 animate-zoom-in">
             <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -translate-y-16 translate-x-16 blur-2xl"></div>
             
             <form wire:submit.prevent="saveVisit" class="relative">
@@ -339,6 +404,33 @@
                                 @endforeach
                             </div>
                         </div>
+
+                        @if(count($specialtyFields) > 0)
+                        <div class="md:col-span-2 space-y-4 pt-4 border-t border-dashed border-gray-200">
+                            @php
+                                $doctor = auth()->user()->isDoctor() ? auth()->user() : \App\Models\User::find(auth()->user()->doctor_id);
+                            @endphp
+                            <h4 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">{{ $doctor->specialty->name }} - {{ __('Extra Details') }}</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                @foreach($specialtyFields as $field)
+                                <div class="space-y-2">
+                                    <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ $field->label }}</label>
+                                    @if($field->type === 'text')
+                                        <input type="text" wire:model="dynamicAnswers.{{ $field->id }}" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-5 text-sm focus:ring-4 focus:ring-emerald-500/10 transition-all">
+                                    @elseif($field->type === 'select')
+                                        <select wire:model="dynamicAnswers.{{ $field->id }}" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-5 text-sm focus:ring-4 focus:ring-emerald-500/10 transition-all">
+                                            <option value="">{{ __('Select...') }}</option>
+                                            @foreach($field->options as $opt)
+                                                <option value="{{ $opt }}">{{ $opt }}</option>
+                                            @endforeach
+                                        </select>
+                                    @endif
+                                    @error('dynamicAnswers.' . $field->id) <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
 
                         <div class="space-y-2">
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Investigations & Tests') }}</label>
@@ -412,9 +504,9 @@
 
     <!-- Booking Modal -->
     @if($showBookingModal)
-    <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div wire:click="closeBookingModal" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-        <div class="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl relative overflow-hidden animate-zoom-in">
+    <div class="fixed inset-0 z-[60] flex justify-center items-start overflow-y-auto p-4 md:p-10">
+        <div wire:click="closeBookingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl relative overflow-hidden animate-zoom-in my-8">
             <div class="p-8">
                 <h3 class="text-xl font-bold mb-6">{{ __('Book Appointment for') }} {{ $patient->name }}</h3>
                 <div class="space-y-5">
@@ -458,9 +550,9 @@
 
     <!-- Edit Patient Modal -->
     @if($showEditModal)
-    <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div wire:click="closeEditModal" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-        <div class="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl relative overflow-hidden animate-zoom-in p-8">
+    <div class="fixed inset-0 z-[60] flex justify-center items-start overflow-y-auto p-4 md:p-10">
+        <div wire:click="closeEditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl relative overflow-hidden animate-zoom-in p-8 my-8">
             <h3 class="text-xl font-bold mb-6">{{ __('Edit Patient Data') }}</h3>
             <form wire:submit.prevent="savePatientData" class="space-y-5">
                 <div class="space-y-2">

@@ -539,8 +539,9 @@ new class extends Component
 
     <!-- Booking Modal -->
     @if($bookingPatientId)
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm shadow-2xl transition-opacity animate-fade-in-down" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
-        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full border border-purple-100 shadow-2xl">
+    <div class="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4 md:p-10 bg-black/50 backdrop-blur-sm shadow-2xl transition-opacity animate-fade-in-down" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+        <div wire:click="cancelBooking" class="fixed inset-0"></div>
+        <div class="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full border border-purple-100 shadow-2xl relative my-8">
             <div class="flex items-center justify-between mb-8">
                 <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
                     <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -602,9 +603,9 @@ new class extends Component
 
     <!-- Upload File Modal -->
     @if($showUploadModal)
-    <div wire:key="upload-modal-container" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div wire:click="closeUploadModal" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-        <div class="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl relative overflow-hidden animate-zoom-in p-8">
+    <div wire:key="upload-modal-container" class="fixed inset-0 z-[60] flex justify-center items-start overflow-y-auto p-4 md:p-10">
+        <div wire:click="closeUploadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl relative overflow-hidden animate-zoom-in p-8 my-8">
             <h3 class="text-xl font-bold mb-6 flex items-center gap-3 text-gray-900">
                 <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>

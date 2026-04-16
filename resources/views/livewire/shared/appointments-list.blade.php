@@ -184,9 +184,9 @@ new class extends Component
 <div class="space-y-6" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
     <!-- Rapid Booking Modal -->
     @if($showBookingModal)
-    <div wire:key="booking-modal-container" class="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div wire:click="closeBookingModal" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-        <div class="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl relative overflow-hidden animate-zoom-in">
+    <div wire:key="booking-modal-container" class="fixed inset-0 z-[60] flex justify-center items-start overflow-y-auto p-4 md:p-10">
+        <div wire:click="closeBookingModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+        <div class="bg-white rounded-[2rem] w-full max-w-lg shadow-2xl relative overflow-hidden animate-zoom-in my-8">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
             
             <div class="p-8 text-right">

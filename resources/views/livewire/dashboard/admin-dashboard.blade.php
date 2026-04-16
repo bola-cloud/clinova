@@ -5,6 +5,7 @@ use Livewire\WithPagination;
 use App\Models\User;
 use App\Models\Patient;
 use App\Models\Setting;
+use App\Models\Specialty;
 use Illuminate\Support\Facades\Hash;
 
 new class extends Component
@@ -20,6 +21,7 @@ new class extends Component
     public $new_password = '';
     public $new_max_patients = 0;
     public $new_max_storage_gb = 0;
+    public $new_specialty_id = '';
     
     public $editingDoctorId = null;
     public $editMaxPatients = 0;
@@ -40,6 +42,7 @@ new class extends Component
         return [
             'doctors' => $baseQuery->withCount('patients')->paginate(10),
             'managingDoctor' => $this->managingDoctorId ? User::find($this->managingDoctorId) : null,
+            'specialties' => Specialty::all(),
             'stats' => [
                 'total_doctors' => User::where('role', 'doctor')->count(),
                 'total_patients' => Patient::count(),
@@ -161,6 +164,7 @@ new class extends Component
             'new_password' => 'required|min:6',
             'new_max_patients' => 'nullable|numeric|min:0',
             'new_max_storage_gb' => 'nullable|numeric|min:0',
+            'new_specialty_id' => 'required|exists:specialties,id',
         ]);
 
         User::create([
@@ -168,6 +172,7 @@ new class extends Component
             'email' => $this->new_email,
             'password' => Hash::make($this->new_password),
             'role' => 'doctor',
+            'specialty_id' => $this->new_specialty_id,
             'subscription_active' => true,
             'max_patients' => $this->new_max_patients ?: 0,
             'max_storage_gb' => $this->new_max_storage_gb ?: 0,
@@ -178,7 +183,7 @@ new class extends Component
             'subscription_expires_at' => now()->addDays(Setting::get('trial_duration_days', 14)),
         ]);
 
-        $this->reset(['showCreateModal', 'new_name', 'new_email', 'new_password', 'new_max_patients', 'new_max_storage_gb']);
+        $this->reset(['showCreateModal', 'new_name', 'new_email', 'new_password', 'new_max_patients', 'new_max_storage_gb', 'new_specialty_id']);
         session()->flash('success', __('Doctor account created successfully.'));
     }
 };
@@ -346,8 +351,9 @@ new class extends Component
 
     <!-- Edit Quotas Modal -->
     @if($editingDoctorId)
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden border border-white animate-zoom-in">
+    <div class="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4 md:p-10 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+        <div wire:click="cancelEdit" class="fixed inset-0"></div>
+        <div class="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden border border-white animate-zoom-in relative my-8">
             <div class="p-10">
                 <div class="flex items-center justify-between mb-8">
                     <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ __('Update Rules & Quotas') }}</h3>
@@ -394,8 +400,9 @@ new class extends Component
 
     <!-- Create Doctor Modal -->
     @if($showCreateModal)
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden border border-white animate-zoom-in">
+    <div class="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4 md:p-10 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+        <div wire:click="$set('showCreateModal', false)" class="fixed inset-0"></div>
+        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden border border-white animate-zoom-in relative my-8">
             <div class="p-10">
                 <div class="flex items-center justify-between mb-8">
                     <div>
@@ -428,6 +435,17 @@ new class extends Component
                                 <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('Password') }}</label>
                                 <input type="password" wire:model="new_password" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500">
                                 @error('new_password') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('Doctor Specialty') }} <span class="text-rose-500">*</span></label>
+                                <select wire:model="new_specialty_id" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500">
+                                    <option value="">{{ __('Select Specialty') }}</option>
+                                    @foreach($specialties as $specialty)
+                                        <option value="{{ $specialty->id }}">{{ $specialty->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('new_specialty_id') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
                             </div>
                         </div>
 
@@ -465,8 +483,9 @@ new class extends Component
 
     <!-- Manage Staff Modal -->
     @if($managingDoctorId && $managingDoctor)
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden border border-white animate-zoom-in">
+    <div class="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4 md:p-10 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+        <div wire:click="closeStaffModal" class="fixed inset-0"></div>
+        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden border border-white animate-zoom-in relative my-8">
             <div class="p-10">
                 <div class="flex items-center justify-between mb-8">
                     <div>

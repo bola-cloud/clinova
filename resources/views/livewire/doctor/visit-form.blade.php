@@ -91,6 +91,28 @@
                 </div>
             </div>
 
+            @if(count($specialtyFields) > 0)
+            <div class="pt-6 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <h4 class="md:col-span-2 text-sm font-black text-purple-600 uppercase tracking-widest">{{ auth()->user()->specialty->name }} - {{ __('Extra Details') }}</h4>
+                @foreach($specialtyFields as $field)
+                <div class="space-y-2">
+                    <label class="block font-bold text-gray-700">{{ $field->label }} <span class="text-rose-500">*</span></label>
+                    @if($field->type === 'text')
+                        <input type="text" wire:model="dynamicAnswers.{{ $field->id }}" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all">
+                    @elseif($field->type === 'select')
+                        <select wire:model="dynamicAnswers.{{ $field->id }}" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all">
+                            <option value="">{{ __('Select...') }}</option>
+                            @foreach($field->options as $opt)
+                                <option value="{{ $opt }}">{{ $opt }}</option>
+                            @endforeach
+                        </select>
+                    @endif
+                    @error('dynamicAnswers.' . $field->id) <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
+                </div>
+                @endforeach
+            </div>
+            @endif
+
             <div class="space-y-3">
                 <label class="block font-bold text-gray-700">{{ __('Attach Prescription Image or File') }}</label>
                 <div class="relative">

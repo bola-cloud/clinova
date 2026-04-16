@@ -24,6 +24,7 @@ class PatientProfile extends Component
     // UI Toggles & Edits
     public $isEditingFH = false;
     public $isEditingPH = false;
+    public $isEditingCI = false;
     public $familyHistoryEdit;
     public $personalHistoryEdit;
     
@@ -42,6 +43,8 @@ class PatientProfile extends Component
     public $visitType = 'checkup';
     public $chronicIllnesses = [];
     public $followUpNotes = '';
+    public $specialtyFields = [];
+    public $dynamicAnswers = [];
 
     // Booking properties
     public $showBookingModal = false;
@@ -127,8 +130,18 @@ class PatientProfile extends Component
 
     public function openVisitModal()
     {
-        $this->reset(['complaint', 'diagnosis', 'investigation', 'treatmentText', 'treatmentFile', 'parentVisitId', 'visitType', 'followUpNotes']);
         $this->chronicIllnesses = $this->patient->chronic_illnesses ?? [];
+        $this->isEditingCI = false;
+        
+        // Load Specialty Fields
+        $doctor = auth()->user()->isDoctor() ? auth()->user() : \App\Models\User::find(auth()->user()->doctor_id);
+        if ($doctor && $doctor->specialty) {
+            $this->specialtyFields = $doctor->specialty->fields;
+            foreach ($this->specialtyFields as $field) {
+                $this->dynamicAnswers[$field->id] = '';
+            }
+        }
+        
         $this->showVisitModal = true;
     }
 
@@ -163,6 +176,14 @@ class PatientProfile extends Component
             'chronicIllnesses' => 'nullable|array',
         ]);
 
+        foreach ($this->specialtyFields as $field) {
+            $rules['dynamicAnswers.' . $field->id] = 'nullable';
+        }
+
+        $this->validate($rules, [], [
+            'dynamicAnswers.*' => __('Specialty Field'),
+        ]);
+
         $treatmentFilePath = null;
         if ($this->treatmentFile) {
             $treatmentFilePath = $this->treatmentFile->store('treatments', 'public');
@@ -182,6 +203,7 @@ class PatientProfile extends Component
             'follow_up_notes' => $this->followUpNotes,
             'parent_visit_id' => $this->parentVisitId,
             'type' => $this->visitType,
+            'specialty_data' => $this->dynamicAnswers,
         ]);
 
         $this->patient->update(['chronic_illnesses' => $this->chronicIllnesses]);
@@ -204,6 +226,13 @@ class PatientProfile extends Component
         $this->patient->update(['personal_history' => $this->personalHistoryEdit]);
         $this->dispatch('close-ph-edit');
         session()->flash('message', __('Personal history updated.'));
+    }
+
+    public function saveChronicIllnesses()
+    {
+        $this->patient->update(['chronic_illnesses' => $this->chronicIllnesses]);
+        $this->isEditingCI = false;
+        session()->flash('message', __('Chronic illnesses updated.'));
     }
 
     public function uploadFile()

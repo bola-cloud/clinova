@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -30,6 +31,7 @@ class User extends Authenticatable
         'max_patients',
         'max_storage_gb',
         'used_storage_bytes',
+        'specialty_id',
         'subscription_plan',
         'subscription_price',
         'is_paid',
@@ -90,6 +92,11 @@ class User extends Authenticatable
     public function secretaries()
     {
         return $this->hasMany(User::class, 'doctor_id')->where('role', 'secretary');
+    }
+
+    public function specialty(): BelongsTo
+    {
+        return $this->belongsTo(Specialty::class);
     }
 
     public function patients()

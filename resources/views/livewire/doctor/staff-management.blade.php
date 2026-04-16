@@ -119,8 +119,9 @@
     <!-- Password Reset Modal -->
     @if($editingStaffId)
         @php $editingUser = \App\Models\User::find($editingStaffId); @endphp
-        <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in">
-            <div class="bg-white rounded-[3rem] w-full max-w-md shadow-2xl overflow-hidden animate-zoom-in border border-white/20">
+        <div class="fixed inset-0 z-[100] flex justify-center items-start overflow-y-auto p-4 md:p-10 bg-slate-900/60 backdrop-blur-md animate-fade-in">
+            <div wire:click="$set('editingStaffId', null)" class="fixed inset-0"></div>
+            <div class="bg-white rounded-[3rem] w-full max-w-md shadow-2xl overflow-hidden animate-zoom-in border border-white/20 relative my-8">
                 <div class="p-10">
                     <div class="flex items-center justify-between mb-8">
                         <div>

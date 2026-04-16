@@ -35,6 +35,17 @@ use Illuminate\Validation\Rules\Password;
                         <label class="block text-sm font-bold text-gray-700"><?php echo e(__('Default Trial Duration (Days)')); ?></label>
                         <input type="number" wire:model="trialDurationDays" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-6 text-sm focus:ring-4 focus:ring-purple-500/10 transition-all">
                     </div>
+                    <div class="pt-4">
+                        <a href="<?php echo e(route('admin.specialties')); ?>" class="flex items-center gap-3 p-4 bg-purple-50 text-purple-700 rounded-2xl border border-purple-100 hover:bg-purple-100 transition-colors group">
+                            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm"><?php echo e(__('Doctors Specialties')); ?></h4>
+                                <p class="text-[10px] font-bold uppercase tracking-wider opacity-60"><?php echo e(__('Manage dynamic fields')); ?></p>
+                            </div>
+                        </a>
+                    </div>
                 </div>
 
                 <div class="space-y-4">

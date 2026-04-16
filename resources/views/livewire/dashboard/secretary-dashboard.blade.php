@@ -517,8 +517,9 @@ new class extends Component
 
     <!-- Edit Appointment Modal -->
     @if($editingAppointmentId)
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
-        <div class="bg-white rounded-3xl p-6 shadow-2xl max-w-md w-full border border-purple-100">
+    <div class="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4 md:p-10 bg-black/50 backdrop-blur-sm animate-fade-in-down" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+        <div wire:click="cancelEdit" class="fixed inset-0"></div>
+        <div class="bg-white rounded-3xl p-6 shadow-2xl max-w-md w-full border border-purple-100 relative my-8">
             <h3 class="text-xl font-bold text-gray-900 mb-6">{{ __('Edit Appointment') }}</h3>
             
             <form wire:submit="saveAppointment" class="space-y-4">

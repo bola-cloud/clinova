@@ -24,6 +24,11 @@ class Visit extends Model
         'family_history',
         'parent_visit_id',
         'type',
+        'specialty_data',
+    ];
+
+    protected $casts = [
+        'specialty_data' => 'array',
     ];
 
     public function patient(): BelongsTo
