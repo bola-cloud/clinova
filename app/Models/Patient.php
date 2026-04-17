@@ -48,4 +48,27 @@ class Patient extends Model
     {
         return $this->hasMany(PatientFile::class);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Attributes
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Get the total count of files (standalone + visit attachments).
+     */
+    public function getTotalFilesCountAttribute(): int
+    {
+        $visitAttachmentsCount = $this->visits()->whereNotNull('treatment_file_path')->count();
+        return $this->files()->count() + $visitAttachmentsCount;
+    }
+
+    /**
+     * Check if the patient has any medical files.
+     */
+    public function getHasMedicalFilesAttribute(): bool
+    {
+        return $this->total_files_count > 0;
+    }
 }

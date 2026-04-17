@@ -17,6 +17,7 @@ class VisitForm extends Component
     public $chronicIllnesses = [];
     public $specialtyFields = [];
     public $dynamicAnswers = [];
+    public $follow_up_notes;
 
     public function updatedComplaint($value)
     {
@@ -63,7 +64,7 @@ class VisitForm extends Component
             if ($doctor->specialty) {
                 $this->specialtyFields = $doctor->specialty->fields;
                 foreach ($this->specialtyFields as $field) {
-                    $this->dynamicAnswers[$field->id] = '';
+                    $this->dynamicAnswers[$field->id] = $field->type === 'multi_select' ? [] : '';
                 }
             }
         }
@@ -72,15 +73,20 @@ class VisitForm extends Component
     public function saveVisit()
     {
         $rules = [
-            'complaint' => 'required',
-            'diagnosis' => 'required',
+            'complaint' => $this->appointment->type === 'follow_up' ? 'nullable' : 'required',
+            'diagnosis' => $this->appointment->type === 'follow_up' ? 'nullable' : 'required',
+        ];
+
+        $messages = [
+            'complaint.required' => __('The complaint field is required.'),
+            'diagnosis.required' => __('The diagnosis field is required.'),
         ];
 
         foreach ($this->specialtyFields as $field) {
-            $rules['dynamicAnswers.' . $field->id] = 'required';
+            $rules['dynamicAnswers.' . $field->id] = 'nullable';
         }
 
-        $this->validate($rules, [], [
+        $this->validate($rules, $messages, [
             'dynamicAnswers.*' => __('Specialty Field'),
         ]);
 
@@ -110,6 +116,7 @@ class VisitForm extends Component
             'history' => $this->history,
             'treatment_text' => $this->treatment_text,
             'treatment_file_path' => $filePath,
+            'follow_up_notes' => $this->follow_up_notes,
             'specialty_data' => $this->dynamicAnswers,
         ]);
 

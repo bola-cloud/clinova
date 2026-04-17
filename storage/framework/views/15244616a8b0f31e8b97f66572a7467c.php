@@ -227,8 +227,9 @@ use Illuminate\Support\Facades\Hash;
 
     <!-- Create Doctor Modal -->
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($showCreateModal): ?>
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden border border-white animate-zoom-in">
+    <div class="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4 md:p-10 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+        <div wire:click="$set('showCreateModal', false)" class="fixed inset-0"></div>
+        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden border border-white animate-zoom-in relative my-8">
             <div class="p-10">
                 <div class="flex items-center justify-between mb-8">
                     <div>
@@ -340,8 +341,9 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
     <!-- Manage Staff Modal -->
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($managingDoctorId && $managingDoctor): ?>
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
-        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden border border-white animate-zoom-in">
+    <div class="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4 md:p-10 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+        <div wire:click="closeStaffModal" class="fixed inset-0"></div>
+        <div class="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden border border-white animate-zoom-in relative my-8">
             <div class="p-10">
                 <div class="flex items-center justify-between mb-8">
                     <div>

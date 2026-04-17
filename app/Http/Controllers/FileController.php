@@ -23,19 +23,35 @@ class FileController extends Controller
 
         $content = Storage::disk('public')->get($path);
         
-        try {
-            $mimeType = Storage::disk('public')->mimeType($path);
-        } catch (\Exception $e) {
-            $mimeType = 'application/octet-stream';
-        }
-
         // If it's compressed (Gzip), decompress it
         if (FileService::isCompressed($content)) {
             $content = FileService::decompressContent($content);
         }
 
+        // Determine Mime Type
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->buffer($content);
+
+        // If detection fails or is generic, use extension as fallback
+        if (!$mimeType || $mimeType === 'application/octet-stream' || $mimeType === 'text/plain') {
+            $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            $mimes = [
+                'pdf' => 'application/pdf',
+                'png' => 'image/png',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+                'txt' => 'text/plain',
+                'doc' => 'application/msword',
+                'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ];
+            $mimeType = $mimes[$extension] ?? $mimeType;
+        }
+
         return response($content)
             ->header('Content-Type', $mimeType)
+            ->header('Content-Disposition', 'inline; filename="' . basename($path) . '"')
             ->header('Cache-Control', 'public, max-age=31536000');
     }
 }

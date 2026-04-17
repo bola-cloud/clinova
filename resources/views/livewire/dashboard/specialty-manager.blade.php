@@ -102,11 +102,11 @@ new class extends Component
     {
         $this->validate([
             'fieldLabel' => 'required|min:2',
-            'fieldType' => 'required|in:text,select',
+            'fieldType' => 'required|in:text,select,multi_select',
         ]);
 
-        if ($this->fieldType === 'select' && empty($this->fieldOptions)) {
-            $this->addError('newOption', __('At least one option is required for multiple choice.'));
+        if (in_array($this->fieldType, ['select', 'multi_select']) && empty($this->fieldOptions)) {
+            $this->addError('newOption', __('At least one option is required.'));
             return;
         }
 
@@ -114,7 +114,7 @@ new class extends Component
             'specialty_id' => $this->selectedSpecialty->id,
             'label' => $this->fieldLabel,
             'type' => $this->fieldType,
-            'options' => $this->fieldType === 'select' ? $this->fieldOptions : null,
+            'options' => in_array($this->fieldType, ['select', 'multi_select']) ? $this->fieldOptions : null,
         ];
 
         if ($this->editingFieldId) {
@@ -208,8 +208,16 @@ new class extends Component
                                 <div>
                                     <h5 class="font-bold text-slate-900">{{ $field->label }}</h5>
                                     <div class="flex items-center gap-3">
-                                        <span class="text-[10px] uppercase font-black tracking-widest text-slate-400">{{ $field->type === 'text' ? __('Text Field') : __('Multiple Choice') }}</span>
-                                        @if($field->type === 'select')
+                                        <span class="text-[10px] uppercase font-black tracking-widest text-slate-400">
+                                            @if($field->type === 'text')
+                                                {{ __('Text Field') }}
+                                            @elseif($field->type === 'select')
+                                                {{ __('Single Selection') }}
+                                            @else
+                                                {{ __('Multiple Selection') }}
+                                            @endif
+                                        </span>
+                                        @if(in_array($field->type, ['select', 'multi_select']))
                                         <span class="text-[10px] text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-lg">{{ count($field->options) }} {{ __('Options') }}</span>
                                         @endif
                                     </div>
@@ -290,21 +298,26 @@ new class extends Component
 
                     <div class="space-y-2">
                         <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Field Type') }}</label>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-3 gap-4">
                             <button wire:click="$set('fieldType', 'text')" 
                                     class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 {{ $fieldType === 'text' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale' }}">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                <span class="text-xs font-black">{{ __('Text Field') }}</span>
+                                <span class="text-[10px] font-black">{{ __('Text Field') }}</span>
                             </button>
                             <button wire:click="$set('fieldType', 'select')" 
                                     class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 {{ $fieldType === 'select' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale' }}">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
-                                <span class="text-xs font-black">{{ __('Multiple Choice') }}</span>
+                                <span class="text-[10px] font-black">{{ __('Single Choice') }}</span>
+                            </button>
+                            <button wire:click="$set('fieldType', 'multi_select')" 
+                                    class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 {{ $fieldType === 'multi_select' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale' }}">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                                <span class="text-[10px] font-black">{{ __('Multi-Select') }}</span>
                             </button>
                         </div>
                     </div>
 
-                    @if($fieldType === 'select')
+                    @if(in_array($fieldType, ['select', 'multi_select']))
                     <div class="space-y-4 pt-4 border-t border-dashed border-gray-100 animate-slide-in">
                         <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Options') }}</label>
                         <div class="flex gap-2">

@@ -82,6 +82,13 @@
                         </div>
                     </div>
 
+                    @if($visit->follow_up_notes)
+                    <div class="md:col-span-2 mt-4 p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50">
+                        <h4 class="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-2">{{ __('Follow Up Notes') }}</h4>
+                        <p class="text-sm text-indigo-900 leading-relaxed whitespace-pre-line">{{ $visit->follow_up_notes }}</p>
+                    </div>
+                    @endif
+
                     @if($visit->specialty_data && count($visit->specialty_data) > 0)
                     <div class="md:col-span-2 pt-4 border-t border-gray-100">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-purple-50/30 p-4 rounded-2xl border border-purple-100">
@@ -96,7 +103,7 @@
                                 @if($field)
                                 <div class="flex flex-col">
                                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ $field->label }}</span>
-                                    <span class="text-sm font-bold text-slate-800">{{ $answer }}</span>
+                                    <span class="text-sm font-bold text-slate-800">{{ is_array($answer) ? implode(', ', $answer) : $answer }}</span>
                                 </div>
                                 @endif
                             @endforeach
@@ -140,6 +147,12 @@
                             <h5 class="text-emerald-900 font-bold mb-1">{{ __('Treatment & Instructions') }}</h5>
                             <p class="text-gray-600 whitespace-pre-line">{{ $followUp->treatment_text ?: __('No data.') }}</p>
                         </div>
+                        @if($followUp->follow_up_notes)
+                        <div class="md:col-span-2 text-xs mt-2 p-3 bg-white rounded-xl border border-emerald-100/50">
+                            <h5 class="text-emerald-900 font-bold mb-1">{{ __('Follow Up Notes') }}</h5>
+                            <p class="text-gray-600 whitespace-pre-line italic">{{ $followUp->follow_up_notes }}</p>
+                        </div>
+                        @endif
                     </div>
                 </div>
                 @endforeach
@@ -165,23 +178,23 @@
                 @endif
                 
                 <div class="space-y-4 mb-6 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-                    @forelse($patient->files as $file)
+                    @forelse($allFiles as $file)
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                         <div class="flex items-center gap-3 overflow-hidden">
-                            <div class="p-2 {{ $file->file_type === 'investigation' ? 'bg-blue-100 text-blue-600' : ($file->file_type === 'lab' ? 'bg-rose-100 text-rose-600' : 'bg-purple-100 text-purple-600') }} rounded-lg shrink-0">
+                            <div class="p-2 {{ $file['type'] === 'investigation' ? 'bg-blue-100 text-blue-600' : ($file['type'] === 'lab' ? 'bg-rose-100 text-rose-600' : 'bg-purple-100 text-purple-600') }} rounded-lg shrink-0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             </div>
                             <div class="flex flex-col min-w-0">
-                                <span class="text-sm font-bold text-gray-800 truncate" title="{{ $file->file_name }}">{{  Str::limit($file->file_name, 20) }}</span>
-                                <span class="text-[10px] text-gray-500 uppercase font-bold">{{ __($file->file_type === 'investigation' ? 'Investigation' : ($file->file_type === 'lab' ? 'Lab Result' : 'Other')) }} • {{ $file->created_at->format('Y-m-d') }}</span>
+                                <span class="text-sm font-bold text-gray-800 truncate" title="{{ $file['name'] }}">{{  Str::limit($file['name'], 20) }}</span>
+                                <span class="text-[10px] text-gray-500 uppercase font-bold">{{ __($file['type'] === 'investigation' ? 'Investigation' : ($file['type'] === 'lab' ? 'Lab Result' : ($file['type'] === 'prescription' ? 'Prescription' : 'Other'))) }} • {{ $file['date']->format('Y-m-d') }}</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5">
-                            <a href="{{ route('files.serve', ['path' => $file->file_path]) }}" target="_blank" class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-sm group/btn" title="{{ __('View') }}">
+                            <a href="{{ route('files.serve', ['path' => $file['path']]) }}" target="_blank" class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-sm group/btn" title="{{ __('View') }}">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                             </a>
-                            @if(auth()->user()->isDoctor() || auth()->user()->isSecretary())
-                            <button wire:click="deleteFile({{ $file->id }})" wire:confirm="{{ __('Are you sure?') }}" class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm" title="{{ __('Delete') }}">
+                            @if($file['source'] === 'patient_file' && (auth()->user()->isDoctor() || auth()->user()->isSecretary()))
+                            <button wire:click="deleteFile({{ $file['id'] }})" wire:confirm="{{ __('Are you sure?') }}" class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm" title="{{ __('Delete') }}">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
                             @endif
@@ -358,7 +371,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2 space-y-2">
-                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Patient Complaint') }} <span class="text-rose-500">*</span></label>
+                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Patient Complaint') }} @if($visitType !== 'follow_up')<span class="text-rose-500">*</span>@endif</label>
                             <div class="relative">
                                 <textarea wire:model.live="complaint" rows="3" placeholder="{{ __('What is the patient suffering from?') }}" 
                                         class="w-full bg-slate-50 border-gray-200 rounded-2xl py-4 px-5 text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"></textarea>
@@ -376,7 +389,7 @@
                         </div>
 
                         <div class="md:col-span-2 space-y-2">
-                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Preliminary Diagnosis') }} <span class="text-rose-500">*</span></label>
+                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Preliminary Diagnosis') }} @if($visitType !== 'follow_up')<span class="text-rose-500">*</span>@endif</label>
                             <div class="relative">
                                 <input type="text" wire:model.live="diagnosis" placeholder="{{ __('Enter diagnosis...') }}"
                                     class="w-full bg-slate-50 border-gray-200 rounded-2xl py-4 px-5 text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all">
@@ -413,7 +426,7 @@
                             <h4 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">{{ $doctor->specialty->name }} - {{ __('Extra Details') }}</h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 @foreach($specialtyFields as $field)
-                                <div class="space-y-2">
+                                <div class="space-y-2 {{ $field->type === 'multi_select' ? 'md:col-span-2' : '' }}">
                                     <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ $field->label }}</label>
                                     @if($field->type === 'text')
                                         <input type="text" wire:model="dynamicAnswers.{{ $field->id }}" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-5 text-sm focus:ring-4 focus:ring-emerald-500/10 transition-all">
@@ -424,6 +437,15 @@
                                                 <option value="{{ $opt }}">{{ $opt }}</option>
                                             @endforeach
                                         </select>
+                                    @elseif($field->type === 'multi_select')
+                                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-gray-100">
+                                            @foreach($field->options as $opt)
+                                            <label class="flex items-center gap-3 cursor-pointer group">
+                                                <input type="checkbox" wire:model="dynamicAnswers.{{ $field->id }}" value="{{ $opt }}" class="w-5 h-5 text-emerald-600 bg-white border-gray-200 rounded-xl focus:ring-emerald-500/20 transition-all">
+                                                <span class="text-xs font-bold text-gray-600 group-hover:text-emerald-700 transition-colors">{{ $opt }}</span>
+                                            </label>
+                                            @endforeach
+                                        </div>
                                     @endif
                                     @error('dynamicAnswers.' . $field->id) <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
                                 </div>
@@ -466,13 +488,11 @@
                             </div>
                         </div>
 
-                        @if($visitType === 'follow_up')
                         <div class="md:col-span-2 space-y-2 pt-4 border-t border-dashed border-gray-200">
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Follow Up Notes') }}</label>
                             <textarea wire:model.live="followUpNotes" rows="3" placeholder="{{ __('Notes regarding patient progress...') }}"
                                       class="w-full bg-indigo-50/50 border-indigo-100 rounded-2xl py-4 px-5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"></textarea>
                         </div>
-                        @endif
 
                         <div class="md:col-span-2 space-y-2">
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Attach Treatment File') }}</label>
@@ -485,16 +505,31 @@
                                     <p class="text-sm font-bold text-slate-700">{{ __('Upload prescription/report') }}</p>
                                     <p class="text-[10px] text-slate-400 uppercase font-black">PDF, JPG, PNG</p>
                                 </div>
+                                <div wire:loading wire:target="treatmentFile" class="absolute inset-0 bg-slate-50/80 backdrop-blur-[1px] rounded-2xl flex items-center justify-center z-10">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="animate-spin h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        <span class="text-xs font-bold text-emerald-700">{{ __('Uploading...') }}</span>
+                                    </div>
+                                </div>
                             </div>
                             @if($treatmentFile)
-                                <p class="text-xs text-emerald-600 font-bold mt-2">{{ $treatmentFile->getClientOriginalName() }}</p>
+                                <div class="flex items-center gap-2 mt-2 px-2 py-1 bg-emerald-50 rounded-lg w-fit">
+                                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <span class="text-xs text-emerald-600 font-bold">{{ $treatmentFile->getClientOriginalName() }}</span>
+                                </div>
                             @endif
                         </div>
                     </div>
 
                     <div class="mt-10 flex gap-4">
                         <button type="button" wire:click="closeVisitModal" class="flex-1 py-4 text-slate-500 font-bold">{{ __('Cancel') }}</button>
-                        <button type="submit" class="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-bold shadow-xl">{{ __('Save Visit Record') }}</button>
+                        <button type="submit" wire:loading.attr="disabled" wire:target="treatmentFile, saveVisit" class="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-bold shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span wire:loading.remove wire:target="treatmentFile, saveVisit">{{ __('Save Visit Record') }}</span>
+                            <span wire:loading wire:target="treatmentFile, saveVisit" class="flex items-center justify-center gap-2">
+                                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span>{{ __('Please wait...') }}</span>
+                            </span>
+                        </button>
                     </div>
                 </div>
             </form>

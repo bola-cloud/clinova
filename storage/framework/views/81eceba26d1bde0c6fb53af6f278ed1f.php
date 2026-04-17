@@ -131,8 +131,16 @@ new class extends Component
             })
             ->when($this->filterDateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->filterDateFrom))
             ->when($this->filterDateTo, fn($q) => $q->whereDate('created_at', '<=', $this->filterDateTo))
-            ->when($this->filterHasFiles === 'yes', fn($q) => $q->has('files'))
-            ->when($this->filterHasFiles === 'no', fn($q) => $q->doesntHave('files'))
+            ->when($this->filterHasFiles === 'yes', function($q) {
+                $q->where(function($fq) {
+                    $fq->has('files')->orWhereHas('visits', fn($vq) => $vq->whereNotNull('treatment_file_path'));
+                });
+            })
+            ->when($this->filterHasFiles === 'no', function($q) {
+                $q->where(function($fq) {
+                    $fq->doesntHave('files')->whereDoesntHave('visits', fn($vq) => $vq->whereNotNull('treatment_file_path'));
+                });
+            })
             ->when($this->filterMinVisits !== '', fn($q) => $q->having('visits_count', '>=', (int)$this->filterMinVisits))
             ->when($this->filterDiagnosis !== '', function($q) {
                 $q->whereHas('visits', function($vq) {
@@ -211,6 +219,16 @@ new class extends Component
 
         $path = $this->newFile->store('patient_files', 'public');
 
+        // Optimize and Compress
+        $mime = $this->newFile->getMimeType();
+        if (str_starts_with($mime, 'image/')) {
+            \App\Services\FileService::optimizeImageInPlace('public', $path);
+        } else {
+            \App\Services\FileService::compressFileInPlace('public', $path);
+        }
+
+        $finalSize = \Illuminate\Support\Facades\Storage::disk('public')->size($path);
+
         \App\Models\PatientFile::create([
             'patient_id' => $patient->id,
             'file_name' => $this->newFile->getClientOriginalName(),
@@ -219,9 +237,9 @@ new class extends Component
             'uploaded_by' => auth()->id(),
         ]);
 
-        // Update used_storage_bytes
+        // Update used_storage_bytes with final size
         if ($doctor) {
-            $doctor->increment('used_storage_bytes', $fileSize);
+            $doctor->increment('used_storage_bytes', $finalSize);
         }
 
         $this->showUploadModal = false;
@@ -250,7 +268,14 @@ new class extends Component
             $basePatientQuery->where('doctor_id', $doctorId);
         }
 
-        $patients = (clone $basePatientQuery)->withCount(['appointments', 'visits', 'files'])
+        $patients = (clone $basePatientQuery)->withCount([
+                'appointments', 
+                'visits', 
+                'files',
+                'visits as visit_attachments_count' => function($q) {
+                    $q->whereNotNull('treatment_file_path');
+                }
+            ])
             ->when($this->search, function($query) {
                 $query->where(function($q) {
                     $q->where('name', 'like', '%'.$this->search.'%')
@@ -262,8 +287,16 @@ new class extends Component
             })
             ->when($this->filterDateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->filterDateFrom))
             ->when($this->filterDateTo, fn($q) => $q->whereDate('created_at', '<=', $this->filterDateTo))
-            ->when($this->filterHasFiles === 'yes', fn($q) => $q->has('files'))
-            ->when($this->filterHasFiles === 'no', fn($q) => $q->doesntHave('files'))
+            ->when($this->filterHasFiles === 'yes', function($q) {
+                $q->where(function($fq) {
+                    $fq->has('files')->orWhereHas('visits', fn($vq) => $vq->whereNotNull('treatment_file_path'));
+                });
+            })
+            ->when($this->filterHasFiles === 'no', function($q) {
+                $q->where(function($fq) {
+                    $fq->doesntHave('files')->whereDoesntHave('visits', fn($vq) => $vq->whereNotNull('treatment_file_path'));
+                });
+            })
             ->when($this->filterMinVisits !== '', fn($q) => $q->having('visits_count', '>=', (int)$this->filterMinVisits))
             ->when($this->filterDiagnosis !== '', function($q) {
                 $q->whereHas('visits', function($vq) {
@@ -276,7 +309,9 @@ new class extends Component
         $stats = [
             'total' => (clone $basePatientQuery)->count(),
             'this_month' => (clone $basePatientQuery)->whereMonth('created_at', now()->month)->count(),
-            'with_files' => (clone $basePatientQuery)->has('files')->count(),
+            'with_files' => (clone $basePatientQuery)->where(function($q) {
+                $q->has('files')->orWhereHas('visits', fn($vq) => $vq->whereNotNull('treatment_file_path'));
+            })->count(),
             'total_visits' => \App\Models\Visit::when(!auth()->user()->isAdmin(), function($q) {
                 $q->where('doctor_id', auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id);
             })->count(),
@@ -502,10 +537,13 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                             </div>
                         </td>
                         <td class="px-6 py-5 text-center">
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($patient->files_count > 0): ?>
+                            <?php
+                                $totalFiles = $patient->files_count + ($patient->visit_attachments_count ?? 0);
+                            ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($totalFiles > 0): ?>
                             <div class="inline-flex items-center justify-center px-3 py-1 bg-rose-50 text-rose-700 rounded-lg text-xs font-bold border border-rose-100 gap-1">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                                <?php echo e($patient->files_count); ?> <?php echo e(__('Files')); ?>
+                                <?php echo e($totalFiles); ?> <?php echo e(__('Files')); ?>
 
                             </div>
                             <?php else: ?>

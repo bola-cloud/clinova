@@ -130,6 +130,7 @@ class PatientProfile extends Component
 
     public function openVisitModal()
     {
+        $this->resetVisitForm();
         $this->chronicIllnesses = $this->patient->chronic_illnesses ?? [];
         $this->isEditingCI = false;
         
@@ -138,7 +139,7 @@ class PatientProfile extends Component
         if ($doctor && $doctor->specialty) {
             $this->specialtyFields = $doctor->specialty->fields;
             foreach ($this->specialtyFields as $field) {
-                $this->dynamicAnswers[$field->id] = '';
+                $this->dynamicAnswers[$field->id] = $field->type === 'multi_select' ? [] : '';
             }
         }
         
@@ -148,14 +149,17 @@ class PatientProfile extends Component
     public function closeVisitModal()
     {
         $this->showVisitModal = false;
+        $this->resetVisitForm();
     }
 
     public function startFollowUp($visitId)
     {
-        $this->openVisitModal();
+        $this->resetVisitForm();
+        $this->showVisitModal = true;
         $this->parentVisitId = $visitId;
         $this->visitType = 'follow_up';
         $this->chronicIllnesses = $this->patient->chronic_illnesses ?? [];
+        $this->isEditingCI = false;
         
         $parentVisit = Visit::find($visitId);
         if ($parentVisit) {
@@ -166,15 +170,15 @@ class PatientProfile extends Component
 
     public function saveVisit()
     {
-        $this->validate([
-            'complaint' => 'required|string|max:5000',
-            'diagnosis' => 'required|string|max:2000',
+        $rules = [
+            'complaint' => $this->visitType === 'follow_up' ? 'nullable|string|max:5000' : 'required|string|max:5000',
+            'diagnosis' => $this->visitType === 'follow_up' ? 'nullable|string|max:2000' : 'required|string|max:2000',
             'investigation' => 'nullable|string|max:5000',
             'treatmentText' => 'nullable|string|max:5000',
             'treatmentFile' => 'nullable|file|max:10240',
             'followUpNotes' => 'nullable|string|max:5000',
             'chronicIllnesses' => 'nullable|array',
-        ]);
+        ];
 
         foreach ($this->specialtyFields as $field) {
             $rules['dynamicAnswers.' . $field->id] = 'nullable';
@@ -184,11 +188,28 @@ class PatientProfile extends Component
             'dynamicAnswers.*' => __('Specialty Field'),
         ]);
 
+        /** @var \App\Models\User $doctor */
+        $doctor = auth()->user()->isDoctor() ? auth()->user() : auth()->user()->assignedDoctor;
+
+        if ($this->treatmentFile) {
+            $fileSize = $this->treatmentFile->getSize();
+            if ($doctor && !$doctor->hasStorageSpace($fileSize)) {
+                $this->addError('treatmentFile', __('Storage limit reached for this clinic. Please contact administration.'));
+                return;
+            }
+        }
+
         $treatmentFilePath = null;
         if ($this->treatmentFile) {
             $treatmentFilePath = $this->treatmentFile->store('treatments', 'public');
             \App\Services\FileService::optimizeImageInPlace('public', $treatmentFilePath);
             \App\Services\FileService::compressFileInPlace('public', $treatmentFilePath);
+            
+            // Increment storage quota with final size
+            if ($doctor) {
+                $finalSize = \Illuminate\Support\Facades\Storage::disk('public')->size($treatmentFilePath);
+                $doctor->increment('used_storage_bytes', $finalSize);
+            }
         }
 
         $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
@@ -210,6 +231,19 @@ class PatientProfile extends Component
 
         $this->closeVisitModal();
         session()->flash('visit_message', __('Visit recorded successfully.'));
+    }
+
+    private function resetVisitForm()
+    {
+        $this->reset([
+            'complaint', 'diagnosis', 'investigation', 'treatmentText', 
+            'treatmentFile', 'parentVisitId', 'visitType', 'followUpNotes', 
+            'dynamicAnswers'
+        ]);
+        $this->complaintSuggestions = [];
+        $this->diagnosisSuggestions = [];
+        $this->investigationSuggestions = [];
+        $this->treatmentSuggestions = [];
     }
 
     public function saveFamilyHistory()
@@ -388,7 +422,33 @@ class PatientProfile extends Component
 
     public function render()
     {
+        // Aggregate files
+        $medicalFiles = $this->patient->files()->orderBy('created_at', 'desc')->get()->map(fn($f) => [
+            'id' => $f->id,
+            'name' => $f->file_name,
+            'path' => $f->file_path,
+            'type' => $f->file_type,
+            'date' => $f->created_at,
+            'source' => 'patient_file',
+        ]);
+
+        $visitFiles = $this->patient->visits()
+            ->whereNotNull('treatment_file_path')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn($v) => [
+                'id' => $v->id,
+                'name' => __('Prescription/Attachment'),
+                'path' => $v->treatment_file_path,
+                'type' => 'prescription',
+                'date' => $v->created_at,
+                'source' => 'visit',
+            ]);
+
+        $allFiles = $medicalFiles->concat($visitFiles)->unique('path')->sortByDesc('date');
+
         return view('livewire.shared.patient-profile', [
+            'allFiles' => $allFiles,
             'primaryVisits' => $this->patient->visits()
                 ->whereNull('parent_visit_id')
                 ->with(['doctor', 'followUps.doctor'])

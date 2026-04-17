@@ -548,5 +548,12 @@
     "Select...": "اختر...",
     "Specialty Field": "حقل التخصص",
     "Doctors Specialties": "تخصصات الأطباء",
-    "Manage dynamic fields": "إدارة الحقول الديناميكية"
+    "Manage dynamic fields": "إدارة الحقول الديناميكية",
+    "Single Selection": "اختيار واحد",
+    "Multiple Selection": "اختيار متعدد",
+    "Single Choice": "اختيار واحد",
+    "Multi-Select": "اختيار متعدد",
+    "At least one option is required.": "يجب إضافة اختيار واحد على الأقل.",
+    "Prescription": "روشتة/علاج",
+    "Prescription/Attachment": "روشتة/مرفق طبى"
 }

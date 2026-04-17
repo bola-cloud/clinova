@@ -80,8 +80,19 @@ use App\Models\SpecialtyField;
                                 <div>
                                     <h5 class="font-bold text-slate-900"><?php echo e($field->label); ?></h5>
                                     <div class="flex items-center gap-3">
-                                        <span class="text-[10px] uppercase font-black tracking-widest text-slate-400"><?php echo e($field->type === 'text' ? __('Text Field') : __('Multiple Choice')); ?></span>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($field->type === 'select'): ?>
+                                        <span class="text-[10px] uppercase font-black tracking-widest text-slate-400">
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($field->type === 'text'): ?>
+                                                <?php echo e(__('Text Field')); ?>
+
+                                            <?php elseif($field->type === 'select'): ?>
+                                                <?php echo e(__('Single Selection')); ?>
+
+                                            <?php else: ?>
+                                                <?php echo e(__('Multiple Selection')); ?>
+
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        </span>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array($field->type, ['select', 'multi_select'])): ?>
                                         <span class="text-[10px] text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-lg"><?php echo e(count($field->options)); ?> <?php echo e(__('Options')); ?></span>
                                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                     </div>
@@ -177,21 +188,26 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
                     <div class="space-y-2">
                         <label class="text-xs font-black text-gray-500 uppercase tracking-widest"><?php echo e(__('Field Type')); ?></label>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-3 gap-4">
                             <button wire:click="$set('fieldType', 'text')" 
                                     class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 <?php echo e($fieldType === 'text' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale'); ?>">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                <span class="text-xs font-black"><?php echo e(__('Text Field')); ?></span>
+                                <span class="text-[10px] font-black"><?php echo e(__('Text Field')); ?></span>
                             </button>
                             <button wire:click="$set('fieldType', 'select')" 
                                     class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 <?php echo e($fieldType === 'select' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale'); ?>">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
-                                <span class="text-xs font-black"><?php echo e(__('Multiple Choice')); ?></span>
+                                <span class="text-[10px] font-black"><?php echo e(__('Single Choice')); ?></span>
+                            </button>
+                            <button wire:click="$set('fieldType', 'multi_select')" 
+                                    class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 <?php echo e($fieldType === 'multi_select' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale'); ?>">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                                <span class="text-[10px] font-black"><?php echo e(__('Multi-Select')); ?></span>
                             </button>
                         </div>
                     </div>
 
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($fieldType === 'select'): ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(in_array($fieldType, ['select', 'multi_select'])): ?>
                     <div class="space-y-4 pt-4 border-t border-dashed border-gray-100 animate-slide-in">
                         <label class="text-xs font-black text-gray-500 uppercase tracking-widest"><?php echo e(__('Options')); ?></label>
                         <div class="flex gap-2">
