@@ -14,7 +14,7 @@
         <div class="md:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
-                    <label class="block font-bold text-gray-700">{{ __('Main Complaint') }} @if($appointment->type !== 'follow_up')<span class="text-red-500">*</span>@endif</label>
+                    <label class="block font-bold text-gray-700">{{ __('Main Complaint') }}</label>
                     <div class="relative">
                         <textarea wire:model.live="complaint" rows="3" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all"></textarea>
                         @if(!empty($complaint) && count($complaintSuggestions) > 0)
@@ -30,7 +30,7 @@
                     @error('complaint') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
                 <div class="space-y-2">
-                    <label class="block font-bold text-gray-700">{{ __('Diagnosis') }} @if($appointment->type !== 'follow_up')<span class="text-red-500">*</span>@endif</label>
+                    <label class="block font-bold text-gray-700">{{ __('Diagnosis') }}</label>
                     <div class="relative">
                         <textarea wire:model.live="diagnosis" rows="3" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all"></textarea>
                         @if(!empty($diagnosis) && count($diagnosisSuggestions) > 0)
@@ -47,17 +47,6 @@
                 </div>
             </div>
 
-            <div class="space-y-4">
-                <label class="block text-sm font-bold text-gray-700">{{ __('Chronic Illnesses') }}</label>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    @foreach(['Diabetes melitus', 'Hypertension', 'Ischemic heart disease', 'Asthma', 'COPD', 'Thyroid disorders', 'Chronic kidney disease', 'Chronic liver disease', 'Osteoporosis', 'Dyslipidemia', 'Anemia'] as $illness)
-                    <label class="flex items-center gap-2 cursor-pointer group">
-                        <input type="checkbox" wire:model="chronicIllnesses" value="{{ $illness }}" class="w-4 h-4 text-purple-600 bg-white border-gray-300 rounded focus:ring-purple-500">
-                        <span class="text-sm text-gray-700 group-hover:text-purple-700 transition-colors">{{ __($illness) }}</span>
-                    </label>
-                    @endforeach
-                </div>
-            </div>
 
             <div class="space-y-2">
                 <label class="block font-bold text-gray-700">{{ __('Investigations & Tests') }}</label>
@@ -96,7 +85,7 @@
                 <h4 class="md:col-span-2 text-sm font-black text-purple-600 uppercase tracking-widest">{{ auth()->user()->specialty->name }} - {{ __('Extra Details') }}</h4>
                 @foreach($specialtyFields as $field)
                 <div class="space-y-2">
-                    <label class="block font-bold text-gray-700">{{ $field->label }} <span class="text-rose-500">*</span></label>
+                    <label class="block font-bold text-gray-700">{{ $field->label }}</label>
                     @if($field->type === 'text')
                         <input type="text" wire:model="dynamicAnswers.{{ $field->id }}" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all">
                     @elseif($field->type === 'select')
@@ -115,6 +104,10 @@
                             </label>
                             @endforeach
                         </div>
+                    @elseif($field->type === 'date')
+                        <input type="date" wire:model="dynamicAnswers.{{ $field->id }}" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all">
+                    @elseif($field->type === 'number')
+                        <input type="number" wire:model="dynamicAnswers.{{ $field->id }}" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all">
                     @endif
                     @error('dynamicAnswers.' . $field->id) <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
                 </div>
@@ -133,7 +126,7 @@
                         <textarea wire:model.live="follow_up_notes" rows="3" class="w-full px-4 py-3 bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-all text-sm" placeholder="{{ __('Notes regarding patient progress...') }}"></textarea>
                     </div>
 
-                    <input type="file" wire:model="treatment_file" class="hidden" id="treatment_file">
+                    <input type="file" wire:model="treatment_file" class="hidden" id="treatment_file" capture="camera" accept="image/*,application/pdf">
                     <label for="treatment_file" class="flex flex-col gap-6 w-full py-10 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-purple-300 transition-all group">
                         <div class="space-y-2 px-6">
                             <label class="text-sm font-bold text-gray-700 flex items-center gap-2">

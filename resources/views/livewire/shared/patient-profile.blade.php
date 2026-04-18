@@ -7,7 +7,13 @@
                 </div>
                 <div>
                     <h2 class="text-3xl font-bold text-gray-900 mb-1">{{ $patient->name }}</h2>
-                    <p class="text-gray-500 font-medium">{{ $patient->phone }} | {{ $patient->age }} {{ __('Years') }} | {{ $patient->address }}</p>
+                    <p class="text-gray-500 font-medium">
+                        {{ $patient->phone }} | 
+                        @if($patient->age_years) {{ $patient->age_years }} {{ __('Y') }} @endif
+                        @if($patient->age_months) {{ $patient->age_months }} {{ __('M') }} @endif
+                        @if($patient->age_days) {{ $patient->age_days }} {{ __('D') }} @endif
+                        | {{ $patient->address }}
+                    </p>
                 </div>
             </div>
             <div class="flex gap-3">
@@ -301,50 +307,7 @@
                         {{ $patient->personal_history ?: __('No data recorded.') }}
                     </p>
                 </div>
-            </div>
-
-            <!-- Chronic Illnesses -->
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative" x-data="{ isEditingCI: @entangle('isEditingCI') }">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-bold text-lg">{{ __('Chronic Illnesses') }}</h3>
-                    @if(auth()->user()->isDoctor())
-                    <button @click="isEditingCI = true" x-show="!isEditingCI" class="text-purple-600 hover:bg-purple-50 p-2 rounded-lg transition-colors" title="{{ __('Edit') }}">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                    </button>
-                    @endif
-                </div>
-
-                <div x-show="isEditingCI" x-cloak>
-                    <form wire:submit.prevent="saveChronicIllnesses" class="space-y-4">
-                        <div class="grid grid-cols-1 gap-2">
-                            @foreach(['Diabetes melitus', 'Hypertension', 'Ischemic heart disease', 'Asthma', 'COPD', 'Thyroid disorders', 'Chronic kidney disease', 'Chronic liver disease', 'Osteoporosis', 'Dyslipidemia', 'Anemia'] as $illness)
-                            <label class="flex items-center gap-3 cursor-pointer group p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                                <input type="checkbox" wire:model="chronicIllnesses" value="{{ $illness }}" class="w-4 h-4 text-purple-600 bg-white border-gray-300 rounded focus:ring-purple-500">
-                                <span class="text-sm font-bold text-gray-600 group-hover:text-purple-700 transition-colors">{{ __($illness) }}</span>
-                            </label>
-                            @endforeach
-                        </div>
-                        <div class="flex items-center gap-2 justify-end pt-2 border-t border-dashed border-gray-100">
-                            <button type="button" @click="isEditingCI = false" class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-colors">{{ __('Cancel') }}</button>
-                            <button type="submit" class="px-4 py-2 text-sm font-bold bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-200 hover:bg-purple-700 transition-colors">{{ __('Save') }}</button>
-                        </div>
-                    </form>
-                </div>
-                <div x-show="!isEditingCI">
-                    @if($patient->chronic_illnesses && count($patient->chronic_illnesses) > 0)
-                    <div class="flex flex-wrap gap-2">
-                        @foreach($patient->chronic_illnesses as $illness)
-                        <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-100 italic">
-                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 me-2"></span>
-                            {{ __($illness) }}
-                        </span>
-                        @endforeach
-                    </div>
-                    @else
-                    <p class="text-gray-400 text-sm italic">{{ __('No chronic illnesses recorded.') }}</p>
-                    @endif
-                </div>
-            </div>
+            </div>>
         </div>
     </div>
 
@@ -371,7 +334,7 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2 space-y-2">
-                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Patient Complaint') }} @if($visitType !== 'follow_up')<span class="text-rose-500">*</span>@endif</label>
+                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Patient Complaint') }}</label>
                             <div class="relative">
                                 <textarea wire:model.live="complaint" rows="3" placeholder="{{ __('What is the patient suffering from?') }}" 
                                         class="w-full bg-slate-50 border-gray-200 rounded-2xl py-4 px-5 text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"></textarea>
@@ -389,7 +352,7 @@
                         </div>
 
                         <div class="md:col-span-2 space-y-2">
-                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Preliminary Diagnosis') }} @if($visitType !== 'follow_up')<span class="text-rose-500">*</span>@endif</label>
+                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Preliminary Diagnosis') }}</label>
                             <div class="relative">
                                 <input type="text" wire:model.live="diagnosis" placeholder="{{ __('Enter diagnosis...') }}"
                                     class="w-full bg-slate-50 border-gray-200 rounded-2xl py-4 px-5 text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all">
@@ -406,17 +369,6 @@
                             @error('diagnosis') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
                         </div>
 
-                        <div class="md:col-span-2 space-y-4 pt-4 border-t border-dashed border-gray-200">
-                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Chronic Illnesses') }}</label>
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50/50 p-5 rounded-2xl border border-gray-100">
-                                @foreach(['Diabetes melitus', 'Hypertension', 'Ischemic heart disease', 'Asthma', 'COPD', 'Thyroid disorders', 'Chronic kidney disease', 'Chronic liver disease', 'Osteoporosis', 'Dyslipidemia', 'Anemia'] as $illness)
-                                <label class="flex items-center gap-3 cursor-pointer group">
-                                    <input type="checkbox" wire:model="chronicIllnesses" value="{{ $illness }}" class="w-5 h-5 text-emerald-600 bg-white border-gray-300 rounded-xl focus:ring-emerald-500">
-                                    <span class="text-sm font-bold text-gray-600 group-hover:text-emerald-700 transition-colors">{{ __($illness) }}</span>
-                                </label>
-                                @endforeach
-                            </div>
-                        </div>
 
                         @if(count($specialtyFields) > 0)
                         <div class="md:col-span-2 space-y-4 pt-4 border-t border-dashed border-gray-200">
@@ -446,6 +398,10 @@
                                             </label>
                                             @endforeach
                                         </div>
+                                     @elseif($field->type === 'date')
+                                        <input type="date" wire:model="dynamicAnswers.{{ $field->id }}" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-5 text-sm focus:ring-4 focus:ring-emerald-500/10 transition-all">
+                                    @elseif($field->type === 'number')
+                                        <input type="number" wire:model="dynamicAnswers.{{ $field->id }}" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-5 text-sm focus:ring-4 focus:ring-emerald-500/10 transition-all">
                                     @endif
                                     @error('dynamicAnswers.' . $field->id) <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
                                 </div>
@@ -572,6 +528,19 @@
                             @endforeach
                         </select>
                     </div>
+                    @else
+                    <div>
+                        <span class="block text-[10px] font-black uppercase text-purple-600 mb-1 tracking-widest">{{ __('Doctor') }}</span>
+                        @php $doctor = \App\Models\User::find($bookingDoctorId); @endphp
+                        <div class="p-4 bg-purple-50 rounded-2xl border border-purple-100 flex items-center justify-between shadow-inner">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold shadow-lg text-xs">
+                                    {{ mb_substr($doctor->name ?? '?', 0, 1) }}
+                                </div>
+                                <span class="font-bold text-purple-900 text-sm">{{ $doctor->name ?? __('Unknown') }}</span>
+                            </div>
+                        </div>
+                    </div>
                     @endif
                     <div class="pt-6 flex gap-3">
                         <button wire:click="closeBookingModal" class="flex-1 py-3 text-gray-500 font-bold">{{ __('Cancel') }}</button>
@@ -596,12 +565,21 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-gray-500 uppercase">{{ __('Phone') }}</label>
-                        <input type="text" wire:model="editPhone" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-3">
+                        <label class="text-xs font-bold text-gray-500 uppercase font-black">{{ __('Phone') }}</label>
+                        <input type="text" wire:model="editPhone" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 transition-all font-bold">
                     </div>
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-gray-500 uppercase">{{ __('Age') }}</label>
-                        <input type="number" wire:model="editAge" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-3">
+                        <label class="text-xs font-bold text-gray-500 uppercase font-black">{{ __('Weight') }} ({{ __('kg') }})</label>
+                        <input type="number" wire:model="editWeight" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 transition-all font-bold">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase font-black mb-2 block">{{ __('Age') }} ({{ __('Y') }} - {{ __('M') }} - {{ __('D') }})</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <input type="number" wire:model="editAgeYears" placeholder="{{ __('Y') }}" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 transition-all font-bold text-center">
+                        <input type="number" wire:model="editAgeMonths" placeholder="{{ __('M') }}" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 transition-all font-bold text-center">
+                        <input type="number" wire:model="editAgeDays" placeholder="{{ __('D') }}" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-500 transition-all font-bold text-center">
                     </div>
                 </div>
                 <div class="space-y-2">

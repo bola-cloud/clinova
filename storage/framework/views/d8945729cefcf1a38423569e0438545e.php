@@ -73,6 +73,10 @@ use App\Models\SpecialtyField;
                                 <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-purple-600 transition-colors">
                                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($field->type === 'text'): ?>
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    <?php elseif($field->type === 'date'): ?>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <?php elseif($field->type === 'number'): ?>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
                                     <?php else: ?>
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
                                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -87,8 +91,14 @@ use App\Models\SpecialtyField;
                                             <?php elseif($field->type === 'select'): ?>
                                                 <?php echo e(__('Single Selection')); ?>
 
-                                            <?php else: ?>
+                                            <?php elseif($field->type === 'multi_select'): ?>
                                                 <?php echo e(__('Multiple Selection')); ?>
+
+                                            <?php elseif($field->type === 'date'): ?>
+                                                <?php echo e(__('Date Field')); ?>
+
+                                            <?php elseif($field->type === 'number'): ?>
+                                                <?php echo e(__('Number Field')); ?>
 
                                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                         </span>
@@ -188,21 +198,31 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
                     <div class="space-y-2">
                         <label class="text-xs font-black text-gray-500 uppercase tracking-widest"><?php echo e(__('Field Type')); ?></label>
-                        <div class="grid grid-cols-3 gap-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
                             <button wire:click="$set('fieldType', 'text')" 
                                     class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 <?php echo e($fieldType === 'text' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale'); ?>">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                <span class="text-[10px] font-black"><?php echo e(__('Text Field')); ?></span>
+                                <span class="text-[10px] font-black"><?php echo e(__('Text')); ?></span>
+                            </button>
+                            <button wire:click="$set('fieldType', 'date')" 
+                                    class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 <?php echo e($fieldType === 'date' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale'); ?>">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span class="text-[10px] font-black"><?php echo e(__('Date')); ?></span>
+                            </button>
+                            <button wire:click="$set('fieldType', 'number')" 
+                                    class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 <?php echo e($fieldType === 'number' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale'); ?>">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                                <span class="text-[10px] font-black"><?php echo e(__('Number')); ?></span>
                             </button>
                             <button wire:click="$set('fieldType', 'select')" 
                                     class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 <?php echo e($fieldType === 'select' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale'); ?>">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
-                                <span class="text-[10px] font-black"><?php echo e(__('Single Choice')); ?></span>
+                                <span class="text-[10px] font-black"><?php echo e(__('Choice')); ?></span>
                             </button>
                             <button wire:click="$set('fieldType', 'multi_select')" 
                                     class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 <?php echo e($fieldType === 'multi_select' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale'); ?>">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                                <span class="text-[10px] font-black"><?php echo e(__('Multi-Select')); ?></span>
+                                <span class="text-[10px] font-black"><?php echo e(__('Multi')); ?></span>
                             </button>
                         </div>
                     </div>

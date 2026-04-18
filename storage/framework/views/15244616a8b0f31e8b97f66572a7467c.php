@@ -143,8 +143,8 @@ use Illuminate\Support\Facades\Hash;
                                 <button wire:click="manageStaff(<?php echo e($doctor->id); ?>)" class="p-2.5 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white rounded-xl transition-all" title="<?php echo e(__('Manage Staff')); ?>">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                                 </button>
-                                <button wire:click="editQuotas(<?php echo e($doctor->id); ?>)" class="p-2.5 bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white rounded-xl transition-all" title="<?php echo e(__('Edit Quotas')); ?>">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                                <button wire:click="editDoctor(<?php echo e($doctor->id); ?>)" class="p-2.5 bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white rounded-xl transition-all" title="<?php echo e(__('Edit Doctor Details')); ?>">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </button>
                                 <button wire:click="toggleSubscription(<?php echo e($doctor->id); ?>)" 
                                         class="p-2.5 rounded-xl transition-all <?php echo e($doctor->subscription_active ? 'bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white'); ?>"
@@ -181,32 +181,83 @@ use Illuminate\Support\Facades\Hash;
         <div class="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden border border-white animate-zoom-in relative my-8">
             <div class="p-10">
                 <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-2xl font-black text-slate-900 tracking-tight"><?php echo e(__('Update Rules & Quotas')); ?></h3>
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tight"><?php echo e(__('Edit Doctor Details')); ?></h3>
                     <button wire:click="cancelEdit" class="p-2 text-gray-400 hover:text-rose-500 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
                 
-                <form wire:submit="saveQuotas" class="space-y-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1"><?php echo e(__('Maximum Patients')); ?> (0 = <?php echo e(__('Infinite')); ?>)</label>
-                        <div class="relative">
-                            <input type="number" wire:model="editMaxPatients" 
-                                   class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all text-center">
-                            <span class="absolute <?php echo e(app()->getLocale() === 'ar' ? 'left-5 text-left' : 'right-5 text-right'); ?> top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold"><?php echo e(__('Slot')); ?></span>
+                <form wire:submit="saveDoctor" class="space-y-6">
+                    <div class="space-y-4">
+                        <h4 class="text-[10px] font-black text-purple-600 uppercase tracking-[0.2em]"><?php echo e(__('Account Details')); ?></h4>
+                        
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-500 uppercase"><?php echo e(__('Name')); ?></label>
+                            <input type="text" wire:model="editName" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500 transition-all">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['editName'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <span class="text-rose-500 text-[10px] font-bold"><?php echo e($message); ?></span> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-500 uppercase"><?php echo e(__('Email')); ?></label>
+                            <input type="email" wire:model="editEmail" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500 transition-all">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['editEmail'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <span class="text-rose-500 text-[10px] font-bold"><?php echo e($message); ?></span> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-500 uppercase"><?php echo e(__('Doctor Specialty')); ?></label>
+                            <select wire:model="editSpecialtyId" <?php if(!$canEditSpecialty): echo 'disabled'; endif; ?> class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500 transition-all <?php echo e(!$canEditSpecialty ? 'opacity-60 cursor-not-allowed' : ''); ?>">
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $specialties; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $specialty): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
+                                    <option value="<?php echo e($specialty->id); ?>"><?php echo e($specialty->name); ?></option>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            </select>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!$canEditSpecialty): ?>
+                                <p class="text-[9px] text-amber-600 font-bold mt-1 italic"><?php echo e(__('Specialty is locked because this doctor already has patient records.')); ?></p>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['editSpecialtyId'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <span class="text-rose-500 text-[10px] font-bold"><?php echo e($message); ?></span> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         </div>
                     </div>
-                    
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1"><?php echo e(__('Maximum Storage')); ?> (GB, 0 = <?php echo e(__('Infinite')); ?>)</label>
-                        <div class="relative">
-                            <input type="number" step="0.1" wire:model="editMaxStorageGb" 
-                                   class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-center">
-                            <span class="absolute <?php echo e(app()->getLocale() === 'ar' ? 'left-5 text-left' : 'right-5 text-right'); ?> top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">GB</span>
+
+                    <div class="space-y-4 pt-4 border-t border-dashed border-gray-100">
+                        <h4 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]"><?php echo e(__('Quotas & Limits')); ?></h4>
+                        
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1"><?php echo e(__('Maximum Patients')); ?> (0 = <?php echo e(__('Infinite')); ?>)</label>
+                            <div class="relative">
+                                <input type="number" wire:model="editMaxPatients" 
+                                       class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all text-center">
+                                <span class="absolute <?php echo e(app()->getLocale() === 'ar' ? 'left-5 text-left' : 'right-5 text-right'); ?> top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold"><?php echo e(__('Slot')); ?></span>
+                            </div>
                         </div>
-
-
-                        <p class="text-[10px] text-gray-400 font-medium italic mt-1"><?php echo e(__('Used to limit lab results, X-rays, and treatment file uploads.')); ?></p>
+                        
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1"><?php echo e(__('Maximum Storage')); ?> (GB, 0 = <?php echo e(__('Infinite')); ?>)</label>
+                            <div class="relative">
+                                <input type="number" step="0.1" wire:model="editMaxStorageGb" 
+                                       class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-center">
+                                <span class="absolute <?php echo e(app()->getLocale() === 'ar' ? 'left-5 text-left' : 'right-5 text-right'); ?> top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">GB</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="pt-6 flex gap-3">
@@ -215,7 +266,7 @@ use Illuminate\Support\Facades\Hash;
 
                         </button>
                         <button type="submit" class="flex-[2] py-4 bg-purple-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-purple-200 hover:bg-purple-700 hover:-translate-y-1 transition-all">
-                            <?php echo e(__('Save Configuration')); ?>
+                            <?php echo e(__('Save Changes')); ?>
 
                         </button>
                     </div>

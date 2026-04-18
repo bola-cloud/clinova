@@ -110,10 +110,10 @@
                         <td class="px-8 py-6">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center font-black text-sm uppercase">
-                                    <?php echo e(mb_substr($sub->user->name, 0, 1)); ?>
+                                    <?php echo e(mb_substr($sub->doctor->name, 0, 1)); ?>
 
                                 </div>
-                                <span class="font-black text-slate-900"><?php echo e($sub->user->name); ?></span>
+                                <span class="font-black text-slate-900"><?php echo e($sub->doctor->name); ?></span>
                             </div>
                         </td>
                         <td class="px-8 py-6">

@@ -102,7 +102,7 @@ new class extends Component
     {
         $this->validate([
             'fieldLabel' => 'required|min:2',
-            'fieldType' => 'required|in:text,select,multi_select',
+            'fieldType' => 'required|in:text,select,multi_select,date,number',
         ]);
 
         if (in_array($this->fieldType, ['select', 'multi_select']) && empty($this->fieldOptions)) {
@@ -201,6 +201,10 @@ new class extends Component
                                 <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-purple-600 transition-colors">
                                     @if($field->type === 'text')
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    @elseif($field->type === 'date')
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    @elseif($field->type === 'number')
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
                                     @else
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
                                     @endif
@@ -213,8 +217,12 @@ new class extends Component
                                                 {{ __('Text Field') }}
                                             @elseif($field->type === 'select')
                                                 {{ __('Single Selection') }}
-                                            @else
+                                            @elseif($field->type === 'multi_select')
                                                 {{ __('Multiple Selection') }}
+                                            @elseif($field->type === 'date')
+                                                {{ __('Date Field') }}
+                                            @elseif($field->type === 'number')
+                                                {{ __('Number Field') }}
                                             @endif
                                         </span>
                                         @if(in_array($field->type, ['select', 'multi_select']))
@@ -298,21 +306,31 @@ new class extends Component
 
                     <div class="space-y-2">
                         <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Field Type') }}</label>
-                        <div class="grid grid-cols-3 gap-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
                             <button wire:click="$set('fieldType', 'text')" 
                                     class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 {{ $fieldType === 'text' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale' }}">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                <span class="text-[10px] font-black">{{ __('Text Field') }}</span>
+                                <span class="text-[10px] font-black">{{ __('Text') }}</span>
+                            </button>
+                            <button wire:click="$set('fieldType', 'date')" 
+                                    class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 {{ $fieldType === 'date' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale' }}">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span class="text-[10px] font-black">{{ __('Date') }}</span>
+                            </button>
+                            <button wire:click="$set('fieldType', 'number')" 
+                                    class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 {{ $fieldType === 'number' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale' }}">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                                <span class="text-[10px] font-black">{{ __('Number') }}</span>
                             </button>
                             <button wire:click="$set('fieldType', 'select')" 
                                     class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 {{ $fieldType === 'select' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale' }}">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
-                                <span class="text-[10px] font-black">{{ __('Single Choice') }}</span>
+                                <span class="text-[10px] font-black">{{ __('Choice') }}</span>
                             </button>
                             <button wire:click="$set('fieldType', 'multi_select')" 
                                     class="p-4 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 {{ $fieldType === 'multi_select' ? 'bg-purple-50 border-purple-600 text-purple-700' : 'bg-slate-50 border-transparent text-slate-400 grayscale' }}">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                                <span class="text-[10px] font-black">{{ __('Multi-Select') }}</span>
+                                <span class="text-[10px] font-black">{{ __('Multi') }}</span>
                             </button>
                         </div>
                     </div>

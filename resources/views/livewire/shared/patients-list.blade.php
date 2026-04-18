@@ -25,7 +25,7 @@ new class extends Component
     public $filterDiagnosis = '';
     
     // New patient fields
-    public $name, $phone, $age, $weight, $address, $gender;
+    public $name, $phone, $age_years, $age_months, $age_days, $weight, $address, $gender;
 
     // Rapid booking fields
     public $bookingPatientId = null;
@@ -50,7 +50,6 @@ new class extends Component
     {
         $this->validate([
             'name' => 'required|min:3',
-            'phone' => 'required|numeric',
         ]);
 
         $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
@@ -58,13 +57,15 @@ new class extends Component
         app(PatientService::class)->createPatient([
             'name' => $this->name,
             'phone' => $this->phone,
-            'age' => $this->age,
+            'age_years' => $this->age_years,
+            'age_months' => $this->age_months,
+            'age_days' => $this->age_days,
             'weight' => $this->weight,
             'address' => $this->address,
             'doctor_id' => $doctorId,
         ]);
 
-        $this->reset(['name', 'phone', 'age', 'weight', 'address', 'showAddPatient']);
+        $this->reset(['name', 'phone', 'age_years', 'age_months', 'age_days', 'weight', 'address', 'showAddPatient']);
         session()->flash('success', __('Patient added successfully.'));
     }
 
@@ -72,12 +73,11 @@ new class extends Component
     {
         $this->bookingPatientId = $patientId;
         
-        // Auto-select doctor: if doctor, select self. If secretary/admin and only 1 doctor, select that one.
+        // Auto-select doctor: if doctor, select self. If assistant, select their doctor.
         if (auth()->user()->role === 'doctor') {
             $this->bookingDoctorId = auth()->id();
         } else {
-            $doctors = User::where('role', 'doctor')->get();
-            $this->bookingDoctorId = $doctors->count() === 1 ? $doctors->first()->id : '';
+            $this->bookingDoctorId = auth()->user()->doctor_id;
         }
 
         $this->bookingDate = now()->format('Y-m-d');
@@ -231,7 +231,7 @@ new class extends Component
 
         \App\Models\PatientFile::create([
             'patient_id' => $patient->id,
-            'file_name' => $this->newFile->getClientOriginalName(),
+            'file_name' => $this->newFile?->getClientOriginalName(),
             'file_path' => $path,
             'file_type' => $this->fileType,
             'uploaded_by' => auth()->id(),
@@ -448,13 +448,17 @@ new class extends Component
                 @error('name') <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
             </div>
             <div class="space-y-2">
-                <label class="text-sm font-bold text-gray-700">{{ __('Phone Number') }} <span class="text-red-500">*</span></label>
+                <label class="text-sm font-bold text-gray-700">{{ __('Phone Number') }}</label>
                 <input wire:model="phone" type="text" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors" dir="ltr">
                 @error('phone') <span class="text-red-500 text-xs font-bold">{{ $message }}</span> @enderror
             </div>
-            <div class="space-y-2">
-                <label class="text-sm font-bold text-gray-700">{{ __('Age') }}</label>
-                <input wire:model="age" type="number" min="0" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors">
+            <div class="space-y-2 col-span-2">
+                <label class="text-sm font-bold text-gray-700">{{ __('Age') }} ({{ __('Year') }} - {{ __('Month') }} - {{ __('Day') }})</label>
+                <div class="grid grid-cols-3 gap-3">
+                    <input wire:model="age_years" type="number" placeholder="{{ __('Year') }}" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors">
+                    <input wire:model="age_months" type="number" placeholder="{{ __('Month') }}" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors">
+                    <input wire:model="age_days" type="number" placeholder="{{ __('Day') }}" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors">
+                </div>
             </div>
             <div class="space-y-2">
                 <label class="text-sm font-bold text-gray-700">{{ __('Address') }}</label>
@@ -591,18 +595,18 @@ new class extends Component
             </div>
             
             <form wire:submit="confirmBooking" class="space-y-5">
-                @if(auth()->user()->isAdmin())
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">{{ __('Select Doctor') }} <span class="text-red-500">*</span></label>
-                    <select wire:model="bookingDoctorId" class="w-full px-4 py-3 bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors">
-                        <option value="">{{ __('Choose a doctor...') }}</option>
-                        @foreach($doctors as $doctor)
-                            <option value="{{ $doctor->id }}">{{ __('Dr.') }} {{ $doctor->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('bookingDoctorId') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
+                    <span class="block text-[11px] font-black uppercase text-purple-600 mb-1 tracking-widest">{{ __('Doctor') }}</span>
+                    @php $doctor = \App\Models\User::find($bookingDoctorId); @endphp
+                    <div class="p-4 bg-purple-50 rounded-2xl border border-purple-100 flex items-center justify-between shadow-inner">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold shadow-lg">
+                                {{ mb_substr($doctor->name ?? '?', 0, 1) }}
+                            </div>
+                            <span class="font-bold text-purple-900">{{ $doctor->name ?? __('Unknown') }}</span>
+                        </div>
+                    </div>
                 </div>
-                @endif
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>

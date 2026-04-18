@@ -25,7 +25,7 @@ new class extends Component
     public $filterDiagnosis = '';
     
     // New patient fields
-    public $name, $phone, $age, $weight, $address, $gender;
+    public $name, $phone, $age_years, $age_months, $age_days, $weight, $address, $gender;
 
     // Rapid booking fields
     public $bookingPatientId = null;
@@ -50,7 +50,6 @@ new class extends Component
     {
         $this->validate([
             'name' => 'required|min:3',
-            'phone' => 'required|numeric',
         ]);
 
         $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
@@ -58,13 +57,15 @@ new class extends Component
         app(PatientService::class)->createPatient([
             'name' => $this->name,
             'phone' => $this->phone,
-            'age' => $this->age,
+            'age_years' => $this->age_years,
+            'age_months' => $this->age_months,
+            'age_days' => $this->age_days,
             'weight' => $this->weight,
             'address' => $this->address,
             'doctor_id' => $doctorId,
         ]);
 
-        $this->reset(['name', 'phone', 'age', 'weight', 'address', 'showAddPatient']);
+        $this->reset(['name', 'phone', 'age_years', 'age_months', 'age_days', 'weight', 'address', 'showAddPatient']);
         session()->flash('success', __('Patient added successfully.'));
     }
 
@@ -72,12 +73,11 @@ new class extends Component
     {
         $this->bookingPatientId = $patientId;
         
-        // Auto-select doctor: if doctor, select self. If secretary/admin and only 1 doctor, select that one.
+        // Auto-select doctor: if doctor, select self. If assistant, select their doctor.
         if (auth()->user()->role === 'doctor') {
             $this->bookingDoctorId = auth()->id();
         } else {
-            $doctors = User::where('role', 'doctor')->get();
-            $this->bookingDoctorId = $doctors->count() === 1 ? $doctors->first()->id : '';
+            $this->bookingDoctorId = auth()->user()->doctor_id;
         }
 
         $this->bookingDate = now()->format('Y-m-d');
@@ -231,7 +231,7 @@ new class extends Component
 
         \App\Models\PatientFile::create([
             'patient_id' => $patient->id,
-            'file_name' => $this->newFile->getClientOriginalName(),
+            'file_name' => $this->newFile?->getClientOriginalName(),
             'file_path' => $path,
             'file_type' => $this->fileType,
             'uploaded_by' => auth()->id(),
@@ -458,7 +458,7 @@ endif;
 unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
             <div class="space-y-2">
-                <label class="text-sm font-bold text-gray-700"><?php echo e(__('Phone Number')); ?> <span class="text-red-500">*</span></label>
+                <label class="text-sm font-bold text-gray-700"><?php echo e(__('Phone Number')); ?></label>
                 <input wire:model="phone" type="text" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors" dir="ltr">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['phone'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -469,9 +469,13 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
-            <div class="space-y-2">
-                <label class="text-sm font-bold text-gray-700"><?php echo e(__('Age')); ?></label>
-                <input wire:model="age" type="number" min="0" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors">
+            <div class="space-y-2 col-span-2">
+                <label class="text-sm font-bold text-gray-700"><?php echo e(__('Age')); ?> (<?php echo e(__('Year')); ?> - <?php echo e(__('Month')); ?> - <?php echo e(__('Day')); ?>)</label>
+                <div class="grid grid-cols-3 gap-3">
+                    <input wire:model="age_years" type="number" placeholder="<?php echo e(__('Year')); ?>" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors">
+                    <input wire:model="age_months" type="number" placeholder="<?php echo e(__('Month')); ?>" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors">
+                    <input wire:model="age_days" type="number" placeholder="<?php echo e(__('Day')); ?>" class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors">
+                </div>
             </div>
             <div class="space-y-2">
                 <label class="text-sm font-bold text-gray-700"><?php echo e(__('Address')); ?></label>
@@ -616,25 +620,19 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             </div>
             
             <form wire:submit="confirmBooking" class="space-y-5">
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->isAdmin()): ?>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2"><?php echo e(__('Select Doctor')); ?> <span class="text-red-500">*</span></label>
-                    <select wire:model="bookingDoctorId" class="w-full px-4 py-3 bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 transition-colors">
-                        <option value=""><?php echo e(__('Choose a doctor...')); ?></option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $doctors; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $doctor): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
-                            <option value="<?php echo e($doctor->id); ?>"><?php echo e(__('Dr.')); ?> <?php echo e($doctor->name); ?></option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                    </select>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['bookingDoctorId'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <span class="text-sm text-red-500 font-bold mt-1 block"><?php echo e($message); ?></span> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <span class="block text-[11px] font-black uppercase text-purple-600 mb-1 tracking-widest"><?php echo e(__('Doctor')); ?></span>
+                    <?php $doctor = \App\Models\User::find($bookingDoctorId); ?>
+                    <div class="p-4 bg-purple-50 rounded-2xl border border-purple-100 flex items-center justify-between shadow-inner">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold shadow-lg">
+                                <?php echo e(mb_substr($doctor->name ?? '?', 0, 1)); ?>
+
+                            </div>
+                            <span class="font-bold text-purple-900"><?php echo e($doctor->name ?? __('Unknown')); ?></span>
+                        </div>
+                    </div>
                 </div>
-                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -717,9 +715,12 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 </div>
                 <div class="pt-6 flex gap-3">
                     <button type="button" wire:click="closeUploadModal" class="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-xl transition-colors"><?php echo e(__('Cancel')); ?></button>
-                    <button type="submit" class="flex-[2] py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex justify-center items-center gap-2">
-                        <span wire:loading.remove wire:target="uploadFile"><?php echo e(__('Upload')); ?></span>
-                        <span wire:loading wire:target="uploadFile"><?php echo e(__('Saving...')); ?></span>
+                    <button type="submit" wire:loading.attr="disabled" wire:target="newFile, uploadFile" class="flex-[2] py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span wire:loading.remove wire:target="newFile, uploadFile"><?php echo e(__('Upload')); ?></span>
+                        <span wire:loading wire:target="newFile, uploadFile" class="flex items-center gap-2">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span><?php echo e(__('Working...')); ?></span>
+                        </span>
                     </button>
                 </div>
             </form>

@@ -27,9 +27,10 @@ new class extends Component
     public $bookingTime = '';
     public $bookingType = 'checkup';
     public $patientFiles = [];
+    public $uploads = []; // Dedicated property for the input field
 
     // New patient fields
-    public $name, $phone, $age, $weight, $address, $gender;
+    public $name, $phone, $age_years, $age_months, $age_days, $weight, $address, $gender;
     
     // Edit Appointment fields
     public $editingAppointmentId = null;
@@ -74,45 +75,95 @@ new class extends Component
                 ->whereBetween('scheduled_at', [$date->copy()->startOfDay(), $date->copy()->endOfDay()])
                 ->selectRaw('count(*) as total, sum(case when status = "pending" then 1 else 0 end) as pending, sum(case when status = "checked-in" then 1 else 0 end) as prepared')
                 ->first(),
-            'doctors' => \App\Models\User::where('role', 'doctor')->get(),
         ];
+    }
+
+    public function updatedUploads()
+    {
+        $this->validate([
+            'uploads.*' => 'nullable|file|max:10240',
+        ]);
+
+        foreach ($this->uploads as $file) {
+            // Save to persistent temp directory immediately
+            $tempPath = $file->store('temp_patient_files', 'public');
+            
+            // Store ONLY metadata in the component state
+            // This prevents Livewire from trying to manage/hydrate TemporaryUploadedFile objects
+            $this->patientFiles[] = [
+                'name' => $file->getClientOriginalName(),
+                'type' => $file->getClientMimeType(),
+                'temp_path' => $tempPath,
+                'id' => uniqid() // For stable wire:key
+            ];
+        }
+
+        $this->reset(['uploads']);
     }
 
     public function createPatient()
     {
         $this->validate([
             'name' => 'required|min:3',
-            'phone' => 'required|numeric',
-            'patientFiles.*' => 'nullable|file|max:10240', // 10MB max
+            'phone' => 'nullable|numeric',
         ]);
 
         $patient = app(PatientService::class)->createPatient([
             'name' => $this->name,
             'phone' => $this->phone,
-            'age' => $this->age,
+            'age_years' => $this->age_years,
+            'age_months' => $this->age_months,
+            'age_days' => $this->age_days,
             'weight' => $this->weight,
             'address' => $this->address,
             'doctor_id' => $this->assignedDoctorId,
         ]);
 
-        // Handle File Uploads
+        // Handle File Uploads (Move from Temp to Permanent)
         if ($this->patientFiles) {
-            foreach ($this->patientFiles as $file) {
-                $path = $file->store("patients/{$patient->id}/files", 'public');
+            foreach ($this->patientFiles as $fileData) {
+                if (!isset($fileData['temp_path'])) continue;
                 
-                PatientFile::create([
-                    'patient_id' => $patient->id,
-                    'file_path' => $path,
-                    'file_name' => $file->getClientOriginalName(),
-                    'file_type' => $file->getClientMimeType(),
-                    'uploaded_by' => auth()->id(),
-                ]);
+                $oldPath = $fileData['temp_path'];
+                $fileName = $fileData['name'];
+                $newPath = "patients/{$patient->id}/files/" . basename($oldPath);
+                
+                // Move the file
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($oldPath)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->move($oldPath, $newPath);
+                    
+                    PatientFile::create([
+                        'patient_id' => $patient->id,
+                        'file_path' => $newPath,
+                        'file_name' => $fileName,
+                        'file_type' => $fileData['type'] ?? 'application/octet-stream',
+                        'uploaded_by' => auth()->id(),
+                    ]);
+                }
             }
         }
 
-        $this->reset(['name', 'phone', 'age', 'weight', 'address', 'showAddPatient', 'patientFiles']);
+        $this->reset(['name', 'phone', 'age_years', 'age_months', 'age_days', 'weight', 'address', 'showAddPatient', 'patientFiles', 'uploads']);
         $this->search = $patient->name;
         session()->flash('message', __('Patient created successfully with files.'));
+    }
+
+    public function deleteFile($fileId)
+    {
+        foreach ($this->patientFiles as $index => $fileData) {
+            if ($fileData['id'] === $fileId) {
+                // Delete physical temp file
+                if (isset($fileData['temp_path'])) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($fileData['temp_path']);
+                }
+                
+                // Remove from state
+                unset($this->patientFiles[$index]);
+                break;
+            }
+        }
+        $this->patientFiles = array_values($this->patientFiles);
+        $this->resetErrorBag();
     }
 
     public function checkIn($appointmentId)
@@ -175,14 +226,12 @@ new class extends Component
     {
         $appointment = Appointment::findOrFail($id);
         $this->editingAppointmentId = $appointment->id;
-        $this->editDoctorId = $appointment->doctor_id;
         $this->editTime = $appointment->scheduled_at->format('H:i');
     }
 
     public function saveAppointment()
     {
         $this->validate([
-            'editDoctorId' => 'required|exists:users,id',
             'editTime' => 'required|date_format:H:i',
         ]);
 
@@ -205,7 +254,7 @@ new class extends Component
         ];
 
         $appointment->update([
-            'doctor_id' => $this->assignedDoctorId ?? $this->editDoctorId,
+            'doctor_id' => $this->assignedDoctorId,
             'scheduled_at' => $newScheduledAt,
             'audit_log' => $auditLog
         ]);
@@ -273,14 +322,17 @@ new class extends Component
                     @error('name') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 <div class="space-y-1">
-                    <label class="text-sm font-bold text-purple-900">{{ __('Phone') }} *</label>
+                    <label class="text-sm font-bold text-purple-900">{{ __('Phone') }}</label>
                     <input wire:model="phone" type="text" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
                     @error('phone') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
-                <div class="space-y-1">
-                    <label class="text-sm font-bold text-purple-900">{{ __('Age') }}</label>
-                    <input wire:model="age" type="number" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
-                    @error('age') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
+                <div class="space-y-1 col-span-2 md:col-span-1">
+                    <label class="text-sm font-bold text-purple-900">{{ __('Age') }} ({{ __('Year') }} - {{ __('Month') }} - {{ __('Day') }})</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <input wire:model="age_years" type="number" placeholder="{{ __('Year') }}" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                        <input wire:model="age_months" type="number" placeholder="{{ __('Month') }}" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                        <input wire:model="age_days" type="number" placeholder="{{ __('Day') }}" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                    </div>
                 </div>
                 <div class="space-y-1">
                     <label class="text-sm font-bold text-purple-900">{{ __('Address') }}</label>
@@ -289,8 +341,8 @@ new class extends Component
                 </div>
                 <div class="md:col-span-2 space-y-2">
                     <label class="text-sm font-bold text-purple-900">{{ __('Attach Files (ID, Reports, etc.)') }}</label>
-                    <div class="relative group">
-                        <input type="file" wire:model="patientFiles" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                    <div class="relative group" wire:key="upload-input-wrapper-{{ count($patientFiles) }}">
+                        <input type="file" wire:model.live="uploads" multiple wire:key="patient-files-input-{{ count($patientFiles) }}" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                         <div class="w-full px-4 py-3 bg-white border-2 border-dashed border-purple-200 rounded-xl flex items-center justify-center gap-3 text-purple-600 group-hover:border-purple-400 transition-all">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                             <span class="font-bold">{{ __('Click or drag to upload files') }}</span>
@@ -301,19 +353,17 @@ new class extends Component
                     </div>
                     @error('patientFiles.*') <span class="text-xs text-red-500 font-bold block mt-1">{{ $message }}</span> @enderror
                     
-                    @if($patientFiles)
                     <div class="flex flex-wrap gap-2 mt-3">
-                        @foreach($patientFiles as $index => $file)
-                        <div class="flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold">
+                        @foreach($patientFiles as $index => $fileData)
+                        <div wire:key="f-{{ $fileData['id'] }}" class="flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold transition-all">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                            {{ Str::limit($file->getClientOriginalName(), 15) }}
-                            <button type="button" wire:click="$set('patientFiles.{{ $index }}', null)" class="text-red-500 hover:text-red-700">
+                            {{ Str::limit($fileData['name'], 15) }}
+                            <button type="button" wire:click="deleteFile('{{ $fileData['id'] }}')" wire:loading.attr="disabled" class="text-red-500 hover:text-red-700 disabled:opacity-50">
                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                             </button>
                         </div>
                         @endforeach
                     </div>
-                    @endif
                 </div>
                 <div class="md:col-span-2">
                     <button type="submit" class="w-full py-3 bg-purple-600 text-white rounded-xl font-bold mt-2 shadow-lg shadow-purple-200" wire:loading.attr="disabled">
@@ -524,13 +574,10 @@ new class extends Component
             
             <form wire:submit="saveAppointment" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">{{ __('Select Doctor') }}</label>
-                    <select wire:model="editDoctorId" class="w-full px-4 py-2 bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500">
-                        @foreach($doctors as $doctor)
-                            <option value="{{ $doctor->id }}">{{ __('Dr.') }} {{ $doctor->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('editDoctorId') <span class="text-sm text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                    <span class="block text-[11px] font-black uppercase text-purple-600 mb-1">{{ __('Clinician') }}</span>
+                    <div class="p-3 bg-purple-50 rounded-xl border border-purple-100 text-sm font-bold text-purple-900">
+                        {{ __('Dr.') }} {{ $assignedDoctorName }}
+                    </div>
                 </div>
                 
                 <div>

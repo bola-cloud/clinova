@@ -13,7 +13,7 @@ use Livewire\WithFileUploads;
 ?>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8" dir="<?php echo e(app()->getLocale() === 'ar' ? 'rtl' : 'ltr'); ?>">
-    <?php if (! $__env->hasRenderedOnce('a75166e7-77e0-4d07-bb4e-07df0a9c05a5')): $__env->markAsRenderedOnce('a75166e7-77e0-4d07-bb4e-07df0a9c05a5');
+    <?php if (! $__env->hasRenderedOnce('460aee6c-ef1b-469b-9b03-e3d1fd005081')): $__env->markAsRenderedOnce('460aee6c-ef1b-469b-9b03-e3d1fd005081');
 $__env->startPush('styles'); ?>
     <style>
         @keyframes fadeInDown {
@@ -76,7 +76,7 @@ endif;
 unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
                 <div class="space-y-1">
-                    <label class="text-sm font-bold text-purple-900"><?php echo e(__('Phone')); ?> *</label>
+                    <label class="text-sm font-bold text-purple-900"><?php echo e(__('Phone')); ?></label>
                     <input wire:model="phone" type="text" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['phone'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -87,17 +87,13 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
-                <div class="space-y-1">
-                    <label class="text-sm font-bold text-purple-900"><?php echo e(__('Age')); ?></label>
-                    <input wire:model="age" type="number" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['age'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <span class="text-sm text-red-500 font-bold mt-1 block"><?php echo e($message); ?></span> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <div class="space-y-1 col-span-2 md:col-span-1">
+                    <label class="text-sm font-bold text-purple-900"><?php echo e(__('Age')); ?> (<?php echo e(__('Year')); ?> - <?php echo e(__('Month')); ?> - <?php echo e(__('Day')); ?>)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <input wire:model="age_years" type="number" placeholder="<?php echo e(__('Year')); ?>" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                        <input wire:model="age_months" type="number" placeholder="<?php echo e(__('Month')); ?>" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                        <input wire:model="age_days" type="number" placeholder="<?php echo e(__('Day')); ?>" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                    </div>
                 </div>
                 <div class="space-y-1">
                     <label class="text-sm font-bold text-purple-900"><?php echo e(__('Address')); ?></label>
@@ -113,8 +109,8 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 </div>
                 <div class="md:col-span-2 space-y-2">
                     <label class="text-sm font-bold text-purple-900"><?php echo e(__('Attach Files (ID, Reports, etc.)')); ?></label>
-                    <div class="relative group">
-                        <input type="file" wire:model="patientFiles" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                    <div class="relative group" <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processElementKey('upload-input-wrapper-{{ count($patientFiles) }}', get_defined_vars()); ?>wire:key="upload-input-wrapper-<?php echo e(count($patientFiles)); ?>">
+                        <input type="file" wire:model.live="uploads" multiple <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processElementKey('patient-files-input-{{ count($patientFiles) }}', get_defined_vars()); ?>wire:key="patient-files-input-<?php echo e(count($patientFiles)); ?>" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                         <div class="w-full px-4 py-3 bg-white border-2 border-dashed border-purple-200 rounded-xl flex items-center justify-center gap-3 text-purple-600 group-hover:border-purple-400 transition-all">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                             <span class="font-bold"><?php echo e(__('Click or drag to upload files')); ?></span>
@@ -132,20 +128,18 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($patientFiles): ?>
                     <div class="flex flex-wrap gap-2 mt-3">
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $patientFiles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
-                        <div class="flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $patientFiles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $fileData): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
+                        <div <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processElementKey('f-{{ $fileData[\'id\'] }}', get_defined_vars()); ?>wire:key="f-<?php echo e($fileData['id']); ?>" class="flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold transition-all">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                            <?php echo e(Str::limit($file->getClientOriginalName(), 15)); ?>
+                            <?php echo e(Str::limit($fileData['name'], 15)); ?>
 
-                            <button type="button" wire:click="$set('patientFiles.<?php echo e($index); ?>', null)" class="text-red-500 hover:text-red-700">
+                            <button type="button" wire:click="deleteFile('<?php echo e($fileData['id']); ?>')" wire:loading.attr="disabled" class="text-red-500 hover:text-red-700 disabled:opacity-50">
                                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                             </button>
                         </div>
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                     </div>
-                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
                 <div class="md:col-span-2">
                     <button type="submit" class="w-full py-3 bg-purple-600 text-white rounded-xl font-bold mt-2 shadow-lg shadow-purple-200" wire:loading.attr="disabled">
@@ -372,26 +366,18 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
     <!-- Edit Appointment Modal -->
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($editingAppointmentId): ?>
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" dir="<?php echo e(app()->getLocale() === 'ar' ? 'rtl' : 'ltr'); ?>">
-        <div class="bg-white rounded-3xl p-6 shadow-2xl max-w-md w-full border border-purple-100">
+    <div class="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4 md:p-10 bg-black/50 backdrop-blur-sm animate-fade-in-down" dir="<?php echo e(app()->getLocale() === 'ar' ? 'rtl' : 'ltr'); ?>">
+        <div wire:click="cancelEdit" class="fixed inset-0"></div>
+        <div class="bg-white rounded-3xl p-6 shadow-2xl max-w-md w-full border border-purple-100 relative my-8">
             <h3 class="text-xl font-bold text-gray-900 mb-6"><?php echo e(__('Edit Appointment')); ?></h3>
             
             <form wire:submit="saveAppointment" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1"><?php echo e(__('Select Doctor')); ?></label>
-                    <select wire:model="editDoctorId" class="w-full px-4 py-2 bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500">
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $doctors; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $doctor): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
-                            <option value="<?php echo e($doctor->id); ?>"><?php echo e(__('Dr.')); ?> <?php echo e($doctor->name); ?></option>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                    </select>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['editDoctorId'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <span class="text-sm text-red-500 mt-1 block"><?php echo e($message); ?></span> <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <span class="block text-[11px] font-black uppercase text-purple-600 mb-1"><?php echo e(__('Clinician')); ?></span>
+                    <div class="p-3 bg-purple-50 rounded-xl border border-purple-100 text-sm font-bold text-purple-900">
+                        <?php echo e(__('Dr.')); ?> <?php echo e($assignedDoctorName); ?>
+
+                    </div>
                 </div>
                 
                 <div>

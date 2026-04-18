@@ -24,8 +24,12 @@ new class extends Component
     public $new_specialty_id = '';
     
     public $editingDoctorId = null;
+    public $editName = '';
+    public $editEmail = '';
+    public $editSpecialtyId = '';
     public $editMaxPatients = 0;
     public $editMaxStorageGb = 0;
+    public $canEditSpecialty = true;
 
     // Staff management
     public $managingDoctorId = null;
@@ -61,30 +65,51 @@ new class extends Component
         ]);
     }
 
-    public function editQuotas($doctorId)
+    public function editDoctor($doctorId)
     {
-        $doctor = User::findOrFail($doctorId);
+        $doctor = User::withCount('patients')->findOrFail($doctorId);
         $this->editingDoctorId = $doctorId;
+        $this->editName = $doctor->name;
+        $this->editEmail = $doctor->email;
+        $this->editSpecialtyId = $doctor->specialty_id;
         $this->editMaxPatients = $doctor->max_patients;
         $this->editMaxStorageGb = $doctor->max_storage_gb;
+        $this->canEditSpecialty = ($doctor->patients_count == 0);
     }
 
-    public function saveQuotas()
+    public function saveDoctor()
     {
+        $this->validate([
+            'editName' => 'required|min:3',
+            'editEmail' => 'required|email|unique:users,email,' . $this->editingDoctorId,
+            'editMaxPatients' => 'nullable|numeric|min:0',
+            'editMaxStorageGb' => 'nullable|numeric|min:0',
+            'editSpecialtyId' => 'required|exists:specialties,id',
+        ]);
+
         $doctor = User::findOrFail($this->editingDoctorId);
-        $doctor->update([
+        
+        $data = [
+            'name' => $this->editName,
+            'email' => $this->editEmail,
             'max_patients' => $this->editMaxPatients,
             'max_storage_gb' => $this->editMaxStorageGb
-        ]);
+        ];
+
+        if ($this->canEditSpecialty) {
+            $data['specialty_id'] = $this->editSpecialtyId;
+        }
+
+        $doctor->update($data);
         
         $this->cancelEdit();
-        session()->flash('success', __('Quotas updated for Dr.') . ' ' . $doctor->name);
+        session()->flash('success', __('Details updated for Dr.') . ' ' . $doctor->name);
     }
 
     public function cancelEdit()
     {
         $this->editingDoctorId = null;
-        $this->reset(['editMaxPatients', 'editMaxStorageGb']);
+        $this->reset(['editName', 'editEmail', 'editSpecialtyId', 'editMaxPatients', 'editMaxStorageGb', 'canEditSpecialty']);
     }
 
     public function manageStaff($doctorId)
@@ -319,8 +344,8 @@ new class extends Component
                                 <button wire:click="manageStaff({{ $doctor->id }})" class="p-2.5 bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white rounded-xl transition-all" title="{{ __('Manage Staff') }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                                 </button>
-                                <button wire:click="editQuotas({{ $doctor->id }})" class="p-2.5 bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white rounded-xl transition-all" title="{{ __('Edit Quotas') }}">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                                <button wire:click="editDoctor({{ $doctor->id }})" class="p-2.5 bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white rounded-xl transition-all" title="{{ __('Edit Doctor Details') }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 </button>
                                 <button wire:click="toggleSubscription({{ $doctor->id }})" 
                                         class="p-2.5 rounded-xl transition-all {{ $doctor->subscription_active ? 'bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white' }}"
@@ -356,32 +381,62 @@ new class extends Component
         <div class="bg-white rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden border border-white animate-zoom-in relative my-8">
             <div class="p-10">
                 <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ __('Update Rules & Quotas') }}</h3>
+                    <h3 class="text-2xl font-black text-slate-900 tracking-tight">{{ __('Edit Doctor Details') }}</h3>
                     <button wire:click="cancelEdit" class="p-2 text-gray-400 hover:text-rose-500 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
                 
-                <form wire:submit="saveQuotas" class="space-y-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Maximum Patients') }} (0 = {{ __('Infinite') }})</label>
-                        <div class="relative">
-                            <input type="number" wire:model="editMaxPatients" 
-                                   class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all text-center">
-                            <span class="absolute {{ app()->getLocale() === 'ar' ? 'left-5 text-left' : 'right-5 text-right' }} top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">{{ __('Slot') }}</span>
+                <form wire:submit="saveDoctor" class="space-y-6">
+                    <div class="space-y-4">
+                        <h4 class="text-[10px] font-black text-purple-600 uppercase tracking-[0.2em]">{{ __('Account Details') }}</h4>
+                        
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('Name') }}</label>
+                            <input type="text" wire:model="editName" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500 transition-all">
+                            @error('editName') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('Email') }}</label>
+                            <input type="email" wire:model="editEmail" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500 transition-all">
+                            @error('editEmail') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('Doctor Specialty') }}</label>
+                            <select wire:model="editSpecialtyId" @disabled(!$canEditSpecialty) class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500 transition-all {{ !$canEditSpecialty ? 'opacity-60 cursor-not-allowed' : '' }}">
+                                @foreach($specialties as $specialty)
+                                    <option value="{{ $specialty->id }}">{{ $specialty->name }}</option>
+                                @endforeach
+                            </select>
+                            @if(!$canEditSpecialty)
+                                <p class="text-[9px] text-amber-600 font-bold mt-1 italic">{{ __('Specialty is locked because this doctor already has patient records.') }}</p>
+                            @endif
+                            @error('editSpecialtyId') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
                         </div>
                     </div>
-                    
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Maximum Storage') }} (GB, 0 = {{ __('Infinite') }})</label>
-                        <div class="relative">
-                            <input type="number" step="0.1" wire:model="editMaxStorageGb" 
-                                   class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-center">
-                            <span class="absolute {{ app()->getLocale() === 'ar' ? 'left-5 text-left' : 'right-5 text-right' }} top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">GB</span>
+
+                    <div class="space-y-4 pt-4 border-t border-dashed border-gray-100">
+                        <h4 class="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">{{ __('Quotas & Limits') }}</h4>
+                        
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Maximum Patients') }} (0 = {{ __('Infinite') }})</label>
+                            <div class="relative">
+                                <input type="number" wire:model="editMaxPatients" 
+                                       class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all text-center">
+                                <span class="absolute {{ app()->getLocale() === 'ar' ? 'left-5 text-left' : 'right-5 text-right' }} top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">{{ __('Slot') }}</span>
+                            </div>
                         </div>
-
-
-                        <p class="text-[10px] text-gray-400 font-medium italic mt-1">{{ __('Used to limit lab results, X-rays, and treatment file uploads.') }}</p>
+                        
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest pl-1">{{ __('Maximum Storage') }} (GB, 0 = {{ __('Infinite') }})</label>
+                            <div class="relative">
+                                <input type="number" step="0.1" wire:model="editMaxStorageGb" 
+                                       class="w-full bg-slate-50 border-gray-100 rounded-2xl py-4 px-5 text-sm font-black focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all text-center">
+                                <span class="absolute {{ app()->getLocale() === 'ar' ? 'left-5 text-left' : 'right-5 text-right' }} top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">GB</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="pt-6 flex gap-3">
@@ -389,7 +444,7 @@ new class extends Component
                             {{ __('Cancel') }}
                         </button>
                         <button type="submit" class="flex-[2] py-4 bg-purple-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-purple-200 hover:bg-purple-700 hover:-translate-y-1 transition-all">
-                            {{ __('Save Configuration') }}
+                            {{ __('Save Changes') }}
                         </button>
                     </div>
                 </form>

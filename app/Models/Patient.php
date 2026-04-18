@@ -14,19 +14,19 @@ class Patient extends Model
     protected $fillable = [
         'name',
         'phone',
-        'age',
+        'age_years',
+        'age_months',
+        'age_days',
         'weight',
         'address',
         'family_history',
         'personal_history',
-        'chronic_illnesses',
         'tags',
         'doctor_id',
     ];
 
     protected $casts = [
         'tags' => 'array',
-        'chronic_illnesses' => 'array',
     ];
 
     public function doctor()

@@ -24,13 +24,12 @@ class PatientProfile extends Component
     // UI Toggles & Edits
     public $isEditingFH = false;
     public $isEditingPH = false;
-    public $isEditingCI = false;
     public $familyHistoryEdit;
     public $personalHistoryEdit;
     
     // Edit Patient properties
     public $showEditModal = false;
-    public $editName, $editPhone, $editAge, $editAddress, $editWeight;
+    public $editName, $editPhone, $editAgeYears, $editAgeMonths, $editAgeDays, $editAddress, $editWeight;
 
     // Visit Recording properties
     public $showVisitModal = false;
@@ -41,7 +40,6 @@ class PatientProfile extends Component
     public $treatmentFile = null;
     public $parentVisitId = null;
     public $visitType = 'checkup';
-    public $chronicIllnesses = [];
     public $followUpNotes = '';
     public $specialtyFields = [];
     public $dynamicAnswers = [];
@@ -131,8 +129,6 @@ class PatientProfile extends Component
     public function openVisitModal()
     {
         $this->resetVisitForm();
-        $this->chronicIllnesses = $this->patient->chronic_illnesses ?? [];
-        $this->isEditingCI = false;
         
         // Load Specialty Fields
         $doctor = auth()->user()->isDoctor() ? auth()->user() : \App\Models\User::find(auth()->user()->doctor_id);
@@ -158,8 +154,6 @@ class PatientProfile extends Component
         $this->showVisitModal = true;
         $this->parentVisitId = $visitId;
         $this->visitType = 'follow_up';
-        $this->chronicIllnesses = $this->patient->chronic_illnesses ?? [];
-        $this->isEditingCI = false;
         
         $parentVisit = Visit::find($visitId);
         if ($parentVisit) {
@@ -171,13 +165,12 @@ class PatientProfile extends Component
     public function saveVisit()
     {
         $rules = [
-            'complaint' => $this->visitType === 'follow_up' ? 'nullable|string|max:5000' : 'required|string|max:5000',
-            'diagnosis' => $this->visitType === 'follow_up' ? 'nullable|string|max:2000' : 'required|string|max:2000',
+            'complaint' => 'nullable|string|max:5000',
+            'diagnosis' => 'nullable|string|max:2000',
             'investigation' => 'nullable|string|max:5000',
             'treatmentText' => 'nullable|string|max:5000',
             'treatmentFile' => 'nullable|file|max:10240',
             'followUpNotes' => 'nullable|string|max:5000',
-            'chronicIllnesses' => 'nullable|array',
         ];
 
         foreach ($this->specialtyFields as $field) {
@@ -227,7 +220,7 @@ class PatientProfile extends Component
             'specialty_data' => $this->dynamicAnswers,
         ]);
 
-        $this->patient->update(['chronic_illnesses' => $this->chronicIllnesses]);
+        $this->closeVisitModal();
 
         $this->closeVisitModal();
         session()->flash('visit_message', __('Visit recorded successfully.'));
@@ -262,12 +255,6 @@ class PatientProfile extends Component
         session()->flash('message', __('Personal history updated.'));
     }
 
-    public function saveChronicIllnesses()
-    {
-        $this->patient->update(['chronic_illnesses' => $this->chronicIllnesses]);
-        $this->isEditingCI = false;
-        session()->flash('message', __('Chronic illnesses updated.'));
-    }
 
     public function uploadFile()
     {
@@ -389,7 +376,9 @@ class PatientProfile extends Component
     {
         $this->editName = $this->patient->name;
         $this->editPhone = $this->patient->phone;
-        $this->editAge = $this->patient->age;
+        $this->editAgeYears = $this->patient->age_years;
+        $this->editAgeMonths = $this->patient->age_months;
+        $this->editAgeDays = $this->patient->age_days;
         $this->editWeight = $this->patient->weight;
         $this->editAddress = $this->patient->address;
         $this->showEditModal = true;
@@ -401,8 +390,10 @@ class PatientProfile extends Component
     {
         $this->validate([
             'editName' => 'required|min:3',
-            'editPhone' => 'required|numeric',
-            'editAge' => 'nullable|numeric',
+            'editPhone' => 'nullable|numeric',
+            'editAgeYears' => 'nullable|numeric',
+            'editAgeMonths' => 'nullable|numeric',
+            'editAgeDays' => 'nullable|numeric',
             'editWeight' => 'nullable|numeric',
             'editAddress' => 'nullable|string|max:500',
         ]);
@@ -410,7 +401,9 @@ class PatientProfile extends Component
         app(\App\Services\PatientService::class)->updatePatient($this->patient->id, [
             'name' => $this->editName,
             'phone' => $this->editPhone,
-            'age' => $this->editAge,
+            'age_years' => $this->editAgeYears,
+            'age_months' => $this->editAgeMonths,
+            'age_days' => $this->editAgeDays,
             'weight' => $this->editWeight,
             'address' => $this->editAddress,
         ]);

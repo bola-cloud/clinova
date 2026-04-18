@@ -32,7 +32,7 @@ class SystemRevenue extends Component
             $query->where('plan_name', $this->selectedPlan);
         }
 
-        $subscriptions = $query->with('user')->orderBy('start_date', 'desc')->get();
+        $subscriptions = $query->with('doctor')->orderBy('start_date', 'desc')->get();
 
         $stats = [
             'total_revenue' => $subscriptions->where('is_paid', true)->sum('amount'),
