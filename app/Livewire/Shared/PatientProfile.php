@@ -413,6 +413,20 @@ class PatientProfile extends Component
         session()->flash('message', __('Patient data updated successfully.'));
     }
 
+    public function deletePatient()
+    {
+        if (!auth()->user()->isDoctor() && !auth()->user()->isAdmin()) {
+            return;
+        }
+
+        $this->patient->delete();
+        
+        session()->flash('success', __('Patient record deleted successfully.'));
+        
+        $redirectUrl = auth()->user()->isDoctor() ? route('doctor.dashboard') : (auth()->user()->isAdmin() ? route('admin.dashboard') : route('secretary.dashboard'));
+        return redirect($redirectUrl);
+    }
+
     public function render()
     {
         // Aggregate files

@@ -12,6 +12,23 @@ class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+    
+    protected static function booted()
+    {
+        static::deleting(function ($user) {
+            if ($user->isDoctor()) {
+                // Manually delete patients to trigger their 'deleting' event (for file cleanup)
+                foreach ($user->patients as $patient) {
+                    $patient->delete();
+                }
+
+                // Delete profile photo
+                if ($user->profile_image && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->profile_image)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_image);
+                }
+            }
+        });
+    }
 
     /**
      * The attributes that are mass assignable.

@@ -11,6 +11,25 @@ class Patient extends Model
     /** @use HasFactory<\Database\Factories\PatientFactory> */
     use HasFactory;
 
+    protected static function booted()
+    {
+        static::deleting(function ($patient) {
+            // Delete standalone medical files
+            foreach ($patient->files as $file) {
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($file->file_path)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($file->file_path);
+                }
+            }
+
+            // Delete visit attachments (prescriptions, etc.)
+            foreach ($patient->visits as $visit) {
+                if ($visit->treatment_file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($visit->treatment_file_path)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($visit->treatment_file_path);
+                }
+            }
+        });
+    }
+
     protected $fillable = [
         'name',
         'phone',

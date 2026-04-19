@@ -16,8 +16,15 @@
                     </p>
                 </div>
             </div>
-            <div class="flex gap-3">
-                <button wire:click="openEditModal" class="px-6 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 font-bold transition-colors">{{ __('Edit Data') }}</button>
+            <div class="flex flex-wrap gap-3">
+                @if(auth()->user()->isDoctor() || auth()->user()->isAdmin())
+                <button wire:click="deletePatient" 
+                        wire:confirm="{{ __('Are you sure you want to permanently delete this patient record and all associated history? This action cannot be undone.') }}"
+                        class="px-6 py-2 bg-rose-50 text-rose-600 rounded-xl font-bold hover:bg-rose-600 hover:text-white transition-all shadow-sm">
+                    {{ __('Delete Patient') }}
+                </button>
+                @endif
+                <button wire:click="openEditModal" class="px-6 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 font-bold transition-colors shadow-sm">{{ __('Edit Data') }}</button>
                 <button wire:click="openBooking" class="px-6 py-2 bg-purple-600 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-purple-200 transition-all flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     {{ __('Book Appointment') }}
