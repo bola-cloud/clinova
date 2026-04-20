@@ -19,25 +19,43 @@ class FileController extends Controller
         
         $exists = Storage::disk('public')->exists($path);
         
-        // Fallback for hyphen/underscore mismatch (e.g. patient-files vs patient_files)
+        // Robust Fallback for hyphen/underscore mismatch and directory location
         if (!$exists) {
             $altPath = null;
             if (str_starts_with($path, 'patient-files/')) {
                 $altPath = str_replace('patient-files/', 'patient_files/', $path);
                 
-                // If it exists in the old format, move it to the new format
-                if (Storage::disk('public')->exists($path)) {
-                    Storage::disk('public')->move($path, $altPath);
+                // If it exists in the NEW format (requested OLD), use NEW
+                if (Storage::disk('public')->exists($altPath)) {
                     $path = $altPath;
                     $exists = true;
                 }
             } elseif (str_starts_with($path, 'patient_files/')) {
                 $altPath = str_replace('patient_files/', 'patient-files/', $path);
+                
+                // If it exists in the OLD format (requested NEW), move it to NEW
+                if (Storage::disk('public')->exists($altPath)) {
+                    Storage::disk('public')->move($altPath, $path);
+                    $exists = true;
+                }
             }
+        }
 
-            if (!$exists && $altPath && Storage::disk('public')->exists($altPath)) {
-                $path = $altPath;
-                $exists = true;
+        // Final attempt: Search for the filename in common directories if still not found
+        if (!$exists) {
+            $filename = basename($path);
+            $searchPaths = ['patient_files/', 'patient-files/', 'visits/', 'patients/'];
+            foreach ($searchPaths as $searchPath) {
+                // We use a flat search in these directories for the filename
+                // Note: This is slower but only happens on 404
+                $files = Storage::disk('public')->files($searchPath);
+                foreach ($files as $f) {
+                    if (basename($f) === $filename) {
+                        $path = $f;
+                        $exists = true;
+                        break 2;
+                    }
+                }
             }
         }
 
