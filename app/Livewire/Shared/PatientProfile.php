@@ -277,7 +277,7 @@ class PatientProfile extends Component
             ]);
         }
 
-        $path = $this->newFile->store('patient-files', 'public');
+        $path = $this->newFile->store('patient_files', 'public');
 
         // Optimize or Compress in place
         $mime = $this->newFile->getMimeType();

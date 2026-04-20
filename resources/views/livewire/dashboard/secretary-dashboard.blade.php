@@ -126,7 +126,7 @@ new class extends Component
                 
                 $oldPath = $fileData['temp_path'];
                 $fileName = $fileData['name'];
-                $newPath = "patients/{$patient->id}/files/" . basename($oldPath);
+                $newPath = "patient_files/" . basename($oldPath);
                 
                 // Move the file
                 if (\Illuminate\Support\Facades\Storage::disk('public')->exists($oldPath)) {

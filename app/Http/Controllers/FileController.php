@@ -17,7 +17,31 @@ class FileController extends Controller
         // For security, you might want to check permissions here
         // For now, we assume the path is valid and within the public disk
         
-        if (!Storage::disk('public')->exists($path)) {
+        $exists = Storage::disk('public')->exists($path);
+        
+        // Fallback for hyphen/underscore mismatch (e.g. patient-files vs patient_files)
+        if (!$exists) {
+            $altPath = null;
+            if (str_starts_with($path, 'patient-files/')) {
+                $altPath = str_replace('patient-files/', 'patient_files/', $path);
+                
+                // If it exists in the old format, move it to the new format
+                if (Storage::disk('public')->exists($path)) {
+                    Storage::disk('public')->move($path, $altPath);
+                    $path = $altPath;
+                    $exists = true;
+                }
+            } elseif (str_starts_with($path, 'patient_files/')) {
+                $altPath = str_replace('patient_files/', 'patient-files/', $path);
+            }
+
+            if (!$exists && $altPath && Storage::disk('public')->exists($altPath)) {
+                $path = $altPath;
+                $exists = true;
+            }
+        }
+
+        if (!$exists) {
             abort(404);
         }
 
