@@ -64,9 +64,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('appointments.visit');
 
         // File Serving with decompression
-        Route::get('files/serve/{path}', [FileController::class, 'serve'])
-            ->where('path', '.*')
-            ->name('files.serve');
+        Route::get('files/serve/{path}', [FileController::class, 'serve'])->where('path', '.*')->name('files.serve');
+        Route::get('files/p/{id}', [FileController::class, 'servePatientFile'])->name('files.patient');
+        Route::get('files/v/{id}', [FileController::class, 'serveVisitFile'])->name('files.visit');
     });
 
     Route::view('profile', 'profile')->name('profile');

@@ -437,6 +437,7 @@ class PatientProfile extends Component
             'type' => $f->file_type,
             'date' => $f->created_at,
             'source' => 'patient_file',
+            'url' => route('files.patient', $f->id),
         ]);
 
         $visitFiles = $this->patient->visits()
@@ -450,6 +451,7 @@ class PatientProfile extends Component
                 'type' => 'prescription',
                 'date' => $v->created_at,
                 'source' => 'visit',
+                'url' => route('files.visit', $v->id),
             ]);
 
         $allFiles = $medicalFiles->concat($visitFiles)->unique('path')->sortByDesc('date');

@@ -96,4 +96,17 @@ class FileController extends Controller
             ->header('Content-Disposition', 'inline; filename="' . basename($path) . '"')
             ->header('Cache-Control', 'public, max-age=31536000');
     }
+
+    public function servePatientFile(int $id)
+    {
+        $file = \App\Models\PatientFile::findOrFail($id);
+        return $this->serve($file->file_path);
+    }
+
+    public function serveVisitFile(int $id)
+    {
+        $visit = \App\Models\Visit::findOrFail($id);
+        if (!$visit->treatment_file_path) abort(404);
+        return $this->serve($visit->treatment_file_path);
+    }
 }
