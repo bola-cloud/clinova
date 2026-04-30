@@ -81,7 +81,9 @@ new class extends Component
     public function updatedUploads()
     {
         $this->validate([
-            'uploads.*' => 'nullable|file|max:10240',
+            'uploads.*' => 'nullable|file|max:2048', // 2MB max
+        ], [
+            'uploads.*.max' => __('The file size must not exceed 2MB.'),
         ]);
 
         foreach ($this->uploads as $file) {
@@ -202,6 +204,30 @@ new class extends Component
                 'status' => 'pending'
             ]);
 
+            // Handle File Uploads for existing patient
+            if ($this->patientFiles) {
+                foreach ($this->patientFiles as $fileData) {
+                    if (!isset($fileData['temp_path'])) continue;
+                    
+                    $oldPath = $fileData['temp_path'];
+                    $fileName = $fileData['name'];
+                    $newPath = "patient_files/" . basename($oldPath);
+                    
+                    // Move the file
+                    if (\Illuminate\Support\Facades\Storage::disk('public')->exists($oldPath)) {
+                        \Illuminate\Support\Facades\Storage::disk('public')->move($oldPath, $newPath);
+                        
+                        PatientFile::create([
+                            'patient_id' => $this->bookingPatientId,
+                            'file_path' => $newPath,
+                            'file_name' => $fileName,
+                            'file_type' => 'other',
+                            'uploaded_by' => auth()->id(),
+                        ]);
+                    }
+                }
+            }
+
             $this->clearSearch();
             $this->resetPage();
             session()->flash('message', __('Appointment booked successfully.'));
@@ -212,6 +238,15 @@ new class extends Component
 
     public function clearSearch()
     {
+        // Clean up unconfirmed temp files
+        foreach ($this->patientFiles as $fileData) {
+            if (isset($fileData['temp_path']) && \Illuminate\Support\Facades\Storage::disk('public')->exists($fileData['temp_path'])) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($fileData['temp_path']);
+            }
+        }
+        $this->patientFiles = [];
+        $this->uploads = [];
+
         $this->search = '';
         $this->bookingPatientId = null;
     }
@@ -448,8 +483,37 @@ new class extends Component
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Attach Files for Existing Patient -->
+                            <div class="mt-4 space-y-2">
+                                <label class="text-[11px] font-bold text-purple-700 uppercase">{{ __('Attach Files (Max 2MB per file)') }}</label>
+                                <div class="relative group" wire:key="booking-upload-input-{{ $patient->id }}-{{ count($patientFiles) }}">
+                                    <input type="file" wire:model.live="uploads" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                    <div class="w-full px-4 py-2 bg-white border border-dashed border-purple-200 rounded-xl flex items-center justify-center gap-2 text-purple-600 group-hover:border-purple-400 transition-all text-sm">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                        <span class="font-bold">{{ __('Click or drag to upload') }}</span>
+                                        <div wire:loading wire:target="uploads">
+                                            <svg class="animate-spin h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                @error('uploads.*') <span class="text-[10px] text-red-500 font-bold block mt-1">{{ $message }}</span> @enderror
+
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    @foreach($patientFiles as $index => $fileData)
+                                    <div wire:key="booking-f-{{ $fileData['id'] }}" class="flex items-center gap-1.5 px-2 py-1 bg-purple-100 text-purple-700 rounded-lg text-[10px] font-bold transition-all">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                        {{ Str::limit($fileData['name'], 15) }}
+                                        <button type="button" wire:click="deleteFile('{{ $fileData['id'] }}')" wire:loading.attr="disabled" class="text-red-500 hover:text-red-700 disabled:opacity-50">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                                        </button>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
                         @endif
+
                     </div>
                     @endforeach
                     <div class="p-3 bg-gray-50 text-center text-xs text-gray-400">

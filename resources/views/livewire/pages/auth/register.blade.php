@@ -30,9 +30,10 @@ new #[Layout('layouts.guest')] class extends Component
 
         event(new Registered($user = User::create($validated)));
 
-        Auth::login($user);
+        // Prevent auto-login, require admin approval
+        // Auth::login($user);
 
-        $this->redirect(route('dashboard', absolute: false), navigate: true);
+        $this->redirect(route('registration.success'), navigate: true);
     }
 }; ?>
 

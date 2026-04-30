@@ -11,6 +11,7 @@ use App\Livewire\Admin\DoctorSubscriptionManager;
 use App\Livewire\Doctor\StaffManagement;
 
 Route::view('/', 'welcome');
+Route::view('/registration-success', 'registration-success')->name('registration.success');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Role-based dashboard redirector
