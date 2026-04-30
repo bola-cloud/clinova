@@ -26,6 +26,7 @@ new class extends Component
     public $editingDoctorId = null;
     public $editName = '';
     public $editEmail = '';
+    public $editPassword = '';
     public $editSpecialtyId = '';
     public $editMaxPatients = 0;
     public $editMaxStorageGb = 0;
@@ -82,6 +83,7 @@ new class extends Component
         $this->validate([
             'editName' => 'required|min:3',
             'editEmail' => 'required|email|unique:users,email,' . $this->editingDoctorId,
+            'editPassword' => 'nullable|min:6',
             'editMaxPatients' => 'nullable|numeric|min:0',
             'editMaxStorageGb' => 'nullable|numeric|min:0',
             'editSpecialtyId' => 'required|exists:specialties,id',
@@ -96,6 +98,10 @@ new class extends Component
             'max_storage_gb' => $this->editMaxStorageGb
         ];
 
+        if ($this->editPassword) {
+            $data['password'] = Hash::make($this->editPassword);
+        }
+
         if ($this->canEditSpecialty) {
             $data['specialty_id'] = $this->editSpecialtyId;
         }
@@ -109,7 +115,7 @@ new class extends Component
     public function cancelEdit()
     {
         $this->editingDoctorId = null;
-        $this->reset(['editName', 'editEmail', 'editSpecialtyId', 'editMaxPatients', 'editMaxStorageGb', 'canEditSpecialty']);
+        $this->reset(['editName', 'editEmail', 'editPassword', 'editSpecialtyId', 'editMaxPatients', 'editMaxStorageGb', 'canEditSpecialty']);
     }
 
     public function manageStaff($doctorId)
@@ -415,6 +421,12 @@ new class extends Component
                             <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('Email') }}</label>
                             <input type="email" wire:model="editEmail" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500 transition-all">
                             @error('editEmail') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-gray-500 uppercase">{{ __('New Password (Optional)') }}</label>
+                            <input type="password" wire:model="editPassword" class="w-full bg-slate-50 border-gray-100 rounded-2xl py-3 px-5 text-sm font-bold focus:ring-2 focus:ring-purple-500 transition-all">
+                            @error('editPassword') <span class="text-rose-500 text-[10px] font-bold">{{ $message }}</span> @enderror
                         </div>
 
                         <div class="space-y-2">
