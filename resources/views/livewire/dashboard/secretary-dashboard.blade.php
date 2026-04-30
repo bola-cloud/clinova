@@ -37,6 +37,57 @@ new class extends Component
     public $editDoctorId;
     public $editTime;
 
+    // Edit Patient fields
+    public $editingPatientId = null;
+
+    public function deleteAppointment($id)
+    {
+        $appointment = Appointment::findOrFail($id);
+        $appointment->delete();
+        session()->flash('message', __('Appointment deleted successfully.'));
+    }
+
+    public function editPatient($id)
+    {
+        $patient = Patient::findOrFail($id);
+        $this->editingPatientId = $patient->id;
+        $this->name = $patient->name;
+        $this->phone = $patient->phone;
+        $this->age_years = $patient->age_years;
+        $this->age_months = $patient->age_months;
+        $this->age_days = $patient->age_days;
+        $this->weight = $patient->weight;
+        $this->address = $patient->address;
+    }
+
+    public function updatePatient()
+    {
+        $this->validate([
+            'name' => 'required|min:3',
+            'phone' => 'nullable|numeric',
+        ]);
+
+        $patient = Patient::findOrFail($this->editingPatientId);
+        $patient->update([
+            'name' => $this->name,
+            'phone' => $this->phone,
+            'age_years' => $this->age_years,
+            'age_months' => $this->age_months,
+            'age_days' => $this->age_days,
+            'weight' => $this->weight,
+            'address' => $this->address,
+        ]);
+
+        $this->cancelPatientEdit();
+        session()->flash('message', __('Patient data updated successfully.'));
+    }
+
+    public function cancelPatientEdit()
+    {
+        $this->editingPatientId = null;
+        $this->reset(['name', 'phone', 'age_years', 'age_months', 'age_days', 'weight', 'address']);
+    }
+
     public function mount()
     {
         $this->selectedDate = now()->format('Y-m-d');
@@ -177,6 +228,7 @@ new class extends Component
 
     public function selectForBooking($patientId)
     {
+        $this->cancelPatientEdit(); // Clear edit mode if active
         $this->bookingPatientId = $patientId;
         // Default time to current time rounded to next 5 mins if it's today
         if ($this->selectedDate === now()->format('Y-m-d')) {
@@ -249,6 +301,7 @@ new class extends Component
 
         $this->search = '';
         $this->bookingPatientId = null;
+        $this->editingPatientId = null;
     }
     
     public function setDate($date)
@@ -344,13 +397,13 @@ new class extends Component
         <div class="bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                 <h3 class="font-bold text-lg">{{ __('Patients & Booking Management') }}</h3>
-                <button wire:click="$toggle('showAddPatient')" class="w-full sm:w-auto px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-base font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
-                    {{ $showAddPatient ? __('Close') : __('New Patient') . ' +' }}
+                <button wire:click="{{ $editingPatientId ? 'cancelPatientEdit' : '$toggle(\'showAddPatient\')' }}" class="w-full sm:w-auto px-6 py-2.5 {{ $editingPatientId || $showAddPatient ? 'bg-gray-100 text-gray-600' : 'bg-purple-600 text-white' }} rounded-xl text-base font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                    {{ $editingPatientId || $showAddPatient ? __('Close') : __('New Patient') . ' +' }}
                 </button>
             </div>
 
-            @if($showAddPatient)
-            <form wire:submit="createPatient" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 p-4 bg-purple-50 rounded-2xl border border-purple-100">
+            @if($showAddPatient || $editingPatientId)
+            <form wire:submit="{{ $editingPatientId ? 'updatePatient' : 'createPatient' }}" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 p-4 bg-purple-50 rounded-2xl border border-purple-100">
                 <div class="space-y-1">
                     <label class="text-sm font-bold text-purple-900">{{ __('Full Name') }} *</label>
                     <input wire:model="name" type="text" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
@@ -374,6 +427,7 @@ new class extends Component
                     <input wire:model="address" type="text" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
                     @error('address') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
+                @if(!$editingPatientId)
                 <div class="md:col-span-2 space-y-2">
                     <label class="text-sm font-bold text-purple-900">{{ __('Attach Files (ID, Reports, etc.)') }}</label>
                     <div class="relative group" wire:key="upload-input-wrapper-{{ count($patientFiles) }}">
@@ -400,10 +454,16 @@ new class extends Component
                         @endforeach
                     </div>
                 </div>
-                <div class="md:col-span-2">
-                    <button type="submit" class="w-full py-3 bg-purple-600 text-white rounded-xl font-bold mt-2 shadow-lg shadow-purple-200" wire:loading.attr="disabled">
-                        {{ __('Save Patient Data') }}
+                @endif
+                <div class="md:col-span-2 flex gap-3">
+                    <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-xl font-bold mt-2 shadow-lg shadow-purple-200" wire:loading.attr="disabled">
+                        {{ $editingPatientId ? __('Update Patient Data') : __('Save Patient Data') }}
                     </button>
+                    @if($editingPatientId)
+                    <button type="button" wire:click="cancelPatientEdit" class="py-3 px-6 bg-gray-200 text-gray-600 rounded-xl font-bold mt-2 hover:bg-gray-300 transition-all">
+                        {{ __('Cancel') }}
+                    </button>
+                    @endif
                 </div>
             </form>
             @endif
@@ -442,6 +502,9 @@ new class extends Component
                                 </div>
                             </div>
                             <div class="flex items-center gap-3 shrink-0">
+                                <button type="button" wire:click.stop="editPatient({{ $patient->id }})" class="p-2 text-gray-400 hover:text-purple-600 transition-colors" title="{{ __('Edit Patient Data') }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </button>
                                 <div class="px-5 py-2 bg-purple-600 text-white rounded-full text-xs font-black shadow-md shadow-purple-200 flex items-center gap-2 group-hover:bg-purple-700 transition-all">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
                                     {{ __('Record Appointment') }}
@@ -585,8 +648,11 @@ new class extends Component
                                 @if($appointment->status === 'pending')
                                 <button wire:click="checkIn({{ $appointment->id }})" class="text-white bg-purple-600 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-purple-700 shadow-sm shadow-purple-200 transition-all">{{ __('Prepare') }}</button>
                                 @endif
-                                <button wire:click="editAppointment({{ $appointment->id }})" class="text-gray-400 hover:text-purple-600 transition-colors" title="{{ __('Edit') }}">
+                                <button wire:click="editAppointment({{ $appointment->id }})" class="text-gray-400 hover:text-purple-600 transition-colors" title="{{ __('Edit Time') }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
+                                <button wire:click="deleteAppointment({{ $appointment->id }})" wire:confirm="{{ __('Are you sure you want to delete this appointment?') }}" class="text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Delete') }}">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                             </td>
                         </tr>

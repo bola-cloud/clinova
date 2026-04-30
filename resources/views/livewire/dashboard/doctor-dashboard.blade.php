@@ -13,6 +13,7 @@ new class extends Component
     public $noteContent = '';
     public $noteDate = '';
     public $noteTime = '';
+    public $showFinished = false;
 
     public function mount()
     {
@@ -30,6 +31,11 @@ new class extends Component
         }
 
         $this->noteTime = now()->addHour()->format('H:00');
+    }
+
+    public function toggleFinished()
+    {
+        $this->showFinished = !$this->showFinished;
     }
 
     public function setDate($date)
@@ -91,9 +97,11 @@ new class extends Component
     public function with()
     {
         $stats = app(AppointmentService::class)->getDoctorStats(auth()->id());
+        $allAppointments = app(AppointmentService::class)->getAppointmentsForDoctor(auth()->id(), \Carbon\Carbon::parse($this->selectedDate)->startOfDay());
         
         return [
-            'appointments' => app(AppointmentService::class)->getAppointmentsForDoctor(auth()->id(), \Carbon\Carbon::parse($this->selectedDate)->startOfDay()),
+            'activeAppointments' => $allAppointments->filter(fn($a) => in_array($a->status, ['pending', 'checked-in'])),
+            'finishedAppointments' => $allAppointments->filter(fn($a) => $a->status === 'seen'),
             'activeNotes' => DoctorNote::where('doctor_id', auth()->id())
                 ->where('is_completed', false)
                 ->orderBy('reminder_date', 'asc')
@@ -253,8 +261,8 @@ new class extends Component
                     </button>
                 </div>
 
-                <!-- Status / Appointments List -->
-                @if($appointments->isEmpty())
+                <!-- Active Appointments List -->
+                @if($activeAppointments->isEmpty() && $finishedAppointments->isEmpty())
                 <div class="flex items-center justify-center md:justify-start gap-4 py-8 bg-emerald-50/50 rounded-3xl px-8 border border-emerald-50/50">
                     <span class="text-lg font-black text-slate-900">{{ __("All Clear! No appointments scheduled for this clinic today.") }}</span>
                     <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 shadow-sm border border-emerald-200">
@@ -268,13 +276,14 @@ new class extends Component
                             <tr>
                                 <th class="px-6 py-6 font-black text-right w-16">#</th>
                                 <th class="px-6 py-6 font-black text-right">{{ __('Patient') }}</th>
+                                <th class="px-6 py-6 font-black text-center">{{ __('Type') }}</th>
                                 <th class="px-6 py-6 font-black text-center">{{ __('Appointment') }}</th>
                                 <th class="px-6 py-6 font-black text-center">{{ __('Status') }}</th>
                                 <th class="px-6 py-6 font-black text-left">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
-                            @foreach($appointments as $appointment)
+                            @foreach($activeAppointments as $appointment)
                             <tr class="group hover:bg-slate-50/50 transition-all duration-300">
                                 <td class="px-6 py-8 text-right">
                                     <span class="text-xs font-black text-slate-400">{{ $loop->iteration }}</span>
@@ -293,15 +302,17 @@ new class extends Component
                                     </div>
                                 </td>
                                 <td class="px-6 py-8 text-center">
+                                    @if($appointment->type === 'checkup')
+                                        <span class="px-3 py-1 bg-purple-100 text-purple-700 text-[10px] rounded-full font-black uppercase tracking-widest border border-purple-200">{{ __('Consultation Case') }}</span>
+                                    @else
+                                        <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] rounded-full font-black uppercase tracking-widest border border-amber-200">{{ __('Follow-up Case') }}</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-8 text-center">
                                     <span class="text-lg font-black text-slate-800 tracking-tighter">{{ $appointment->scheduled_at->format('H:i') }}</span>
                                 </td>
                                 <td class="px-6 py-8 text-center">
-                                    @if($appointment->status === 'seen')
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                                            <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{{ __('Seen') }}</span>
-                                        </div>
-                                    @elseif($appointment->status === 'checked-in')
+                                    @if($appointment->status === 'checked-in')
                                         <div class="flex items-center justify-center gap-2">
                                             <div class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] animate-pulse"></div>
                                             <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">{{ __('Wait') }}</span>
@@ -315,11 +326,15 @@ new class extends Component
                                 </td>
                                 <td class="px-6 py-8 text-left">
                                     @if($appointment->status === 'checked-in')
-                                    <a href="{{ route('appointments.visit', $appointment->id) }}" class="px-8 py-3 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition-all inline-block">{{ __('Start') }}</a>
+                                        @if($appointment->type === 'checkup')
+                                            <a href="{{ route('appointments.visit', $appointment->id) }}" class="px-8 py-3 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition-all inline-block">{{ __('Start') }}</a>
+                                        @else
+                                            <a href="{{ route('patients.show', $appointment->patient_id) }}" class="px-8 py-3 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all inline-block">{{ __('Start') }}</a>
+                                        @endif
                                     @else
-                                    <a href="{{ route('patients.show', $appointment->patient_id) }}" class="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                                    </a>
+                                        <a href="{{ route('patients.show', $appointment->patient_id) }}" class="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                                        </a>
                                     @endif
                                 </td>
                             </tr>
@@ -327,6 +342,63 @@ new class extends Component
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Finished Appointments Collapsible -->
+                @if($finishedAppointments->isNotEmpty())
+                <div class="mt-8 pt-8 border-t border-gray-50">
+                    <button wire:click="toggleFinished" class="flex items-center justify-between w-full px-6 py-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-500 border border-emerald-100 shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div class="text-right">
+                                <h4 class="font-black text-slate-900 text-sm tracking-tight">{{ __("Finished Patients") }}</h4>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ $finishedAppointments->count() }} {{ __("Patients completed today") }}</p>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center bg-white text-gray-400 group-hover:bg-indigo-50 transition-colors {{ $showFinished ? 'rotate-180' : '' }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </button>
+
+                    @if($showFinished)
+                    <div class="mt-4 overflow-x-auto animate-slide-in-top">
+                        <table class="w-full text-right" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
+                            <tbody class="divide-y divide-gray-50">
+                                @foreach($finishedAppointments as $appointment)
+                                <tr class="group hover:bg-slate-50/50 transition-all duration-300 opacity-60">
+                                    <td class="px-6 py-6 text-right w-16">
+                                        <span class="text-[10px] font-black text-slate-400">#{{ $loop->iteration }}</span>
+                                    </td>
+                                    <td class="px-6 py-6">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center font-black text-emerald-600 text-xs border border-white">
+                                                {{ substr($appointment->patient->name, 0, 1) }}
+                                            </div>
+                                            <div>
+                                                <a href="{{ route('patients.show', $appointment->patient_id) }}" class="font-bold text-slate-800 text-sm tracking-tight">
+                                                    {{ $appointment->patient->name }}
+                                                </a>
+                                                <span class="text-[10px] text-gray-400 font-bold block">{{ $appointment->patient->phone }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-6 text-center">
+                                        <span class="text-sm font-black text-slate-600 tracking-tighter">{{ $appointment->scheduled_at->format('H:i') }}</span>
+                                    </td>
+                                    <td class="px-6 py-6 text-left">
+                                        <a href="{{ route('patients.show', $appointment->patient_id) }}" class="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                                        </a>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+                </div>
+                @endif
                 @endif
             </div>
 
