@@ -82,9 +82,9 @@ use App\Models\DoctorNote;
     </div>
 
     <!-- Middle Section: Doctor Profile and Schedule - Reordered for RTL (RHS First) -->
-    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-16 items-start mt-6">
+    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-10 items-start mt-6">
         <!-- Schedule Section (RHS in RTL - FIRST in DOM) -->
-        <div class="lg:col-span-7 space-y-6 pt-12">
+        <div class="lg:col-span-8 space-y-6 pt-12">
             <!-- Header -->
             <div class="flex items-center justify-between px-2">
                 <h2 class="text-5xl font-black text-slate-900 tracking-tighter"><?php echo e(__("Today at a Glance")); ?></h2>
@@ -146,8 +146,8 @@ use App\Models\DoctorNote;
                     </button>
                 </div>
 
-                <!-- Status / Appointments List -->
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($appointments->isEmpty()): ?>
+                <!-- Active Appointments List -->
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($activeAppointments->isEmpty() && $finishedAppointments->isEmpty()): ?>
                 <div class="flex items-center justify-center md:justify-start gap-4 py-8 bg-emerald-50/50 rounded-3xl px-8 border border-emerald-50/50">
                     <span class="text-lg font-black text-slate-900"><?php echo e(__("All Clear! No appointments scheduled for this clinic today.")); ?></span>
                     <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 shadow-sm border border-emerald-200">
@@ -159,17 +159,18 @@ use App\Models\DoctorNote;
                     <table class="w-full text-right" dir="<?php echo e(app()->getLocale() === 'ar' ? 'rtl' : 'ltr'); ?>">
                         <thead class="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-gray-50">
                             <tr>
-                                <th class="px-6 py-6 font-black text-right w-16">#</th>
-                                <th class="px-6 py-6 font-black text-right"><?php echo e(__('Patient')); ?></th>
-                                <th class="px-6 py-6 font-black text-center"><?php echo e(__('Appointment')); ?></th>
-                                <th class="px-6 py-6 font-black text-center"><?php echo e(__('Status')); ?></th>
+                                <th class="px-2 py-6 font-black text-right w-10">#</th>
+                                <th class="px-6 py-6 font-black text-right min-w-[250px] w-full"><?php echo e(__('Patient')); ?></th>
+                                <th class="px-6 py-6 font-black text-center min-w-[160px]"><?php echo e(__('Type')); ?></th>
+                                <th class="px-6 py-6 font-black text-center min-w-[120px]"><?php echo e(__('Appointment')); ?></th>
+                                <th class="px-6 py-6 font-black text-center min-w-[140px]"><?php echo e(__('Status')); ?></th>
                                 <th class="px-6 py-6 font-black text-left"><?php echo e(__('Actions')); ?></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $appointments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $appointment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $activeAppointments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $appointment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
                             <tr class="group hover:bg-slate-50/50 transition-all duration-300">
-                                <td class="px-6 py-8 text-right">
+                                <td class="px-2 py-8 text-right">
                                     <span class="text-xs font-black text-slate-400"><?php echo e($loop->iteration); ?></span>
                                 </td>
                                 <td class="px-6 py-8">
@@ -179,7 +180,7 @@ use App\Models\DoctorNote;
 
                                         </div>
                                         <div>
-                                            <a href="<?php echo e(route('patients.show', $appointment->patient_id)); ?>" class="font-black text-slate-900 group-hover:text-indigo-600 transition-colors block text-base tracking-tight">
+                                            <a href="<?php echo e(route('patients.show', $appointment->patient_id)); ?>" class="font-black text-slate-900 group-hover:text-indigo-600 transition-colors block text-lg tracking-tight">
                                                 <?php echo e($appointment->patient->name); ?>
 
                                             </a>
@@ -188,15 +189,17 @@ use App\Models\DoctorNote;
                                     </div>
                                 </td>
                                 <td class="px-6 py-8 text-center">
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($appointment->type === 'checkup'): ?>
+                                        <span class="px-3 py-1.5 bg-purple-100 text-purple-700 text-xs rounded-full font-black uppercase tracking-widest border border-purple-200"><?php echo e(__('Consultation Case')); ?></span>
+                                    <?php else: ?>
+                                        <span class="px-3 py-1.5 bg-amber-100 text-amber-700 text-xs rounded-full font-black uppercase tracking-widest border border-amber-200"><?php echo e(__('Follow-up Case')); ?></span>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </td>
+                                <td class="px-6 py-8 text-center">
                                     <span class="text-lg font-black text-slate-800 tracking-tighter"><?php echo e($appointment->scheduled_at->format('H:i')); ?></span>
                                 </td>
                                 <td class="px-6 py-8 text-center">
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($appointment->status === 'seen'): ?>
-                                        <div class="flex items-center justify-center gap-2">
-                                            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-                                            <span class="text-[10px] font-black text-emerald-600 uppercase tracking-widest"><?php echo e(__('Seen')); ?></span>
-                                        </div>
-                                    <?php elseif($appointment->status === 'checked-in'): ?>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($appointment->status === 'checked-in'): ?>
                                         <div class="flex items-center justify-center gap-2">
                                             <div class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] animate-pulse"></div>
                                             <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest"><?php echo e(__('Wait')); ?></span>
@@ -210,11 +213,15 @@ use App\Models\DoctorNote;
                                 </td>
                                 <td class="px-6 py-8 text-left">
                                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($appointment->status === 'checked-in'): ?>
-                                    <a href="<?php echo e(route('appointments.visit', $appointment->id)); ?>" class="px-8 py-3 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition-all inline-block"><?php echo e(__('Start')); ?></a>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($appointment->type === 'checkup'): ?>
+                                            <a href="<?php echo e(route('appointments.visit', $appointment->id)); ?>" class="px-8 py-3 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition-all inline-block"><?php echo e(__('Start')); ?></a>
+                                        <?php else: ?>
+                                            <a href="<?php echo e(route('patients.show', $appointment->patient_id)); ?>" class="px-8 py-3 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all inline-block"><?php echo e(__('Start')); ?></a>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                     <?php else: ?>
-                                    <a href="<?php echo e(route('patients.show', $appointment->patient_id)); ?>" class="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                                    </a>
+                                        <a href="<?php echo e(route('patients.show', $appointment->patient_id)); ?>" class="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                                        </a>
                                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 </td>
                             </tr>
@@ -222,6 +229,65 @@ use App\Models\DoctorNote;
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Finished Appointments Collapsible -->
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($finishedAppointments->isNotEmpty()): ?>
+                <div class="mt-8 pt-8 border-t border-gray-50">
+                    <button wire:click="toggleFinished" class="flex items-center justify-between w-full px-6 py-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-500 border border-emerald-100 shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div class="text-right">
+                                <h4 class="font-black text-slate-900 text-sm tracking-tight"><?php echo e(__("Finished Patients")); ?></h4>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest"><?php echo e($finishedAppointments->count()); ?> <?php echo e(__("Patients completed today")); ?></p>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center bg-white text-gray-400 group-hover:bg-indigo-50 transition-colors <?php echo e($showFinished ? 'rotate-180' : ''); ?>">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </button>
+
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($showFinished): ?>
+                    <div class="mt-4 overflow-x-auto animate-slide-in-top">
+                        <table class="w-full text-right" dir="<?php echo e(app()->getLocale() === 'ar' ? 'rtl' : 'ltr'); ?>">
+                            <tbody class="divide-y divide-gray-50">
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $finishedAppointments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $appointment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
+                                <tr class="group hover:bg-slate-50/50 transition-all duration-300 opacity-60">
+                                    <td class="px-6 py-6 text-right w-16">
+                                        <span class="text-[10px] font-black text-slate-400">#<?php echo e($loop->iteration); ?></span>
+                                    </td>
+                                    <td class="px-6 py-6">
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center font-black text-emerald-600 text-xs border border-white">
+                                                <?php echo e(substr($appointment->patient->name, 0, 1)); ?>
+
+                                            </div>
+                                            <div>
+                                                <a href="<?php echo e(route('patients.show', $appointment->patient_id)); ?>" class="font-bold text-slate-800 text-sm tracking-tight">
+                                                    <?php echo e($appointment->patient->name); ?>
+
+                                                </a>
+                                                <span class="text-[10px] text-gray-400 font-bold block"><?php echo e($appointment->patient->phone); ?></span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-6 text-center">
+                                        <span class="text-sm font-black text-slate-600 tracking-tighter"><?php echo e($appointment->scheduled_at->format('H:i')); ?></span>
+                                    </td>
+                                    <td class="px-6 py-6 text-left">
+                                        <a href="<?php echo e(route('patients.show', $appointment->patient_id)); ?>" class="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
 
@@ -320,7 +386,7 @@ use App\Models\DoctorNote;
         </div>
 
         <!-- Doctor Profile Image Area & Notes (LHS in RTL) -->
-        <div class="lg:col-span-4 lg:col-start-9 flex flex-col items-center justify-start relative pt-16 space-y-12 pr-0 lg:pr-12 xl:pr-16">
+        <div class="lg:col-span-4 flex flex-col items-center justify-start relative pt-16 space-y-12">
             
             <!-- Doctor Spotlight -->
             <div class="relative group mt-8">

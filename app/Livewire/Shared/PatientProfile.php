@@ -18,7 +18,8 @@ class PatientProfile extends Component
     public Patient $patient;
     
     // File Upload properties
-    public $newFile;
+    public $uploads = [];
+    public $patientFiles = [];
     public $fileType = 'lab';
     
     // UI Toggles & Edits
@@ -37,7 +38,6 @@ class PatientProfile extends Component
     public $diagnosis = '';
     public $investigation = '';
     public $treatmentText = '';
-    public $treatmentFile = null;
     public $parentVisitId = null;
     public $visitType = 'checkup';
     public $followUpNotes = '';
@@ -51,6 +51,46 @@ class PatientProfile extends Component
     public $bookingTime = '09:00';
     public $bookingType = 'checkup';
 
+
+    public function updatedUploads()
+    {
+        $this->validate([
+            'uploads.*' => 'nullable|file|max:2048', // 2MB max
+        ], [
+            'uploads.*.max' => __('The file size must not exceed 2MB.'),
+        ]);
+
+        foreach ($this->uploads as $file) {
+            // Save to persistent temp directory immediately
+            $tempPath = $file->store('temp_patient_files', 'public');
+            
+            $this->patientFiles[] = [
+                'name' => $file->getClientOriginalName(),
+                'type' => $file->getClientMimeType(),
+                'temp_path' => $tempPath,
+                'id' => uniqid() // For stable wire:key
+            ];
+        }
+
+        $this->reset(['uploads']);
+    }
+
+    public function deletePatientFile($fileId)
+    {
+        foreach ($this->patientFiles as $index => $fileData) {
+            if ($fileData['id'] === $fileId) {
+                // Delete physical temp file
+                if (isset($fileData['temp_path'])) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($fileData['temp_path']);
+                }
+                
+                // Remove from state
+                unset($this->patientFiles[$index]);
+                break;
+            }
+        }
+        $this->patientFiles = array_values($this->patientFiles);
+    }
 
     public function updatedComplaint($value)
     {
@@ -97,54 +137,46 @@ class PatientProfile extends Component
     public function selectSuggestionFor($field, $value)
     {
         $currentText = $this->$field;
-        
-        $lastComma = mb_strrpos($currentText, ',');
-        $lastNewline = mb_strrpos($currentText, "\n");
-        $lastArabicComma = mb_strrpos($currentText, '،');
-        
-        $lastSeparatorPoint = max(
-            $lastComma !== false ? $lastComma : -1, 
-            $lastNewline !== false ? $lastNewline : -1,
-            $lastArabicComma !== false ? $lastArabicComma : -1
-        );
-        
-        if ($lastSeparatorPoint !== -1) {
-            // Keep everything up to the separator, and add the new value
-            $prefix = mb_substr($currentText, 0, $lastSeparatorPoint + 1);
-            
-            // Add a space if it's a comma (for better formatting)
-            $space = mb_substr($prefix, -1) === "\n" ? "" : " ";
-            $this->$field = $prefix . $space . $value;
-        } else {
-            $this->$field = $value;
-        }
-
+        $this->$field = $value;
         $suggestionField = $field . 'Suggestions';
-        if ($field === 'treatmentText') $suggestionField = 'treatmentSuggestions';
+        if ($field === 'history') $suggestionField = 'investigationSuggestions';
+        if ($field === 'treatment_text') $suggestionField = 'treatmentSuggestions';
         
         $this->$suggestionField = [];
     }
 
+    public function mount(Patient $patient)
+    {
+        $this->patient = $patient;
+        $this->familyHistoryEdit = $patient->family_history;
+        $this->personalHistoryEdit = $patient->personal_history;
+        
+        $user = auth()->user();
+        if ($user->role === 'doctor') {
+            $specialty = $user->specialty;
+            if ($specialty) {
+                $this->specialtyFields = $specialty->fields;
+            }
+        }
+    }
 
     public function openVisitModal()
     {
         $this->resetVisitForm();
-        
-        // Load Specialty Fields
-        $doctor = auth()->user()->isDoctor() ? auth()->user() : \App\Models\User::find(auth()->user()->doctor_id);
-        if ($doctor && $doctor->specialty) {
-            $this->specialtyFields = $doctor->specialty->fields;
-            foreach ($this->specialtyFields as $field) {
-                $this->dynamicAnswers[$field->id] = $field->type === 'multi_select' ? [] : '';
-            }
-        }
-        
         $this->showVisitModal = true;
     }
 
     public function closeVisitModal()
     {
         $this->showVisitModal = false;
+        // Clean up any uploaded temp files if modal closed without saving
+        if ($this->patientFiles) {
+            foreach ($this->patientFiles as $fileData) {
+                if (isset($fileData['temp_path'])) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($fileData['temp_path']);
+                }
+            }
+        }
         $this->resetVisitForm();
     }
 
@@ -169,7 +201,6 @@ class PatientProfile extends Component
             'diagnosis' => 'nullable|string|max:2000',
             'investigation' => 'nullable|string|max:5000',
             'treatmentText' => 'nullable|string|max:5000',
-            'treatmentFile' => 'nullable|file|max:10240',
             'followUpNotes' => 'nullable|string|max:5000',
         ];
 
@@ -184,45 +215,66 @@ class PatientProfile extends Component
         /** @var \App\Models\User $doctor */
         $doctor = auth()->user()->isDoctor() ? auth()->user() : auth()->user()->assignedDoctor;
 
-        if ($this->treatmentFile) {
-            $fileSize = $this->treatmentFile->getSize();
-            if ($doctor && !$doctor->hasStorageSpace($fileSize)) {
-                $this->addError('treatmentFile', __('Storage limit reached for this clinic. Please contact administration.'));
-                return;
+        // Check storage for all files
+        $totalSize = 0;
+        foreach ($this->patientFiles as $f) {
+            if (isset($f['temp_path'])) {
+                $totalSize += \Illuminate\Support\Facades\Storage::disk('public')->size($f['temp_path']);
             }
         }
 
-        $treatmentFilePath = null;
-        if ($this->treatmentFile) {
-            $treatmentFilePath = $this->treatmentFile->store('treatments', 'public');
-            \App\Services\FileService::optimizeImageInPlace('public', $treatmentFilePath);
-            \App\Services\FileService::compressFileInPlace('public', $treatmentFilePath);
-            
-            // Increment storage quota with final size
-            if ($doctor) {
-                $finalSize = \Illuminate\Support\Facades\Storage::disk('public')->size($treatmentFilePath);
-                $doctor->increment('used_storage_bytes', $finalSize);
-            }
+        if ($doctor && !$doctor->hasStorageSpace($totalSize)) {
+            $this->addError('uploads', __('Storage limit reached for this clinic. Please contact administration.'));
+            return;
         }
 
         $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
 
-        $this->patient->visits()->create([
+        $visit = $this->patient->visits()->create([
             'doctor_id' => $doctorId,
             'complaint' => $this->complaint,
             'diagnosis' => $this->diagnosis,
             'history' => $this->investigation,
             'treatment_text' => $this->treatmentText,
-            'treatment_file_path' => $treatmentFilePath,
             'follow_up_notes' => $this->followUpNotes,
             'parent_visit_id' => $this->parentVisitId,
             'type' => $this->visitType,
             'specialty_data' => $this->dynamicAnswers,
         ]);
 
-        $this->closeVisitModal();
+        // Process Files
+        if ($this->patientFiles) {
+            foreach ($this->patientFiles as $fileData) {
+                if (!isset($fileData['temp_path'])) continue;
+                
+                $oldPath = $fileData['temp_path'];
+                $fileName = $fileData['name'];
+                $newPath = "patient_files/" . basename($oldPath);
+                
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($oldPath)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->move($oldPath, $newPath);
+                    
+                    // Optimization
+                    \App\Services\FileService::optimizeImageInPlace('public', $newPath);
+                    \App\Services\FileService::compressFileInPlace('public', $newPath);
+                    
+                    $finalSize = \Illuminate\Support\Facades\Storage::disk('public')->size($newPath);
+                    if ($doctor) $doctor->increment('used_storage_bytes', $finalSize);
 
-        $this->closeVisitModal();
+                    PatientFile::create([
+                        'patient_id' => $this->patient->id,
+                        'visit_id' => $visit->id,
+                        'file_path' => $newPath,
+                        'file_name' => $fileName,
+                        'file_type' => $fileData['type'] ?? 'application/octet-stream',
+                        'uploaded_by' => auth()->id(),
+                    ]);
+                }
+            }
+        }
+
+        $this->showVisitModal = false;
+        $this->resetVisitForm();
         session()->flash('visit_message', __('Visit recorded successfully.'));
     }
 
@@ -230,8 +282,8 @@ class PatientProfile extends Component
     {
         $this->reset([
             'complaint', 'diagnosis', 'investigation', 'treatmentText', 
-            'treatmentFile', 'parentVisitId', 'visitType', 'followUpNotes', 
-            'dynamicAnswers'
+            'parentVisitId', 'visitType', 'followUpNotes', 
+            'dynamicAnswers', 'patientFiles', 'uploads'
         ]);
         $this->complaintSuggestions = [];
         $this->diagnosisSuggestions = [];
@@ -258,78 +310,70 @@ class PatientProfile extends Component
 
     public function uploadFile()
     {
-        if (!auth()->user()->isDoctor() && !auth()->user()->isSecretary()) return;
+        if (!$this->patientFiles) {
+            $this->addError('uploads', __('Please select files to upload.'));
+            return;
+        }
 
         /** @var \App\Models\User $doctor */
         $doctor = auth()->user()->isDoctor() ? auth()->user() : auth()->user()->assignedDoctor;
 
-        $this->validate([
-            'newFile' => 'required|file|max:20480',
-            'fileType' => 'required|in:lab,investigation,other',
-        ]);
+        foreach ($this->patientFiles as $fileData) {
+            $oldPath = $fileData['temp_path'];
+            $fileName = $fileData['name'];
+            $newPath = "patient_files/" . basename($oldPath);
+            
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($oldPath)) {
+                $fileSize = \Illuminate\Support\Facades\Storage::disk('public')->size($oldPath);
+                
+                if ($doctor && !$doctor->hasStorageSpace($fileSize)) {
+                    $this->addError('uploads', __('Storage limit reached.'));
+                    return;
+                }
 
-        $fileSize = $this->newFile->getSize();
-        
-        // Check storage limit
-        if ($doctor && !$doctor->hasStorageSpace($fileSize)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'newFile' => [__('Storage limit reached for this clinic. Please contact administration.')]
-            ]);
+                \Illuminate\Support\Facades\Storage::disk('public')->move($oldPath, $newPath);
+                
+                // Optimization
+                \App\Services\FileService::optimizeImageInPlace('public', $newPath);
+                \App\Services\FileService::compressFileInPlace('public', $newPath);
+                
+                $finalSize = \Illuminate\Support\Facades\Storage::disk('public')->size($newPath);
+                if ($doctor) $doctor->increment('used_storage_bytes', $finalSize);
+
+                PatientFile::create([
+                    'patient_id' => $this->patient->id,
+                    'file_path' => $newPath,
+                    'file_name' => $fileName,
+                    'file_type' => $this->fileType ?: ($fileData['type'] ?? 'application/octet-stream'),
+                    'uploaded_by' => auth()->id(),
+                ]);
+            }
         }
 
-        $path = $this->newFile->store('patient_files', 'public');
-
-        // Optimize or Compress in place
-        $mime = $this->newFile->getMimeType();
-        if (str_starts_with($mime, 'image/')) {
-            \App\Services\FileService::optimizeImageInPlace('public', $path);
-        } else {
-            \App\Services\FileService::compressFileInPlace('public', $path);
-        }
-
-        // Recalculate size after compression for accurate used_storage_bytes
-        $finalSize = Storage::disk('public')->size($path);
-
-        $this->patient->files()->create([
-            'file_name' => $this->newFile->getClientOriginalName(),
-            'file_path' => $path,
-            'file_type' => $this->fileType,
-            'uploaded_by' => auth()->id(),
-        ]);
-
-        // Update used_storage_bytes with final (compressed) size
-        if ($doctor) {
-            $doctor->increment('used_storage_bytes', $finalSize);
-        }
-
-        $this->reset(['newFile', 'fileType']);
-        $this->patient->load('files');
-        session()->flash('file_message', __('Medical file uploaded successfully.'));
+        $this->reset(['patientFiles', 'uploads']);
+        session()->flash('file_message', __('Files uploaded successfully.'));
     }
 
     public function deleteFile($fileId)
     {
-        if (!auth()->user()->isDoctor() && !auth()->user()->isSecretary()) return;
-
         $file = PatientFile::findOrFail($fileId);
-        $fileSize = 0;
-
-        if (Storage::disk('public')->exists($file->file_path)) {
-            $fileSize = Storage::disk('public')->size($file->file_path);
-            Storage::disk('public')->delete($file->file_path);
+        
+        // Check permissions
+        if (!auth()->user()->isDoctor() && !auth()->user()->isSecretary()) {
+            return;
         }
 
-        $file->delete();
-
+        // Subtract storage
         /** @var \App\Models\User $doctor */
         $doctor = auth()->user()->isDoctor() ? auth()->user() : auth()->user()->assignedDoctor;
-        
-        if ($doctor && $fileSize > 0) {
-            $doctor->decrement('used_storage_bytes', $fileSize);
+        if ($doctor && \Illuminate\Support\Facades\Storage::disk('public')->exists($file->file_path)) {
+            $size = \Illuminate\Support\Facades\Storage::disk('public')->size($file->file_path);
+            $doctor->decrement('used_storage_bytes', min($size, $doctor->used_storage_bytes));
         }
 
-        $this->patient->load('files');
-        session()->flash('file_message', __('File deleted successfully.'));
+        \Illuminate\Support\Facades\Storage::disk('public')->delete($file->file_path);
+        $file->delete();
+        session()->flash('file_message', __('File deleted.'));
     }
 
     public function openBooking()
@@ -379,12 +423,15 @@ class PatientProfile extends Component
         $this->editAgeYears = $this->patient->age_years;
         $this->editAgeMonths = $this->patient->age_months;
         $this->editAgeDays = $this->patient->age_days;
-        $this->editWeight = $this->patient->weight;
         $this->editAddress = $this->patient->address;
+        $this->editWeight = $this->patient->weight;
         $this->showEditModal = true;
     }
 
-    public function closeEditModal() { $this->showEditModal = false; }
+    public function closeEditModal()
+    {
+        $this->showEditModal = false;
+    }
 
     public function savePatientData()
     {
@@ -441,7 +488,24 @@ class PatientProfile extends Component
         ]);
 
         $visitFiles = $this->patient->visits()
+            ->join('patient_files', 'visits.id', '=', 'patient_files.visit_id')
+            ->select('patient_files.*')
+            ->orderBy('patient_files.created_at', 'desc')
+            ->get()
+            ->map(fn($f) => [
+                'id' => $f->id,
+                'name' => $f->file_name,
+                'path' => $f->file_path,
+                'type' => $f->file_type,
+                'date' => $f->created_at,
+                'source' => 'patient_file',
+                'url' => route('files.patient', $f->id),
+            ]);
+
+        // Fallback for old treatment_file_path if it exists
+        $legacyVisitFiles = $this->patient->visits()
             ->whereNotNull('treatment_file_path')
+            ->whereDoesntHave('files')
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(fn($v) => [
@@ -454,7 +518,7 @@ class PatientProfile extends Component
                 'url' => route('files.visit', $v->id),
             ]);
 
-        $allFiles = $medicalFiles->concat($visitFiles)->unique('path')->sortByDesc('date');
+        $allFiles = $medicalFiles->concat($visitFiles)->concat($legacyVisitFiles)->unique('path')->sortByDesc('date');
 
         return view('livewire.shared.patient-profile', [
             'allFiles' => $allFiles,

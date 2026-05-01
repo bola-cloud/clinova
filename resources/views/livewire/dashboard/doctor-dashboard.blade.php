@@ -198,9 +198,9 @@ new class extends Component
     </div>
 
     <!-- Middle Section: Doctor Profile and Schedule - Reordered for RTL (RHS First) -->
-    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-16 items-start mt-6">
+    <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-10 items-start mt-6">
         <!-- Schedule Section (RHS in RTL - FIRST in DOM) -->
-        <div class="lg:col-span-7 space-y-6 pt-12">
+        <div class="lg:col-span-8 space-y-6 pt-12">
             <!-- Header -->
             <div class="flex items-center justify-between px-2">
                 <h2 class="text-5xl font-black text-slate-900 tracking-tighter">{{ __("Today at a Glance") }}</h2>
@@ -274,18 +274,18 @@ new class extends Component
                     <table class="w-full text-right" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
                         <thead class="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-gray-50">
                             <tr>
-                                <th class="px-6 py-6 font-black text-right w-16">#</th>
-                                <th class="px-6 py-6 font-black text-right">{{ __('Patient') }}</th>
-                                <th class="px-6 py-6 font-black text-center">{{ __('Type') }}</th>
-                                <th class="px-6 py-6 font-black text-center">{{ __('Appointment') }}</th>
-                                <th class="px-6 py-6 font-black text-center">{{ __('Status') }}</th>
+                                <th class="px-2 py-6 font-black text-right w-10">#</th>
+                                <th class="px-6 py-6 font-black text-right min-w-[250px] w-full">{{ __('Patient') }}</th>
+                                <th class="px-6 py-6 font-black text-center min-w-[160px]">{{ __('Type') }}</th>
+                                <th class="px-6 py-6 font-black text-center min-w-[120px]">{{ __('Appointment') }}</th>
+                                <th class="px-6 py-6 font-black text-center min-w-[140px]">{{ __('Status') }}</th>
                                 <th class="px-6 py-6 font-black text-left">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
                             @foreach($activeAppointments as $appointment)
                             <tr class="group hover:bg-slate-50/50 transition-all duration-300">
-                                <td class="px-6 py-8 text-right">
+                                <td class="px-2 py-8 text-right">
                                     <span class="text-xs font-black text-slate-400">{{ $loop->iteration }}</span>
                                 </td>
                                 <td class="px-6 py-8">
@@ -294,7 +294,7 @@ new class extends Component
                                             {{ substr($appointment->patient->name, 0, 1) }}
                                         </div>
                                         <div>
-                                            <a href="{{ route('patients.show', $appointment->patient_id) }}" class="font-black text-slate-900 group-hover:text-indigo-600 transition-colors block text-base tracking-tight">
+                                            <a href="{{ route('patients.show', $appointment->patient_id) }}" class="font-black text-slate-900 group-hover:text-indigo-600 transition-colors block text-lg tracking-tight">
                                                 {{ $appointment->patient->name }}
                                             </a>
                                             <span class="text-xs text-gray-400 font-bold">{{ $appointment->patient->phone }}</span>
@@ -303,9 +303,9 @@ new class extends Component
                                 </td>
                                 <td class="px-6 py-8 text-center">
                                     @if($appointment->type === 'checkup')
-                                        <span class="px-3 py-1 bg-purple-100 text-purple-700 text-[10px] rounded-full font-black uppercase tracking-widest border border-purple-200">{{ __('Consultation Case') }}</span>
+                                        <span class="px-3 py-1.5 bg-purple-100 text-purple-700 text-xs rounded-full font-black uppercase tracking-widest border border-purple-200">{{ __('Consultation Case') }}</span>
                                     @else
-                                        <span class="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] rounded-full font-black uppercase tracking-widest border border-amber-200">{{ __('Follow-up Case') }}</span>
+                                        <span class="px-3 py-1.5 bg-amber-100 text-amber-700 text-xs rounded-full font-black uppercase tracking-widest border border-amber-200">{{ __('Follow-up Case') }}</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-8 text-center">
@@ -494,7 +494,7 @@ new class extends Component
         </div>
 
         <!-- Doctor Profile Image Area & Notes (LHS in RTL) -->
-        <div class="lg:col-span-4 lg:col-start-9 flex flex-col items-center justify-start relative pt-16 space-y-12 pr-0 lg:pr-12 xl:pr-16">
+        <div class="lg:col-span-4 flex flex-col items-center justify-start relative pt-16 space-y-12">
             
             <!-- Doctor Spotlight -->
             <div class="relative group mt-8">

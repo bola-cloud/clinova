@@ -119,6 +119,7 @@ new class extends Component
                     $query->where('doctor_id', $this->assignedDoctorId);
                 })
                 ->whereBetween('scheduled_at', [$date->copy()->startOfDay(), $date->copy()->endOfDay()])
+                ->orderByRaw("CASE WHEN status = 'checked-in' THEN 1 WHEN status = 'pending' THEN 2 WHEN status = 'seen' THEN 3 ELSE 4 END")
                 ->orderBy('scheduled_at', 'asc')
                 ->orderBy('queue_order', 'asc')
                 ->paginate(15),
@@ -150,8 +151,12 @@ new class extends Component
                 'id' => uniqid() // For stable wire:key
             ];
         }
-
         $this->reset(['uploads']);
+    }
+
+    public function resetForm()
+    {
+        $this->reset(['name', 'phone', 'age_years', 'age_months', 'age_days', 'weight', 'address', 'patientFiles', 'uploads']);
     }
 
     public function createPatient()
@@ -224,6 +229,13 @@ new class extends Component
         $appointment = Appointment::findOrFail($appointmentId);
         app(AppointmentService::class)->updateStatus($appointment, 'checked-in');
         session()->flash('message', __('Patient prepared successfully.'));
+    }
+
+    public function markAsSeen($appointmentId)
+    {
+        $appointment = Appointment::findOrFail($appointmentId);
+        app(AppointmentService::class)->updateStatus($appointment, 'seen');
+        session()->flash('message', __('Appointment marked as seen.'));
     }
 
     public function selectForBooking($patientId)
@@ -647,6 +659,8 @@ new class extends Component
                             <td class="px-6 py-4 flex items-center gap-3">
                                 @if($appointment->status === 'pending')
                                 <button wire:click="checkIn({{ $appointment->id }})" class="text-white bg-purple-600 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-purple-700 shadow-sm shadow-purple-200 transition-all">{{ __('Prepare') }}</button>
+                                @elseif($appointment->status === 'checked-in')
+                                <button wire:click="markAsSeen({{ $appointment->id }})" class="text-white bg-emerald-600 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 shadow-sm shadow-emerald-200 transition-all">{{ __('Mark as Seen') }}</button>
                                 @endif
                                 <button wire:click="editAppointment({{ $appointment->id }})" class="text-gray-400 hover:text-purple-600 transition-colors" title="{{ __('Edit Time') }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>

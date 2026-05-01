@@ -135,7 +135,7 @@
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($visit->treatment_file_path): ?>
                     <div class="md:col-span-2">
-                        <a href="<?php echo e(route('files.serve', ['path' => $visit->treatment_file_path])); ?>" target="_blank" class="inline-flex items-center gap-2 text-purple-600 font-bold hover:underline">
+                        <a href="<?php echo e($visit->treatment_file_path ? route('files.visit', $visit->id) : '#'); ?>" target="_blank" class="inline-flex items-center gap-2 text-purple-600 font-bold hover:underline">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             <?php echo e(__('View Attached Treatment File')); ?>
 
@@ -215,7 +215,7 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5">
-                            <a href="<?php echo e(route('files.serve', ['path' => $file['path']])); ?>" target="_blank" class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-sm group/btn" title="<?php echo e(__('View')); ?>">
+                            <a href="<?php echo e($file['url']); ?>" target="_blank" class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-black hover:text-white transition-all shadow-sm group/btn" title="<?php echo e(__('View')); ?>">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                             </a>
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($file['source'] === 'patient_file' && (auth()->user()->isDoctor() || auth()->user()->isSecretary())): ?>
@@ -232,31 +232,55 @@
                 
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth()->user()->isDoctor() || auth()->user()->isSecretary()): ?>
                 <!-- Upload Form -->
-                <form wire:submit.prevent="uploadFile" class="pt-4 border-t border-dashed border-gray-200 space-y-3 relative">
+                <div class="pt-4 border-t border-dashed border-gray-200 space-y-3 relative">
                     <div class="flex flex-col sm:flex-row items-center gap-3">
                         <select wire:model="fileType" class="w-full sm:w-1/3 px-3 py-2 text-sm bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500">
                             <option value="lab"><?php echo e(__('Lab Result')); ?></option>
                             <option value="investigation"><?php echo e(__('Investigation')); ?></option>
                             <option value="other"><?php echo e(__('Other Document')); ?></option>
                         </select>
-                        <input type="file" wire:model="newFile" class="block w-full sm:w-2/3 text-sm text-gray-500 file:me-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 transition-all cursor-pointer">
+                        <div class="relative w-full sm:w-2/3 h-10 bg-purple-50 border-2 border-dashed border-purple-200 rounded-xl flex items-center justify-center group hover:bg-purple-100 transition-all cursor-pointer">
+                            <input type="file" wire:model.live="uploads" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                            <div class="flex items-center gap-2 text-purple-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                                <span class="text-xs font-black uppercase tracking-widest"><?php echo e(__('Select Files')); ?></span>
+                            </div>
+                        </div>
                     </div>
+
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($patientFiles): ?>
+                    <div class="grid grid-cols-1 gap-2 mt-3">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $patientFiles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
+                        <div class="flex items-center justify-between p-2 bg-white rounded-lg border border-purple-100 shadow-sm animate-fade-in" <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processElementKey('temp-file-{{ $file[\'id\'] }}', get_defined_vars()); ?>wire:key="temp-file-<?php echo e($file['id']); ?>">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
+                                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                </div>
+                                <span class="text-xs font-bold text-gray-700 truncate max-w-[150px]"><?php echo e($file['name']); ?></span>
+                            </div>
+                            <button type="button" wire:click="deletePatientFile('<?php echo e($file['id']); ?>')" class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                    </div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     
-                    <div wire:loading wire:target="newFile" class="text-xs text-purple-600 font-bold loading-dots"><?php echo e(__('Uploading file...')); ?></div>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['newFile'];
+                    <div wire:loading wire:target="uploads" class="text-[10px] text-purple-600 font-black uppercase tracking-widest animate-pulse"><?php echo e(__('Uploading to temporary storage...')); ?></div>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['uploads.*'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?> <span class="text-xs text-red-500 block"><?php echo e($message); ?></span> <?php unset($message);
+$message = $__bag->first($__errorArgs[0]); ?> <span class="text-xs text-red-500 font-bold block"><?php echo e($message); ?></span> <?php unset($message);
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     
-                    <button type="submit" wire:loading.attr="disabled" wire:target="uploadFile, newFile" class="w-full py-2.5 bg-purple-600 text-white rounded-xl text-sm font-bold shadow-md shadow-purple-200 hover:bg-purple-700 transition-colors disabled:opacity-50">
-                        <?php echo e(__('Upload File')); ?>
+                    <button type="button" wire:click="uploadFile" wire:loading.attr="disabled" wire:target="uploadFile, uploads" class="w-full py-3 bg-purple-600 text-white rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-lg shadow-purple-200 hover:bg-purple-700 hover:-translate-y-0.5 transition-all disabled:opacity-50">
+                        <?php echo e(__('Save Files Permanently')); ?>
 
                     </button>
-                </form>
+                </div>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
 
@@ -338,7 +362,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
                     </p>
                 </div>
-            </div>>
+            </div>
         </div>
     </div>
 
@@ -508,37 +532,59 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                         </div>
 
                         <div class="md:col-span-2 space-y-2">
-                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest"><?php echo e(__('Attach Treatment File')); ?></label>
-                            <div class="flex items-center gap-4 p-4 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl group relative cursor-pointer">
-                                <input type="file" wire:model="treatmentFile" class="absolute inset-0 opacity-0 cursor-pointer">
-                                <div class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-emerald-600">
-                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest"><?php echo e(__('Attach Files')); ?></label>
+                            <div class="relative w-full h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] flex flex-col items-center justify-center group hover:bg-slate-100 transition-all cursor-pointer overflow-hidden">
+                                <input type="file" wire:model.live="uploads" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                <div class="flex flex-col items-center gap-2 text-slate-400 group-hover:text-emerald-600 transition-colors">
+                                    <div class="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                                    </div>
+                                    <span class="text-[10px] font-black uppercase tracking-[0.2em]"><?php echo e(__('Select Files (Max 2MB)')); ?></span>
                                 </div>
-                                <div>
-                                    <p class="text-sm font-bold text-slate-700"><?php echo e(__('Upload prescription/report')); ?></p>
-                                    <p class="text-[10px] text-slate-400 uppercase font-black">PDF, JPG, PNG</p>
-                                </div>
-                                <div wire:loading wire:target="treatmentFile" class="absolute inset-0 bg-slate-50/80 backdrop-blur-[1px] rounded-2xl flex items-center justify-center z-10">
+                                <div wire:loading wire:target="uploads" class="absolute inset-0 bg-slate-50/90 backdrop-blur-sm flex items-center justify-center z-20">
                                     <div class="flex items-center gap-2">
                                         <svg class="animate-spin h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                        <span class="text-xs font-bold text-emerald-700"><?php echo e(__('Uploading...')); ?></span>
+                                        <span class="text-xs font-black text-emerald-700 uppercase tracking-widest"><?php echo e(__('Uploading...')); ?></span>
                                     </div>
                                 </div>
                             </div>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($treatmentFile): ?>
-                                <div class="flex items-center gap-2 mt-2 px-2 py-1 bg-emerald-50 rounded-lg w-fit">
-                                    <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    <span class="text-xs text-emerald-600 font-bold"><?php echo e($treatmentFile->getClientOriginalName()); ?></span>
+                            
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($patientFiles): ?>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $patientFiles; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $file): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoop($loop->index); ?><?php endif; ?>
+                                <div class="flex items-center justify-between p-3 bg-white rounded-2xl border border-emerald-100 shadow-sm animate-fade-in" <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processElementKey('visit-temp-file-{{ $file[\'id\'] }}', get_defined_vars()); ?>wire:key="visit-temp-file-<?php echo e($file['id']); ?>">
+                                    <div class="flex items-center gap-3 overflow-hidden">
+                                        <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                        </div>
+                                        <div class="flex flex-col min-w-0">
+                                            <span class="text-xs font-black text-slate-700 truncate"><?php echo e($file['name']); ?></span>
+                                            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest"><?php echo e(__('Temp Ready')); ?></span>
+                                        </div>
+                                    </div>
+                                    <button type="button" wire:click="deletePatientFile('<?php echo e($file['id']); ?>')" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
                                 </div>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            </div>
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['uploads.*'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <span class="text-rose-500 text-xs font-bold block mt-1"><?php echo e($message); ?></span> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         </div>
                     </div>
 
                     <div class="mt-10 flex gap-4">
                         <button type="button" wire:click="closeVisitModal" class="flex-1 py-4 text-slate-500 font-bold"><?php echo e(__('Cancel')); ?></button>
-                        <button type="submit" wire:loading.attr="disabled" wire:target="treatmentFile, saveVisit" class="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-bold shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
-                            <span wire:loading.remove wire:target="treatmentFile, saveVisit"><?php echo e(__('Save Visit Record')); ?></span>
-                            <span wire:loading wire:target="treatmentFile, saveVisit" class="flex items-center justify-center gap-2">
+                        <button type="submit" wire:loading.attr="disabled" wire:target="uploads, saveVisit" class="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-bold shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span wire:loading.remove wire:target="uploads, saveVisit"><?php echo e(__('Save Visit Record')); ?></span>
+                            <span wire:loading wire:target="uploads, saveVisit" class="flex items-center justify-center gap-2">
                                 <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 <span><?php echo e(__('Please wait...')); ?></span>
                             </span>
