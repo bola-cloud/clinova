@@ -1,1 +1,0 @@
-f-<?php echo e($fileData['id']); ?><?php /**PATH C:\Bola\Clinova\storage\framework\views/a405d7a20fb24bfb8a60adb702014943.blade.php ENDPATH**/ ?>

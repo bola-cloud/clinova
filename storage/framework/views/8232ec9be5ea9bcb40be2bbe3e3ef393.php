@@ -1,1 +1,0 @@
-patient-files-input-<?php echo e(count($patientFiles)); ?><?php /**PATH C:\Bola\Clinova\storage\framework\views/2bf89a040e1d8d55c70996e8e0c2ab2d.blade.php ENDPATH**/ ?>

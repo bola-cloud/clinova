@@ -1,1 +1,0 @@
-appointment-<?php echo e($appointment->id); ?>-<?php echo e($tableId ?? 'table'); ?><?php /**PATH C:\Bola\Clinova\storage\framework\views/c36ef013730eda4f0847e43d94255d86.blade.php ENDPATH**/ ?>

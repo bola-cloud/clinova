@@ -1,1 +1,0 @@
-patient-<?php echo e($patient->id); ?><?php /**PATH C:\Bola\Clinova\storage\framework\views/83f04c6a5e7ad8441f24ca05ef4a650b.blade.php ENDPATH**/ ?>
