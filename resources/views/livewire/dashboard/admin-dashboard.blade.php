@@ -80,14 +80,19 @@ new class extends Component
 
     public function saveDoctor()
     {
-        $this->validate([
+        $rules = [
             'editName' => 'required|min:3',
             'editEmail' => 'required|email|unique:users,email,' . $this->editingDoctorId,
             'editPassword' => 'nullable|min:6',
             'editMaxPatients' => 'nullable|numeric|min:0',
             'editMaxStorageGb' => 'nullable|numeric|min:0',
-            'editSpecialtyId' => 'required|exists:specialties,id',
-        ]);
+        ];
+
+        if ($this->canEditSpecialty) {
+            $rules['editSpecialtyId'] = 'required|exists:specialties,id';
+        }
+
+        $this->validate($rules);
 
         $doctor = User::findOrFail($this->editingDoctorId);
         
