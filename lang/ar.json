@@ -562,5 +562,17 @@
     "Delete Doctor Permanently": "حذف الطبيب نهائياً",
     "Are you sure you want to permanently delete this patient record and all associated history? This action cannot be undone.": "هل أنت متأكد من حذف ملف هذا المريض نهائياً مع كافة تاريخه المرضي؟ لا يمكن التراجع عن هذا الإجراء.",
     "Delete Patient": "حذف ملف المريض",
-    "Patient record deleted successfully.": "تم حذف ملف المريض بنجاح."
+    "Patient record deleted successfully.": "تم حذف ملف المريض بنجاح.",
+    "Follow-up completed successfully!": "تم إتمام المتابعة بنجاح!",
+    "Completed Appointments": "المواعيد المكتملة",
+    "Appointments completed today": "مواعيد تم إتمامها اليوم",
+    "Write medications and dosages here...": "اكتب الأدوية والجرعات هنا...",
+    "Attach Prescription Image or File": "إرفاق صورة الروشتة أو ملف",
+    "Attachment (Prescription/Result)": "المرفق (روشتة/نتيجة)",
+    "Click to upload file or drag here": "اضغط لرفع الملف أو اسحبه هنا",
+    "Max 2MB per file": "بحد أقصى 2 ميجا للملف",
+    "Save Visit & End Appointment": "حفظ الزيارة وإنهاء الموعد",
+    "Uploading files...": "جاري رفع الملفات...",
+    "Saving...": "جاري الحفظ...",
+    "Investigations & Tests": "الفحوصات والتحاليل"
 }

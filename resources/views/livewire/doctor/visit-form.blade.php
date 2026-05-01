@@ -65,7 +65,7 @@
             </div>
 
             <div class="space-y-2">
-                <label class="block font-bold text-gray-700">{{ __('Treatment Plan & Prescription') }} (Treatment Plan)</label>
+                <label class="block font-bold text-gray-700">{{ __('Treatment Plan & Prescription') }}</label>
                 <div class="relative">
                     <textarea wire:model.live="treatment_text" rows="5" placeholder="{{ __('Write medications and dosages here...') }}" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all font-mono leading-relaxed"></textarea>
                     @if(!empty($treatment_text) && count($treatmentSuggestions) > 0)

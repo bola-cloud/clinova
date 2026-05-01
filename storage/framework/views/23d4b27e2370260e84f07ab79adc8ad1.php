@@ -216,7 +216,7 @@ use App\Models\DoctorNote;
                                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($appointment->type === 'checkup'): ?>
                                             <a href="<?php echo e(route('appointments.visit', $appointment->id)); ?>" class="px-8 py-3 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition-all inline-block"><?php echo e(__('Start')); ?></a>
                                         <?php else: ?>
-                                            <a href="<?php echo e(route('patients.show', $appointment->patient_id)); ?>" class="px-8 py-3 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all inline-block"><?php echo e(__('Start')); ?></a>
+                                            <button wire:click="markAsSeen(<?php echo e($appointment->id); ?>)" class="px-8 py-3 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all inline-block"><?php echo e(__('Start')); ?></button>
                                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                     <?php else: ?>
                                         <a href="<?php echo e(route('patients.show', $appointment->patient_id)); ?>" class="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all">
@@ -239,8 +239,8 @@ use App\Models\DoctorNote;
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                             </div>
                             <div class="text-right">
-                                <h4 class="font-black text-slate-900 text-sm tracking-tight"><?php echo e(__("Finished Patients")); ?></h4>
-                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest"><?php echo e($finishedAppointments->count()); ?> <?php echo e(__("Patients completed today")); ?></p>
+                                <h4 class="font-black text-slate-900 text-sm tracking-tight"><?php echo e(__("Completed Appointments")); ?></h4>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest"><?php echo e($finishedAppointments->count()); ?> <?php echo e(__("Appointments completed today")); ?></p>
                             </div>
                         </div>
                         <div class="w-8 h-8 rounded-full flex items-center justify-center bg-white text-gray-400 group-hover:bg-indigo-50 transition-colors <?php echo e($showFinished ? 'rotate-180' : ''); ?>">
