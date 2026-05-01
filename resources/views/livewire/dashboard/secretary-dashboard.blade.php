@@ -662,10 +662,17 @@ new class extends Component
                                 @elseif($appointment->status === 'checked-in')
                                 <button wire:click="markAsSeen({{ $appointment->id }})" class="text-white bg-emerald-600 px-3 py-1.5 rounded-lg font-bold text-xs hover:bg-emerald-700 shadow-sm shadow-emerald-200 transition-all">{{ __('Mark as Seen') }}</button>
                                 @endif
-                                <button wire:click="editAppointment({{ $appointment->id }})" class="text-gray-400 hover:text-purple-600 transition-colors" title="{{ __('Edit Time') }}">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                </button>
-                                <button wire:click="deleteAppointment({{ $appointment->id }})" wire:confirm="{{ __('Are you sure you want to delete this appointment?') }}" class="text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Delete') }}">
+                                
+                                <div class="flex items-center gap-1 bg-gray-50 p-1 rounded-lg">
+                                    <button wire:click="editPatient({{ $appointment->patient_id }})" class="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-white rounded-md transition-all" title="{{ __('Edit Patient Data') }}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    </button>
+                                    <button wire:click="editAppointment({{ $appointment->id }})" class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-white rounded-md transition-all" title="{{ __('Edit Appointment Time') }}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </button>
+                                </div>
+
+                                <button wire:click="deleteAppointment({{ $appointment->id }})" wire:confirm="{{ __('Are you sure you want to delete this appointment?') }}" class="p-1.5 text-gray-400 hover:text-red-600 transition-colors" title="{{ __('Delete') }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                             </td>
@@ -717,13 +724,6 @@ new class extends Component
             <h3 class="text-xl font-bold text-gray-900 mb-6">{{ __('Edit Appointment') }}</h3>
             
             <form wire:submit="saveAppointment" class="space-y-4">
-                <div>
-                    <span class="block text-[11px] font-black uppercase text-purple-600 mb-1">{{ __('Clinician') }}</span>
-                    <div class="p-3 bg-purple-50 rounded-xl border border-purple-100 text-sm font-bold text-purple-900">
-                        {{ __('Dr.') }} {{ $assignedDoctorName }}
-                    </div>
-                </div>
-                
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">{{ __('Time') }}</label>
                     <input type="time" wire:model="editTime" class="w-full px-4 py-2 bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500">
