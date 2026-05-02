@@ -415,64 +415,62 @@ new class extends Component
             </div>
 
             @if($showAddPatient || $editingPatientId)
-            <form wire:submit="{{ $editingPatientId ? 'updatePatient' : 'createPatient' }}" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 p-4 bg-purple-50 rounded-2xl border border-purple-100">
-                <div class="space-y-1">
-                    <label class="text-sm font-bold text-purple-900">{{ __('Full Name') }} *</label>
-                    <input wire:model="name" type="text" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+            <form wire:submit="{{ $editingPatientId ? 'updatePatient' : 'createPatient' }}" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-4 md:p-6 bg-purple-50 rounded-2xl border border-purple-100">
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-purple-900 block">{{ __('Full Name') }} *</label>
+                    <input wire:model="name" type="text" class="w-full px-4 py-2.5 rounded-lg border-none focus:ring-2 focus:ring-purple-500 shadow-sm">
                     @error('name') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
-                <div class="space-y-1">
-                    <label class="text-sm font-bold text-purple-900">{{ __('Phone') }}</label>
-                    <input wire:model="phone" type="text" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-purple-900 block">{{ __('Phone') }}</label>
+                    <input wire:model="phone" type="text" class="w-full px-4 py-2.5 rounded-lg border-none focus:ring-2 focus:ring-purple-500 shadow-sm">
                     @error('phone') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
-                <div class="space-y-1 col-span-2 md:col-span-1">
-                    <label class="text-sm font-bold text-purple-900">{{ __('Age') }} ({{ __('Year') }} - {{ __('Month') }} - {{ __('Day') }})</label>
+                <div class="space-y-2 col-span-1 md:col-span-1">
+                    <label class="text-sm font-bold text-purple-900 block">{{ __('Age') }} ({{ __('Year') }} - {{ __('Month') }} - {{ __('Day') }})</label>
                     <div class="grid grid-cols-3 gap-2">
-                        <input wire:model="age_years" type="number" placeholder="{{ __('Year') }}" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
-                        <input wire:model="age_months" type="number" placeholder="{{ __('Month') }}" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
-                        <input wire:model="age_days" type="number" placeholder="{{ __('Day') }}" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                        <input wire:model="age_years" type="number" placeholder="{{ __('Year') }}" class="w-full px-3 py-2.5 rounded-lg border-none focus:ring-2 focus:ring-purple-500 shadow-sm">
+                        <input wire:model="age_months" type="number" placeholder="{{ __('Month') }}" class="w-full px-3 py-2.5 rounded-lg border-none focus:ring-2 focus:ring-purple-500 shadow-sm">
+                        <input wire:model="age_days" type="number" placeholder="{{ __('Day') }}" class="w-full px-3 py-2.5 rounded-lg border-none focus:ring-2 focus:ring-purple-500 shadow-sm">
                     </div>
                 </div>
-                <div class="space-y-1">
-                    <label class="text-sm font-bold text-purple-900">{{ __('Address') }}</label>
-                    <input wire:model="address" type="text" class="w-full px-4 py-2 rounded-lg border-none focus:ring-2 focus:ring-purple-500">
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-purple-900 block">{{ __('Address') }}</label>
+                    <input wire:model="address" type="text" class="w-full px-4 py-2.5 rounded-lg border-none focus:ring-2 focus:ring-purple-500 shadow-sm">
                     @error('address') <span class="text-sm text-red-500 font-bold mt-1 block">{{ $message }}</span> @enderror
                 </div>
                 @if(!$editingPatientId)
                 <div class="md:col-span-2 space-y-2">
-                    <label class="text-sm font-bold text-purple-900">{{ __('Attach Files (ID, Reports, etc.)') }}</label>
+                    <label class="text-sm font-bold text-purple-900 block">{{ __('Attach Files (ID, Reports, etc.)') }}</label>
                     <div class="relative group" wire:key="upload-input-wrapper-{{ count($patientFiles) }}">
                         <input type="file" wire:model.live="uploads" multiple wire:key="patient-files-input-{{ count($patientFiles) }}" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                        <div class="w-full px-4 py-3 bg-white border-2 border-dashed border-purple-200 rounded-xl flex items-center justify-center gap-3 text-purple-600 group-hover:border-purple-400 transition-all">
+                        <div class="w-full px-4 py-4 bg-white border-2 border-dashed border-purple-200 rounded-xl flex items-center justify-center gap-3 text-purple-600 group-hover:border-purple-400 transition-all">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                            <span class="font-bold">{{ __('Click or drag to upload files') }}</span>
-                            <div wire:loading wire:target="patientFiles">
-                                <svg class="animate-spin h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            </div>
+                            <span class="font-bold text-sm md:text-base">{{ __('Click or drag to upload files') }}</span>
                         </div>
                     </div>
                     @error('patientFiles.*') <span class="text-xs text-red-500 font-bold block mt-1">{{ $message }}</span> @enderror
                     
                     <div class="flex flex-wrap gap-2 mt-3">
                         @foreach($patientFiles as $index => $fileData)
-                        <div wire:key="f-{{ $fileData['id'] }}" class="flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold transition-all">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                        <div wire:key="f-{{ $fileData['id'] }}" class="flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold transition-all border border-purple-200">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                             {{ Str::limit($fileData['name'], 15) }}
-                            <button type="button" wire:click="deleteFile('{{ $fileData['id'] }}')" wire:loading.attr="disabled" class="text-red-500 hover:text-red-700 disabled:opacity-50">
-                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                            <button type="button" wire:click="deleteFile('{{ $fileData['id'] }}')" class="text-red-500 hover:text-red-700">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                             </button>
                         </div>
                         @endforeach
                     </div>
                 </div>
                 @endif
-                <div class="md:col-span-2 flex gap-3">
-                    <button type="submit" class="flex-1 py-3 bg-purple-600 text-white rounded-xl font-bold mt-2 shadow-lg shadow-purple-200" wire:loading.attr="disabled">
-                        {{ $editingPatientId ? __('Update Patient Data') : __('Save Patient Data') }}
+                <div class="md:col-span-2 flex flex-col sm:flex-row gap-3 mt-4">
+                    <button type="submit" class="flex-1 py-3.5 bg-purple-600 text-white rounded-xl font-bold shadow-lg shadow-purple-100 hover:bg-purple-700 transition-all active:scale-95" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="{{ $editingPatientId ? 'updatePatient' : 'createPatient' }}">{{ $editingPatientId ? __('Update Patient Data') : __('Save Patient Data') }}</span>
+                        <span wire:loading wire:target="{{ $editingPatientId ? 'updatePatient' : 'createPatient' }}">{{ __('Saving...') }}</span>
                     </button>
                     @if($editingPatientId)
-                    <button type="button" wire:click="cancelPatientEdit" class="py-3 px-6 bg-gray-200 text-gray-600 rounded-xl font-bold mt-2 hover:bg-gray-300 transition-all">
+                    <button type="button" wire:click="cancelPatientEdit" class="py-3.5 px-8 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 transition-all active:scale-95">
                         {{ __('Cancel') }}
                     </button>
                     @endif
