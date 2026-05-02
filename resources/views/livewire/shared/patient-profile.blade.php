@@ -489,7 +489,7 @@
                                     <div class="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center">
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
                                     </div>
-                                    <span class="text-[10px] font-black uppercase tracking-[0.2em]">{{ __('Select Files (Max 2MB)') }}</span>
+                                    <span class="text-[10px] font-black uppercase tracking-[0.2em]">{{ __('Select Files (Max 5MB)') }}</span>
                                 </div>
                                 <div wire:loading wire:target="uploads" class="absolute inset-0 bg-slate-50/90 backdrop-blur-sm flex items-center justify-center z-20">
                                     <div class="flex items-center gap-2">

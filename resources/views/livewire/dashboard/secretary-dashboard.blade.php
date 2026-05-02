@@ -133,9 +133,9 @@ new class extends Component
     public function updatedUploads()
     {
         $this->validate([
-            'uploads.*' => 'nullable|file|max:2048', // 2MB max
+            'uploads.*' => 'nullable|file|max:5120', // 5MB max
         ], [
-            'uploads.*.max' => __('The file size must not exceed 2MB.'),
+            'uploads.*.max' => __('The file size must not exceed 5MB.'),
         ]);
 
         foreach ($this->uploads as $file) {
@@ -559,7 +559,7 @@ new class extends Component
 
                             <!-- Attach Files for Existing Patient -->
                             <div class="mt-4 space-y-2">
-                                <label class="text-[11px] font-bold text-purple-700 uppercase">{{ __('Attach Files (Max 2MB per file)') }}</label>
+                                <label class="text-[11px] font-bold text-purple-700 uppercase">{{ __('Attach Files (Max 5MB per file)') }}</label>
                                 <div class="relative group" wire:key="booking-upload-input-{{ $patient->id }}-{{ count($patientFiles) }}">
                                     <input type="file" wire:model.live="uploads" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                                     <div class="w-full px-4 py-2 bg-white border border-dashed border-purple-200 rounded-xl flex items-center justify-center gap-2 text-purple-600 group-hover:border-purple-400 transition-all text-sm">

@@ -198,7 +198,7 @@ new class extends Component
         $doctor = $currentUser->isDoctor() ? $currentUser : $currentUser->assignedDoctor;
 
         $this->validate([
-            'newFile' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:2048',
+            'newFile' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:5120',
             'fileType' => 'required|in:investigation,lab,other',
         ]);
 
@@ -664,7 +664,7 @@ new class extends Component
                     </select>
                 </div>
                 <div class="space-y-2">
-                    <label class="text-xs font-bold text-gray-500 uppercase">{{ __('Choose File') }} ({{ __('Max 2MB') }})</label>
+                    <label class="text-xs font-bold text-gray-500 uppercase">{{ __('Choose File') }} ({{ __('Max 5MB') }})</label>
                     <input type="file" wire:model="newFile" class="w-full bg-slate-50 border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-500 file:me-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer">
                     <div wire:loading wire:target="newFile" class="text-xs text-blue-600 font-bold mt-2">{{ __('Preparing file...') }}</div>
                     @error('newFile') <span class="text-xs text-red-500 block mt-1">{{ $message }}</span> @enderror

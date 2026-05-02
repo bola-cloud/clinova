@@ -55,9 +55,9 @@ class PatientProfile extends Component
     public function updatedUploads()
     {
         $this->validate([
-            'uploads.*' => 'nullable|file|max:2048', // 2MB max
+            'uploads.*' => 'nullable|file|max:5120', // 5MB max
         ], [
-            'uploads.*.max' => __('The file size must not exceed 2MB.'),
+            'uploads.*.max' => __('The file size must not exceed 5MB.'),
         ]);
 
         foreach ($this->uploads as $file) {

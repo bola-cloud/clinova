@@ -54,7 +54,7 @@
                         <p class="text-xs text-gray-500 leading-relaxed max-w-sm">
                             {{ __('Upload a professional photo to build trust with your patients.') }}
                             <br>
-                            {{ __('Recommended: Square image, max 2MB.') }}
+                            {{ __('Recommended: Square image, max 5MB.') }}
                         </p>
                         @error('profile_image') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
                     </div>

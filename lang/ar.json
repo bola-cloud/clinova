@@ -313,7 +313,7 @@
     "Ready to transform": "مستعد لتحويل",
     "Recent Bookings": "أحدث الحجوزات",
     "Recent Subscription Activity": "أحدث نشاط للاشتراكات",
-    "Recommended: Square image, max 2MB.": "المقترح: صورة مربعة، بحد أقصى 2 ميجابايت.",
+    "Recommended: Square image, max 5MB.": "المقترح: صورة مربعة، بحد أقصى 5 ميجابايت.",
     "Record any relevant hereditary diseases or family medical context...": "تسجيل أي أمراض وراثية ذات صلة أو سياق طبي عائلي...",
     "Record Appointment": "تسجيل موعد",
     "Record chronic diseases, allergies, etc...": "سجل الأمراض المزمنة، الحساسية، إلخ...",
@@ -570,10 +570,14 @@
     "Attach Prescription Image or File": "إرفاق صورة الروشتة أو ملف",
     "Attachment (Prescription/Result)": "المرفق (روشتة/نتيجة)",
     "Click to upload file or drag here": "اضغط لرفع الملف أو اسحبه هنا",
-    "Max 2MB per file": "بحد أقصى 2 ميجا للملف",
+    "Max 5MB per file": "بحد أقصى 5 ميجا للملف",
     "Save Visit & End Appointment": "حفظ الزيارة وإنهاء الموعد",
     "Uploading files...": "جاري رفع الملفات...",
     "Update Patient Data": "تحديث بيانات المريض",
     "Saving...": "جاري الحفظ...",
-    "Investigations & Tests": "الفحوصات والتحاليل"
+    "Investigations & Tests": "الفحوصات والتحاليل",
+    "Max 5MB": "بحد أقصى 5 ميجا",
+    "Select Files (Max 5MB)": "اختر الملفات (بحد أقصى 5 ميجا)",
+    "Attach Files (Max 5MB per file)": "إرفاق ملفات (بحد أقصى 5 ميجا للملف)",
+    "The file size must not exceed 5MB.": "يجب ألا يتجاوز حجم الملف 5 ميجابايت."
 }
