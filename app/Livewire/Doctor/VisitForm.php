@@ -96,12 +96,11 @@ class VisitForm extends Component
         $this->history = $this->appointment->patient->family_history;
 
         // Load Specialty Fields
-        if ($doctor = auth()->user()) {
-            if ($doctor->specialty) {
-                $this->specialtyFields = $doctor->specialty->fields;
-                foreach ($this->specialtyFields as $field) {
-                    $this->dynamicAnswers[$field->id] = $field->type === 'multi_select' ? [] : '';
-                }
+        $doctor = auth()->user()->isDoctor() ? auth()->user() : auth()->user()->assignedDoctor;
+        if ($doctor && $doctor->specialty) {
+            $this->specialtyFields = $doctor->specialty->fields;
+            foreach ($this->specialtyFields as $field) {
+                $this->dynamicAnswers[$field->id] = $field->type === 'multi_select' ? [] : '';
             }
         }
     }
@@ -126,9 +125,13 @@ class VisitForm extends Component
             'dynamicAnswers.*' => __('Specialty Field'),
         ]);
 
+        /** @var \App\Models\User $doctor */
+        $doctor = auth()->user()->isDoctor() ? auth()->user() : auth()->user()->assignedDoctor;
+        $doctorId = $doctor ? $doctor->id : auth()->id();
+
         $visit = Visit::create([
             'patient_id' => $this->appointment->patient_id,
-            'doctor_id' => auth()->id(),
+            'doctor_id' => $doctorId,
             'complaint' => $this->complaint,
             'diagnosis' => $this->diagnosis,
             'history' => $this->history,
@@ -154,7 +157,7 @@ class VisitForm extends Component
                     
                     $finalSize = \Illuminate\Support\Facades\Storage::disk('public')->size($oldPath);
                     
-                    if (auth()->user()->hasStorageSpace($finalSize)) {
+                    if ($doctor && $doctor->hasStorageSpace($finalSize)) {
                         \Illuminate\Support\Facades\Storage::disk('public')->move($oldPath, $newPath);
                         
                         \App\Models\PatientFile::create([
@@ -172,7 +175,9 @@ class VisitForm extends Component
                     }
                 }
             }
-            auth()->user()->increment('used_storage_bytes', $totalSize);
+            if ($doctor) {
+                $doctor->increment('used_storage_bytes', $totalSize);
+            }
         }
 
         // Mark appointment as seen

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use App\Models\PatientFile;
+use App\Models\Visit;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
@@ -37,10 +38,7 @@ class CalculateStorageUsage extends Command
             /** @var \App\Models\User $doctor */
             $totalBytes = 0;
             
-            // Files uploaded by this doctor (including those for their patients)
-            // Or files belonging to patients of this doctor.
-            // Usually, a doctor owns the storage of their patients.
-            
+            // 1. Count Patient Files (Uploaded directly or via visits)
             $patientIds = $doctor->patients()->pluck('id');
             $files = PatientFile::whereIn('patient_id', $patientIds)->get();
 
@@ -48,6 +46,22 @@ class CalculateStorageUsage extends Command
                 if (Storage::disk('public')->exists($file->file_path)) {
                     $totalBytes += Storage::disk('public')->size($file->file_path);
                 }
+            }
+
+            // 2. Count Legacy Visit Attachments (treatment_file_path)
+            $visitAttachments = Visit::whereIn('patient_id', $patientIds)
+                ->whereNotNull('treatment_file_path')
+                ->get();
+
+            foreach ($visitAttachments as $visit) {
+                if (Storage::disk('public')->exists($visit->treatment_file_path)) {
+                    $totalBytes += Storage::disk('public')->size($visit->treatment_file_path);
+                }
+            }
+
+            // 3. Count Doctor's Profile Image
+            if ($doctor->profile_image && Storage::disk('public')->exists($doctor->profile_image)) {
+                $totalBytes += Storage::disk('public')->size($doctor->profile_image);
             }
 
             $doctor->update(['used_storage_bytes' => $totalBytes]);

@@ -40,11 +40,26 @@ class CheckSubscription
             }
 
             if ($isExpired) {
+                $errorMessage = __('Your subscription has expired. Please contact the administrator to renew.');
+                
+                // If the user is a doctor and was never active or has 'none' plan, it's pending approval
+                if ($user->isDoctor() && (!$user->subscription_start_at || $user->subscription_plan === 'none')) {
+                    $errorMessage = __('Your account is pending approval. Please contact the administrator to activate your account.');
+                }
+                
+                // If secretary, check their doctor's status for the same logic
+                if ($user->isSecretary() && $user->assignedDoctor) {
+                    $doctor = $user->assignedDoctor;
+                    if (!$doctor->subscription_start_at || $doctor->subscription_plan === 'none') {
+                        $errorMessage = __('Your doctor\'s account is pending approval.');
+                    }
+                }
+
                 Auth::guard('web')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
 
-                return redirect()->route('login')->with('error', __('Your subscription has expired. Please contact the administrator to renew.'));
+                return redirect()->route('login')->with('error', $errorMessage);
             }
         }
 

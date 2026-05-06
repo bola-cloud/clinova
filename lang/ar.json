@@ -554,8 +554,8 @@
     "Single Choice": "اختيار واحد",
     "Multi-Select": "اختيار متعدد",
     "At least one option is required.": "يجب إضافة اختيار واحد على الأقل.",
-    "Prescription": "روشتة/علاج",
-    "Prescription/Attachment": "روشتة/مرفق طبى",
+    "Prescription": "روشتة\/علاج",
+    "Prescription\/Attachment": "روشتة\/مرفق طبى",
     "Doctor account and all associated data for Dr.": "تم حذف حساب الطبيب وكافة البيانات المتعلقة بـ د.",
     "have been permanently deleted.": "نهائياً.",
     "Permanently delete this doctor and all their associated patients, visits, and staff records?": "هل أنت متأكد من حذف هذا الطبيب نهائياً مع كافة ملفات المرضى، الزيارات، وحسابات السكرتارية التابعة له؟",
@@ -568,7 +568,7 @@
     "Appointments completed today": "مواعيد تم إتمامها اليوم",
     "Write medications and dosages here...": "اكتب الأدوية والجرعات هنا...",
     "Attach Prescription Image or File": "إرفاق صورة الروشتة أو ملف",
-    "Attachment (Prescription/Result)": "المرفق (روشتة/نتيجة)",
+    "Attachment (Prescription\/Result)": "المرفق (روشتة\/نتيجة)",
     "Click to upload file or drag here": "اضغط لرفع الملف أو اسحبه هنا",
     "Max 5MB per file": "بحد أقصى 5 ميجا للملف",
     "Save Visit & End Appointment": "حفظ الزيارة وإنهاء الموعد",
@@ -579,5 +579,9 @@
     "Max 5MB": "بحد أقصى 5 ميجا",
     "Select Files (Max 5MB)": "اختر الملفات (بحد أقصى 5 ميجا)",
     "Attach Files (Max 5MB per file)": "إرفاق ملفات (بحد أقصى 5 ميجا للملف)",
-    "The file size must not exceed 5MB.": "يجب ألا يتجاوز حجم الملف 5 ميجابايت."
+    "The file size must not exceed 5MB.": "يجب ألا يتجاوز حجم الملف 5 ميجابايت.",
+    "Your account is pending approval. Please contact the administrator to activate your account.": "حسابك قيد المراجعة حالياً. يرجى التواصل مع الإدارة لتفعيل الحساب.",
+    "Your doctor's account is pending approval.": "حساب الطبيب الخاص بك قيد المراجعة حالياً.",
+    "Add New Patient Record": "إضافة ملف مريض جديد",
+    "Close Form": "إغلاق النموذج"
 }

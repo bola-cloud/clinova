@@ -188,6 +188,11 @@ new class extends Component
                 
                 // Move the file
                 if (\Illuminate\Support\Facades\Storage::disk('public')->exists($oldPath)) {
+                    // Optimization & Compression
+                    \App\Services\FileService::optimizeImageInPlace('public', $oldPath);
+                    \App\Services\FileService::compressFileInPlace('public', $oldPath);
+                    
+                    $finalSize = \Illuminate\Support\Facades\Storage::disk('public')->size($oldPath);
                     \Illuminate\Support\Facades\Storage::disk('public')->move($oldPath, $newPath);
                     
                     PatientFile::create([
@@ -197,6 +202,12 @@ new class extends Component
                         'file_type' => $fileData['type'] ?? 'application/octet-stream',
                         'uploaded_by' => auth()->id(),
                     ]);
+
+                    // Increment doctor storage
+                    $doctor = \App\Models\User::find($this->assignedDoctorId);
+                    if ($doctor) {
+                        $doctor->increment('used_storage_bytes', $finalSize);
+                    }
                 }
             }
         }
@@ -279,6 +290,11 @@ new class extends Component
                     
                     // Move the file
                     if (\Illuminate\Support\Facades\Storage::disk('public')->exists($oldPath)) {
+                        // Optimization & Compression
+                        \App\Services\FileService::optimizeImageInPlace('public', $oldPath);
+                        \App\Services\FileService::compressFileInPlace('public', $oldPath);
+                        
+                        $finalSize = \Illuminate\Support\Facades\Storage::disk('public')->size($oldPath);
                         \Illuminate\Support\Facades\Storage::disk('public')->move($oldPath, $newPath);
                         
                         PatientFile::create([
@@ -288,6 +304,12 @@ new class extends Component
                             'file_type' => 'other',
                             'uploaded_by' => auth()->id(),
                         ]);
+
+                        // Increment doctor storage
+                        $doctor = \App\Models\User::find($this->assignedDoctorId);
+                        if ($doctor) {
+                            $doctor->increment('used_storage_bytes', $finalSize);
+                        }
                     }
                 }
             }

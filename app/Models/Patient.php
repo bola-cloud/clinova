@@ -14,18 +14,29 @@ class Patient extends Model
     protected static function booted()
     {
         static::deleting(function ($patient) {
-            // Delete standalone medical files
+            /** @var Patient $patient */
+            $doctor = $patient->doctor;
+            $totalDeletedSize = 0;
+
+            // 1. Calculate and delete standalone medical files
             foreach ($patient->files as $file) {
                 if (\Illuminate\Support\Facades\Storage::disk('public')->exists($file->file_path)) {
+                    $totalDeletedSize += \Illuminate\Support\Facades\Storage::disk('public')->size($file->file_path);
                     \Illuminate\Support\Facades\Storage::disk('public')->delete($file->file_path);
                 }
             }
 
-            // Delete visit attachments (prescriptions, etc.)
+            // 2. Calculate and delete visit attachments (legacy treatment_file_path)
             foreach ($patient->visits as $visit) {
                 if ($visit->treatment_file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($visit->treatment_file_path)) {
+                    $totalDeletedSize += \Illuminate\Support\Facades\Storage::disk('public')->size($visit->treatment_file_path);
                     \Illuminate\Support\Facades\Storage::disk('public')->delete($visit->treatment_file_path);
                 }
+            }
+
+            // 3. Decrement doctor storage
+            if ($doctor && $totalDeletedSize > 0) {
+                $doctor->decrement('used_storage_bytes', min($totalDeletedSize, $doctor->used_storage_bytes));
             }
         });
     }
