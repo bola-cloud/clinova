@@ -24,6 +24,7 @@ new class extends Component
 
     // Booking Details
     public $bookingPatientId = null;
+    public $bookingDate = '';
     public $bookingTime = '';
     public $bookingType = 'checkup';
     public $patientFiles = [];
@@ -91,6 +92,7 @@ new class extends Component
     public function mount()
     {
         $this->selectedDate = now()->format('Y-m-d');
+        $this->bookingDate = now()->format('Y-m-d');
         $this->bookingTime = now()->addMinutes(15)->format('H:i');
         
         $user = auth()->user();
@@ -110,6 +112,7 @@ new class extends Component
         $date = Carbon::parse($this->selectedDate);
 
         return [
+            'assignedDoctorModel' => \App\Models\User::find($this->assignedDoctorId),
             'patients' => $this->search ? Patient::where('doctor_id', $this->assignedDoctorId)->where(function($q) {
                 $q->where('name', 'like', '%'.$this->search.'%')->orWhere('phone', 'like', '%'.$this->search.'%');
             })->take(5)->get() : [],
@@ -253,8 +256,9 @@ new class extends Component
     {
         $this->cancelPatientEdit(); // Clear edit mode if active
         $this->bookingPatientId = $patientId;
+        $this->bookingDate = $this->selectedDate;
         // Default time to current time rounded to next 5 mins if it's today
-        if ($this->selectedDate === now()->format('Y-m-d')) {
+        if ($this->bookingDate === now()->format('Y-m-d')) {
             $this->bookingTime = now()->addMinutes(5)->format('H:i');
         } else {
             $this->bookingTime = '09:00';
@@ -263,12 +267,19 @@ new class extends Component
 
     public function confirmBooking()
     {
+        $doctor = \App\Models\User::find($this->assignedDoctorId);
+        $allowedTypes = ['checkup', 'follow_up'];
+        if ($doctor && $doctor->custom_fees) {
+            $allowedTypes = array_merge($allowedTypes, array_column($doctor->custom_fees, 'id'));
+        }
+
         $this->validate([
+            'bookingDate' => 'required|date',
             'bookingTime' => 'required',
-            'bookingType' => 'required|in:checkup,follow_up',
+            'bookingType' => 'required|in:' . implode(',', $allowedTypes),
         ]);
 
-        $scheduledAt = Carbon::parse($this->selectedDate . ' ' . $this->bookingTime);
+        $scheduledAt = Carbon::parse($this->bookingDate . ' ' . $this->bookingTime);
 
         try {
             app(AppointmentService::class)->bookAppointment([
@@ -557,17 +568,27 @@ new class extends Component
                                 </div>
                             </div>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div class="space-y-1">
-                                    <label class="text-[11px] font-bold text-purple-700 uppercase">{{ __('Time') }}</label>
-                                    <input wire:model="bookingTime" type="time" class="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 shadow-sm text-sm">
+                                    <label class="text-[11px] font-black text-purple-700 uppercase tracking-wider">{{ __('Date') }}</label>
+                                    <input wire:model="bookingDate" type="date" class="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 shadow-sm text-sm font-bold text-slate-800">
+                                    @error('bookingDate') <span class="text-[10px] text-red-500 font-bold block mt-1">{{ $message }}</span> @enderror
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[11px] font-black text-purple-700 uppercase tracking-wider">{{ __('Time') }}</label>
+                                    <input wire:model="bookingTime" type="time" class="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 shadow-sm text-sm font-bold text-slate-800">
                                     @error('bookingTime') <span class="text-[10px] text-red-500 font-bold block mt-1">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="space-y-1">
-                                    <label class="text-[11px] font-bold text-purple-700 uppercase">{{ __('Type') }}</label>
-                                    <select wire:model="bookingType" class="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 shadow-sm text-sm">
-                                        <option value="checkup">{{ __('Consultation Case') }}</option>
-                                        <option value="follow_up">{{ __('Follow-up Case') }}</option>
+                                    <label class="text-[11px] font-black text-purple-700 uppercase tracking-wider">{{ __('Type') }}</label>
+                                    <select wire:model="bookingType" class="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 shadow-sm text-sm font-bold text-slate-800">
+                                        <option value="checkup">{{ __('Consultation Case') }} ({{ $assignedDoctorModel?->consultation_fee ?? 0 }} {{ __('EGP') }})</option>
+                                        <option value="follow_up">{{ __('Follow-up Case') }} ({{ $assignedDoctorModel?->followup_fee ?? 0 }} {{ __('EGP') }})</option>
+                                        @if($assignedDoctorModel && $assignedDoctorModel->custom_fees)
+                                            @foreach($assignedDoctorModel->custom_fees as $custom)
+                                                <option value="{{ $custom['id'] }}">{{ $custom['name'] }} ({{ $custom['fee'] }} {{ __('EGP') }})</option>
+                                            @endforeach
+                                        @endif
                                     </select>
                                     @error('bookingType') <span class="text-[10px] text-red-500 font-bold block mt-1">{{ $message }}</span> @enderror
                                 </div>
@@ -664,8 +685,22 @@ new class extends Component
                                 {{ $appointment->scheduled_at->format('H:i') }}
                             </td>
                             <td class="px-6 py-4">
-                                <a href="{{ route('patients.show', $appointment->patient_id) }}" class="block font-bold hover:text-purple-600 transition-colors">{{ $appointment->patient->name }}</a>
-                                <span class="text-xs text-gray-400">{{ $appointment->patient->phone }}</span>
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('patients.show', $appointment->patient_id) }}" class="block font-bold hover:text-purple-600 transition-colors">{{ $appointment->patient->name }}</a>
+                                    @if($appointment->type === 'checkup')
+                                        <span class="px-2 py-0.5 bg-purple-50 text-purple-600 text-[10px] rounded-md font-bold">{{ __('Checkup') }}</span>
+                                    @elseif($appointment->type === 'follow_up')
+                                        <span class="px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] rounded-md font-bold">{{ __('Follow-up') }}</span>
+                                    @else
+                                        @php
+                                            $customFee = collect($appointment->doctor->custom_fees ?? [])->firstWhere('id', $appointment->type);
+                                        @endphp
+                                        <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] rounded-md font-bold">
+                                            {{ $customFee ? $customFee['name'] : ucfirst(str_replace('_', ' ', $appointment->type)) }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <span class="text-xs text-gray-400 block mt-0.5">{{ $appointment->patient->phone }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 @if($appointment->status === 'checked-in')

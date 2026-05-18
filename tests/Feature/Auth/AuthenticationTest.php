@@ -44,29 +44,30 @@ test('users can not authenticate with invalid password', function () {
 });
 
 test('navigation menu can be rendered', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'role' => 'admin',
+    ]);
 
     $this->actingAs($user);
 
-    $response = $this->get('/dashboard');
+    $response = $this->followingRedirects()->get('/dashboard');
 
     $response
         ->assertOk()
-        ->assertSeeVolt('layout.navigation');
+        ->assertSee(__('Doctor Management'))
+        ->assertSee(__('Logout'));
 });
 
 test('users can logout', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'role' => 'admin',
+    ]);
 
     $this->actingAs($user);
 
-    $component = Volt::test('layout.navigation');
+    $response = $this->post('/logout');
 
-    $component->call('logout');
-
-    $component
-        ->assertHasNoErrors()
-        ->assertRedirect('/');
+    $response->assertRedirect('/');
 
     $this->assertGuest();
 });

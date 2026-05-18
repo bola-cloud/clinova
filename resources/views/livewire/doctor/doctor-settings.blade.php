@@ -93,6 +93,45 @@
                     @error('followup_fee') <span class="text-rose-500 text-xs font-bold">{{ $message }}</span> @enderror
                     <p class="text-xs text-gray-400 mt-1">{{ __('The fee charged for a follow-up visit.') }}</p>
                 </div>
+
+                <!-- Custom Dynamic Fees -->
+                <div class="space-y-3 pt-6 border-t border-dashed border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-black text-gray-800">{{ __('Additional Booking Types & Fees') }}</label>
+                        <button type="button" wire:click="addCustomFee" class="px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-xs rounded-lg transition-colors flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                            {{ __('Add Type') }}
+                        </button>
+                    </div>
+
+                    @if(count($customFees) > 0)
+                        <div class="space-y-3">
+                            @foreach($customFees as $index => $feeItem)
+                                <div wire:key="custom-fee-{{ $index }}" class="flex items-start gap-3 bg-slate-50/50 p-3 rounded-2xl border border-gray-100 shadow-sm">
+                                    <!-- Name -->
+                                    <div class="flex-1 space-y-1">
+                                        <input type="text" wire:model="customFees.{{ $index }}.name" placeholder="{{ __('e.g., Urgent Booking, Home Visit') }}" class="w-full bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-xs py-2 px-3 shadow-inner">
+                                    </div>
+                                    <!-- Fee -->
+                                    <div class="w-1/3 space-y-1 relative">
+                                        <div class="absolute inset-y-0 {{ app()->getLocale() === 'ar' ? 'left-0 pl-3' : 'right-0 pr-3' }} flex items-center pointer-events-none">
+                                            <span class="text-gray-400 font-bold text-[10px]">{{ __('EGP') }}</span>
+                                        </div>
+                                        <input type="number" step="0.01" min="0" wire:model="customFees.{{ $index }}.fee" placeholder="0.00" dir="ltr" class="w-full bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-xs py-2 {{ app()->getLocale() === 'ar' ? 'pl-8 pr-3 text-right' : 'pr-8 pl-3 text-left' }} shadow-inner">
+                                    </div>
+                                    <!-- Remove Button -->
+                                    <button type="button" wire:click="removeCustomFee({{ $index }})" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors mt-0.5" title="{{ __('Delete') }}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="p-6 bg-slate-50/50 rounded-2xl border border-dashed border-gray-200 text-center text-xs text-gray-400">
+                            {{ __('No additional custom booking types configured. Click "Add Type" to add one.') }}
+                        </div>
+                    @endif
+                </div>
             </div>
 
             <div class="mt-8 pt-6 border-t border-gray-100 flex justify-end">

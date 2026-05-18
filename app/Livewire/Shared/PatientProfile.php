@@ -397,11 +397,17 @@ class PatientProfile extends Component
 
     public function confirmBooking()
     {
+        $doctor = \App\Models\User::find($this->bookingDoctorId);
+        $allowedTypes = ['checkup', 'follow_up'];
+        if ($doctor && $doctor->custom_fees) {
+            $allowedTypes = array_merge($allowedTypes, array_column($doctor->custom_fees, 'id'));
+        }
+
         $this->validate([
             'bookingDoctorId' => 'required|exists:users,id',
             'bookingDate' => 'required|date',
             'bookingTime' => 'required',
-            'bookingType' => 'required|in:checkup,follow_up',
+            'bookingType' => 'required|in:' . implode(',', $allowedTypes),
         ]);
 
         app(\App\Services\AppointmentService::class)->bookAppointment([
@@ -529,7 +535,8 @@ class PatientProfile extends Component
                 ->get(),
             'doctors' => auth()->user()->isDoctor() 
                 ? \App\Models\User::where('id', auth()->id())->get() 
-                : \App\Models\User::where('role', 'doctor')->get()
+                : \App\Models\User::where('role', 'doctor')->get(),
+            'selectedDoctorModel' => \App\Models\User::find($this->bookingDoctorId)
         ])->layout('layouts.clinic', ['title' => __('Patient Profile')]);
     }
 }

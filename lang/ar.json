@@ -89,8 +89,10 @@
     "Collection Rate": "معدل التحصيل",
     "Combined": "جدول موحد",
     "Complete patient history, visit records, medical files, tags, and rapid booking — all in one place.": "تاريخ المريض الكامل، سجلات الزيارات، الملفات الطبية، التاقات، والحجز السريع — كل ذلك في مكان واحد.",
-    "Completed Tasks": "مهمات مكتملة",
     "Completed Visits": "الزيارات المكتملة",
+    "Completed Visits Statistics": "إحصائيات الزيارات المكتملة",
+    "Track completed appointments statistics.": "تتبع إحصائيات المواعيد والزيارات المكتملة.",
+    "Completed Tasks": "مهمات مكتملة",
     "Comprehensive revenue dashboards, billing management, and financial growth analytics built-in.": "لوحات بيانات شاملة للإيرادات، إدارة الفواتير، وتحليلات النمو المالي المدمجة.",
     "Configure consultation fees, add doctors and secretary accounts, and personalize the system to your workflow.": "اضبط رسوم الاستشارة، أضف حسابات الأطباء والسكرتيرة، وخصّص النظام لتناسب سير عملك.",
     "Configure your consultation fees, add doctors and secretary accounts, and personalize the system to your workflow.": "اضبط رسوم الاستشارة، أضف حسابات الأطباء والسكرتيرة، وخصص النظام لتناسب سير عملك.",
@@ -381,6 +383,8 @@
     "Standard Monthly": "شهري قياسي",
     "Standard Yearly": "سنوي قياسي",
     "Start": "ابدأ",
+    "Start Consultation": "ابدأ الكشف",
+    "Start Follow-up": "ابدأ المتابعة",
     "Start adding patient records and booking appointments. The system handles the waitlist, visit records, and billing automatically.": "ابدأ بإضافة سجلات المرضى وحجز المواعيد. النظام يدير الحجوزات وسجلات الزيارات والفوترة تلقائياً.",
     "Start Date": "تاريخ البدء",
     "Start Free Trial": "ابدأ الفترة التجريبية",
@@ -583,5 +587,9 @@
     "Your account is pending approval. Please contact the administrator to activate your account.": "حسابك قيد المراجعة حالياً. يرجى التواصل مع الإدارة لتفعيل الحساب.",
     "Your doctor's account is pending approval.": "حساب الطبيب الخاص بك قيد المراجعة حالياً.",
     "Add New Patient Record": "إضافة ملف مريض جديد",
-    "Close Form": "إغلاق النموذج"
+    "Close Form": "إغلاق النموذج",
+    "Additional Booking Types & Fees": "أنواع وأسعار الحجوزات الإضافية",
+    "Add Type": "إضافة نوع",
+    "e.g., Urgent Booking, Home Visit": "مثال: حجز مستعجل، زيارة منزلية",
+    "No additional custom booking types configured. Click \"Add Type\" to add one.": "لم يتم ضبط أي أنواع حجوزات إضافية. انقر فوق \"إضافة نوع\" لإضافة حجز جديد."
 }

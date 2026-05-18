@@ -88,10 +88,16 @@ new class extends Component
 
     public function confirmBooking()
     {
+        $doctor = \App\Models\User::find($this->bookingDoctorId);
+        $allowedTypes = ['checkup', 'follow_up'];
+        if ($doctor && $doctor->custom_fees) {
+            $allowedTypes = array_merge($allowedTypes, array_column($doctor->custom_fees, 'id'));
+        }
+
         $this->validate([
             'selectedPatient' => 'required',
             'bookingDate' => 'required|date',
-            'bookingType' => 'required|in:checkup,follow_up',
+            'bookingType' => 'required|in:' . implode(',', $allowedTypes),
             'bookingDoctorId' => 'required|exists:users,id',
         ], [
             'selectedPatient.required' => __('Please select a patient'),
@@ -176,6 +182,7 @@ new class extends Component
                 })
                 ->limit(5)->get() 
                 : [],
+            'selectedDoctorModel' => \App\Models\User::find($this->bookingDoctorId)
         ])->layout('layouts.clinic', ['title' => __('Appointments Management')]);
     }
 };
@@ -284,8 +291,13 @@ new class extends Component
                     <div class="space-y-2">
                         <label class="text-xs font-black text-gray-500 uppercase tracking-widest block">{{ __('Visit Type') }}</label>
                         <select wire:model="bookingType" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
-                            <option value="checkup">{{ __('Checkup') }}</option>
-                            <option value="follow_up">{{ __('Follow-up') }}</option>
+                            <option value="checkup">{{ __('Checkup') }} ({{ $selectedDoctorModel?->consultation_fee ?? 0 }} {{ __('EGP') }})</option>
+                            <option value="follow_up">{{ __('Follow-up') }} ({{ $selectedDoctorModel?->followup_fee ?? 0 }} {{ __('EGP') }})</option>
+                            @if($selectedDoctorModel && $selectedDoctorModel->custom_fees)
+                                @foreach($selectedDoctorModel->custom_fees as $custom)
+                                    <option value="{{ $custom['id'] }}">{{ $custom['name'] }} ({{ $custom['fee'] }} {{ __('EGP') }})</option>
+                                @endforeach
+                            @endif
                         </select>
                     </div>
 

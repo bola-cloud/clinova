@@ -43,6 +43,7 @@ class User extends Authenticatable
         'doctor_id',
         'consultation_fee',
         'followup_fee',
+        'custom_fees',
         'subscription_active',
         'subscription_expires_at',
         'max_patients',
@@ -83,6 +84,7 @@ class User extends Authenticatable
             'is_paid' => 'boolean',
             'subscription_start_at' => 'datetime',
             'subscription_price' => 'decimal:2',
+            'custom_fees' => 'array',
         ];
     }
 

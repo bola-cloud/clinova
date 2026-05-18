@@ -51,6 +51,10 @@ class IncomeStatistics extends Component
                 $fee = $doctor->followup_fee ?? 0;
                 $followupIncome += $fee;
                 $totalIncome += $fee;
+            } else {
+                $customFee = collect($doctor->custom_fees ?? [])->firstWhere('id', $appointment->type);
+                $fee = $customFee ? ($customFee['fee'] ?? 0) : 0;
+                $totalIncome += $fee;
             }
         }
 
@@ -64,6 +68,9 @@ class IncomeStatistics extends Component
                     $dayIncome += $app->doctor->consultation_fee ?? 0;
                 } elseif ($app->type === 'follow_up') {
                     $dayIncome += $app->doctor->followup_fee ?? 0;
+                } else {
+                    $customFee = collect($app->doctor->custom_fees ?? [])->firstWhere('id', $app->type);
+                    $dayIncome += $customFee ? ($customFee['fee'] ?? 0) : 0;
                 }
             }
             return $dayIncome;

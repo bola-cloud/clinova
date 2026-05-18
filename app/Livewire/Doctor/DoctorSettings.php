@@ -22,6 +22,8 @@ class DoctorSettings extends Component
     #[Rule('nullable|numeric|min:0|max:999999')]
     public $followup_fee;
 
+    public $customFees = [];
+
     // Security Properties
     public $current_password = '';
     public $password = '';
@@ -32,6 +34,7 @@ class DoctorSettings extends Component
         $user = auth()->user();
         $this->consultation_fee = $user->consultation_fee;
         $this->followup_fee = $user->followup_fee;
+        $this->customFees = $user->custom_fees ?? [];
         $this->current_image = $user->profile_image;
     }
 
@@ -66,9 +69,41 @@ class DoctorSettings extends Component
 
         $user->consultation_fee = $this->consultation_fee ?: null;
         $user->followup_fee = $this->followup_fee ?: null;
+
+        // Clean custom fees
+        $cleanedFees = [];
+        if (is_array($this->customFees)) {
+            foreach ($this->customFees as $fee) {
+                if (!empty($fee['name'])) {
+                    $cleanedFees[] = [
+                        'id' => $fee['id'] ?? 'custom_' . uniqid(),
+                        'name' => $fee['name'],
+                        'fee' => (float)($fee['fee'] ?? 0),
+                    ];
+                }
+            }
+        }
+        $this->customFees = $cleanedFees;
+        $user->custom_fees = $cleanedFees ?: null;
+
         $user->save();
 
         session()->flash('success', __('Settings saved successfully'));
+    }
+
+    public function addCustomFee()
+    {
+        $this->customFees[] = [
+            'id' => 'custom_' . uniqid(),
+            'name' => '',
+            'fee' => 0
+        ];
+    }
+
+    public function removeCustomFee($index)
+    {
+        unset($this->customFees[$index]);
+        $this->customFees = array_values($this->customFees);
     }
 
     public function updatePassword()

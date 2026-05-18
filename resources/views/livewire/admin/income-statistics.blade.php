@@ -2,8 +2,12 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-black text-gray-900 tracking-tight">{{ __('Income Statistics') }}</h1>
-            <p class="text-gray-500 mt-1">{{ __('Track clinic revenue from completed appointments.') }}</p>
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight">
+                {{ auth()->user()->role === 'admin' ? __('Completed Visits Statistics') : __('Income Statistics') }}
+            </h1>
+            <p class="text-gray-500 mt-1">
+                {{ auth()->user()->role === 'admin' ? __('Track completed appointments statistics.') : __('Track clinic revenue from completed appointments.') }}
+            </p>
         </div>
         
         <div class="flex flex-wrap items-center gap-4">
@@ -53,7 +57,8 @@
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 {{ auth()->user()->role === 'admin' ? '' : 'md:grid-cols-2 lg:grid-cols-4' }} gap-6">
+        @if(auth()->user()->role !== 'admin')
         <!-- Total Income -->
         <div class="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-3xl p-6 text-white shadow-xl shadow-indigo-200 relative overflow-hidden group">
             <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-white opacity-10 group-hover:scale-150 transition-transform duration-500"></div>
@@ -95,6 +100,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <!-- Total Patients Seen -->
         <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden">
@@ -111,6 +117,7 @@
         </div>
     </div>
 
+    @if(auth()->user()->role !== 'admin')
     <!-- Daily Breakdown Chart -->
     <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
         <h3 class="text-lg font-bold text-gray-800 mb-6">{{ __('Daily Revenue Breakdown') }}</h3>
@@ -147,4 +154,5 @@
             </div>
         @endif
     </div>
+    @endif
 </div>

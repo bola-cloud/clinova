@@ -121,6 +121,11 @@ new class extends Component
         app(AppointmentService::class)->updateStatus($appointment, 'seen');
         return redirect()->route('patients.show', $appointment->patient_id);
     }
+
+    public function startVisit($appointmentId)
+    {
+        return $this->markAsSeen($appointmentId);
+    }
 };
 ?>
 
@@ -291,22 +296,48 @@ new class extends Component
                                 </td>
                                 <td class="px-6 py-8">
                                     <div class="flex items-center gap-4">
-                                        <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-100 to-purple-100 flex items-center justify-center font-black text-indigo-600 text-sm shadow-sm border border-white">
-                                            {{ substr($appointment->patient->name, 0, 1) }}
+                                        <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-100 to-purple-100 flex items-center justify-center font-black text-indigo-600 text-sm shadow-sm border border-white shrink-0">
+                                            {{ mb_substr($appointment->patient->name, 0, 1) }}
                                         </div>
-                                        <div>
-                                            <a href="{{ route('patients.show', $appointment->patient_id) }}" class="font-black text-slate-900 group-hover:text-indigo-600 transition-colors block text-lg tracking-tight">
-                                                {{ $appointment->patient->name }}
-                                            </a>
-                                            <span class="text-xs text-gray-400 font-bold">{{ $appointment->patient->phone }}</span>
+                                        <div class="flex flex-col gap-1.5">
+                                            <div>
+                                                <a href="{{ route('patients.show', $appointment->patient_id) }}" class="font-black text-slate-900 group-hover:text-indigo-600 transition-colors block text-lg tracking-tight leading-snug">
+                                                    {{ $appointment->patient->name }}
+                                                </a>
+                                                <span class="text-xs text-gray-400 font-bold block leading-none mt-0.5">{{ $appointment->patient->phone }}</span>
+                                            </div>
+                                            
+                                            <!-- Merged start buttons on mobile/tablet for easy horizontal navigation -->
+                                            @if($appointment->status === 'checked-in')
+                                                <div class="lg:hidden block mt-1">
+                                                    @if($appointment->type === 'checkup')
+                                                        <button wire:click="startVisit({{ $appointment->id }})" class="w-fit px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-md hover:bg-slate-800 transition-all flex items-center gap-1">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
+                                                            {{ __('Start Consultation') }}
+                                                        </button>
+                                                    @else
+                                                        <button wire:click="startVisit({{ $appointment->id }})" class="w-fit px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-md hover:bg-indigo-700 transition-all flex items-center gap-1">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
+                                                            {{ __('Start Follow-up') }}
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-8 text-center">
                                     @if($appointment->type === 'checkup')
                                         <span class="px-3 py-1.5 bg-purple-100 text-purple-700 text-xs rounded-full font-black uppercase tracking-widest border border-purple-200">{{ __('Consultation Case') }}</span>
-                                    @else
+                                    @elseif($appointment->type === 'follow_up')
                                         <span class="px-3 py-1.5 bg-amber-100 text-amber-700 text-xs rounded-full font-black uppercase tracking-widest border border-amber-200">{{ __('Follow-up Case') }}</span>
+                                    @else
+                                        @php
+                                            $customFee = collect($appointment->doctor->custom_fees ?? [])->firstWhere('id', $appointment->type);
+                                        @endphp
+                                        <span class="px-3 py-1.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-black uppercase tracking-widest border border-indigo-200">
+                                            {{ $customFee ? $customFee['name'] : ucfirst(str_replace('_', ' ', $appointment->type)) }}
+                                        </span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-8 text-center">
@@ -328,9 +359,9 @@ new class extends Component
                                 <td class="px-6 py-8 text-left">
                                     @if($appointment->status === 'checked-in')
                                         @if($appointment->type === 'checkup')
-                                            <a href="{{ route('appointments.visit', $appointment->id) }}" class="px-8 py-3 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition-all inline-block">{{ __('Start') }}</a>
+                                            <button wire:click="startVisit({{ $appointment->id }})" class="px-6 py-2.5 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.1em] shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition-all inline-block">{{ __('Start Consultation') }}</button>
                                         @else
-                                            <button wire:click="markAsSeen({{ $appointment->id }})" class="px-8 py-3 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all inline-block">{{ __('Start') }}</button>
+                                            <button wire:click="startVisit({{ $appointment->id }})" class="px-6 py-2.5 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.1em] shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all inline-block">{{ __('Start Follow-up') }}</button>
                                         @endif
                                     @else
                                         <a href="{{ route('patients.show', $appointment->patient_id) }}" class="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all">
