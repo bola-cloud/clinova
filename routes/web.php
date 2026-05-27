@@ -31,7 +31,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('admin/doctors/{doctor}/subscriptions', DoctorSubscriptionManager::class)->name('admin.doctor.subscriptions');
         Route::view('admin/patients', 'dashboard.admin-patients')->name('admin.patients');
         Route::view('admin/specialties', 'dashboard.admin-specialties')->name('admin.specialties');
+        Route::get('admin/trash', \App\Livewire\Admin\SystemTrash::class)->name('admin.trash');
         Route::view('admin/settings', 'dashboard.admin-settings')->name('admin.settings');
+        Route::get('admin/backup', [App\Http\Controllers\BackupController::class, 'download'])->name('admin.backup');
+        Route::get('admin/backup/database', [App\Http\Controllers\BackupController::class, 'databaseBackup'])->name('admin.backup.database');
+        Route::get('admin/backup/full-system', [App\Http\Controllers\BackupController::class, 'fullSystemBackup'])->name('admin.backup.full-system');
     });
 
     // Doctor Dashboard (with subscription guard)
@@ -40,6 +44,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('doctor/settings', DoctorSettings::class)->name('doctor.settings');
         Route::get('doctor/staff', StaffManagement::class)->name('doctor.staff');
         Route::get('doctor/statistics', IncomeStatistics::class)->name('doctor.statistics');
+        Route::get('doctor/trash', \App\Livewire\Admin\SystemTrash::class)->name('doctor.trash');
+        Route::get('doctor/backup', [App\Http\Controllers\BackupController::class, 'download'])->name('doctor.backup');
     });
 
     // Secretary Dashboard

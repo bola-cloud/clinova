@@ -230,6 +230,22 @@ new class extends Component
         $this->reset(['showCreateModal', 'new_name', 'new_email', 'new_password', 'new_max_patients', 'new_max_storage_gb', 'new_specialty_id']);
         session()->flash('success', __('Doctor account created successfully.'));
     }
+
+    public function downloadDatabase()
+    {
+        return app(\App\Http\Controllers\BackupController::class)->databaseBackup();
+    }
+
+    public function downloadFullSystem()
+    {
+        return app(\App\Http\Controllers\BackupController::class)->fullSystemBackup();
+    }
+
+    public function downloadDoctorBackup($doctorId)
+    {
+        request()->merge(['doctor_id' => $doctorId]);
+        return app(\App\Http\Controllers\BackupController::class)->download();
+    }
 };
 ?>
 
@@ -284,6 +300,14 @@ new class extends Component
                            class="w-full pl-10 pr-4 py-3 bg-gray-50 border-gray-100 rounded-2xl focus:ring-2 focus:ring-purple-500 text-sm italic">
                     <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
+                <button wire:click="downloadFullSystem" wire:loading.attr="disabled" class="w-full md:w-auto px-6 py-3 bg-emerald-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 disabled:opacity-55 disabled:cursor-not-allowed">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    {{ __('Full System Backup') }}
+                </button>
+                <button wire:click="downloadDatabase" wire:loading.attr="disabled" class="w-full md:w-auto px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-55 disabled:cursor-not-allowed">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                    {{ __('Database Backup') }}
+                </button>
                 <button wire:click="$set('showCreateModal', true)" class="w-full md:w-auto px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg shadow-slate-200">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
                     {{ __('Add New Doctor') }}
@@ -365,6 +389,9 @@ new class extends Component
                                 </button>
                                 <button wire:click="editDoctor({{ $doctor->id }})" class="p-2.5 bg-slate-50 text-slate-600 hover:bg-slate-900 hover:text-white rounded-xl transition-all" title="{{ __('Edit Doctor Details') }}">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </button>
+                                <button wire:click="downloadDoctorBackup({{ $doctor->id }})" wire:loading.attr="disabled" class="p-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-xl transition-all disabled:opacity-55 disabled:cursor-not-allowed" title="{{ __('Download Backup') }}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 </button>
                                 <button wire:click="toggleSubscription({{ $doctor->id }})" 
                                         class="p-2.5 rounded-xl transition-all {{ $doctor->subscription_active ? 'bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white' }}"
@@ -658,4 +685,22 @@ new class extends Component
         </div>
     </div>
     @endif
+
+    <div wire:loading wire:target="downloadDatabase, downloadFullSystem, downloadDoctorBackup" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-md transition-all duration-300">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-5 max-w-sm text-center relative overflow-hidden">
+            <!-- Glowing background accent -->
+            <div class="absolute -top-10 -left-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-10 -right-10 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
+            
+            <!-- Spinner -->
+            <div class="relative w-16 h-16">
+                <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-t-emerald-500 animate-spin"></div>
+            </div>
+            <div class="space-y-2 z-10">
+                <h3 class="text-lg font-black text-white tracking-tight">{{ __('Preparing Backup...') }}</h3>
+                <p class="text-xs text-slate-400 font-medium leading-relaxed">{{ __('This may take a moment as we package your clinical records and files.') }}</p>
+            </div>
+        </div>
+    </div>
 </div>

@@ -19,7 +19,7 @@ class PatientFactory extends Factory
         return [
             'name' => fake()->name(),
             'phone' => fake()->phoneNumber(),
-            'age' => fake()->numberBetween(1, 100),
+            'age_years' => fake()->numberBetween(1, 100),
             'weight' => fake()->randomFloat(2, 5, 120),
             'address' => fake()->address(),
             'family_history' => fake()->sentence(),

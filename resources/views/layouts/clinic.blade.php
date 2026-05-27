@@ -48,8 +48,12 @@
             animation: sweep 5s infinite;
         }
         [x-cloak] { display: none !important; }
-        .p-10.pb-4.flex.flex-col.items-center.gap-4{
-            margin: 20px;
+        .no-scrollbar::-webkit-scrollbar {
+            display: none !important;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none !important;  /* IE and Edge */
+            scrollbar-width: none !important;  /* Firefox */
         }
 
         /* Premium Select2 Styling */
@@ -103,6 +107,7 @@
                         ['name' => __('Global Patient Archive'), 'route' => 'admin.patients', 'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'],
                         ['name' => __('Income Statistics'), 'route' => 'admin.statistics', 'icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'],
                         ['name' => __('System Revenue'), 'route' => 'admin.revenue', 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
+                        ['name' => __('System Trash'), 'route' => 'admin.trash', 'icon' => 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'],
                         ['name' => __('Control Panel'), 'route' => 'admin.settings', 'icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z']
                     ];
                 } elseif ($role === 'doctor') {
@@ -112,6 +117,7 @@
                         ['name' => __('Patient Archive'), 'route' => 'patients.index', 'icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'],
                         ['name' => __('Clinic Staff'), 'route' => 'doctor.staff', 'icon' => 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z'],
                         ['name' => __('Income Statistics'), 'route' => 'doctor.statistics', 'icon' => 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'],
+                        ['name' => __('System Trash'), 'route' => 'doctor.trash', 'icon' => 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'],
                         ['name' => __('Settings'), 'route' => 'doctor.settings', 'icon' => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z']
                     ];
                 } elseif ($role === 'secretary') {
@@ -146,23 +152,23 @@
                class="fixed inset-y-0 left-0 w-72 bg-gradient-to-b from-[#8A2BE2] via-[#4A26AB] to-[#0C3E8A] text-white z-[60] flex flex-col shadow-2xl md:hidden"
                dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
             <!-- Reusing Sidebar Content -->
-            <div class="p-10 pb-4 flex flex-col items-center gap-4">
-                <div class="w-20 h-20 bg-white rounded-[2rem] flex items-center justify-center shadow-lg overflow-hidden relative">
-                    <img src="{{ asset('Clinova Logo.png') }}" alt="Clinova" class="w-14 h-14 object-contain">
+            <div class="p-6 pb-2 flex flex-col items-center gap-2">
+                <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg overflow-hidden relative">
+                    <img src="{{ asset('Clinova Logo.png') }}" alt="Clinova" class="w-10 h-10 object-contain">
                 </div>
                 <div class="text-center">
-                    <h1 class="text-2xl font-black text-white leading-none">
+                    <h1 class="text-xl font-black text-white leading-none">
                         {{ \App\Models\Setting::get('clinic_name', 'Clinova') }}
                     </h1>
-                    <p class="text-[8px] text-purple-200 mt-1 uppercase tracking-widest font-black italic">{{ __('Smart Clinic') }}</p>
+                    <p class="text-[8px] text-purple-200 mt-0.5 uppercase tracking-widest font-black italic">{{ __('Smart Clinic') }}</p>
                 </div>
             </div>
 
-            <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto">
-                <div class="px-4 text-xs font-bold text-purple-300 uppercase tracking-wider mb-4 opacity-70">{{ __('Main Menu') }}</div>
+            <nav class="flex-1 px-4 space-y-1 mt-4 overflow-y-auto no-scrollbar">
+                <div class="px-4 text-xs font-bold text-purple-300 uppercase tracking-wider mb-2 opacity-70">{{ __('Main Menu') }}</div>
                 @foreach($links as $link)
                     <a href="{{ route($link['route']) }}" 
-                       class="flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-medium
+                       class="flex items-center gap-4 px-4 py-2.5 rounded-2xl transition-all duration-300 font-medium
                               {{ request()->routeIs($link['route']) ? 'bg-white text-[#4A26AB]' : 'text-purple-100 hover:bg-white/10' }}">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $link['icon'] }}"></path></svg>
                         <span>{{ $link['name'] }}</span>
@@ -170,7 +176,7 @@
                 @endforeach
             </nav>
 
-            <div class="p-6 border-t border-white/10 space-y-4 glass-panel m-4 rounded-3xl mt-auto">
+            <div class="p-4 border-t border-white/10 space-y-3 glass-panel m-3 rounded-2xl mt-auto">
                 @php
                     $user = auth()->user();
                     $displayUser = $user->isSecretary() ? $user->assignedDoctor : $user;
@@ -210,24 +216,24 @@
         <!-- Premium Desktop Sidebar -->
         <aside class="w-72 bg-gradient-to-b from-[#8A2BE2] via-[#4A26AB] to-[#0C3E8A] text-white shrink-0 hidden md:flex flex-col shadow-2xl relative z-20">
             <!-- Logo Section -->
-            <div class="p-10 pb-4 flex flex-col items-center gap-4">
-                <div class="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-[0_15px_45px_rgba(0,0,0,0.2)] border-2 border-white/20 group hover:scale-110 transition-all duration-500 overflow-hidden relative group/logo">
+            <div class="p-6 pb-2 flex flex-col items-center gap-2">
+                <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.15)] border-2 border-white/20 group hover:scale-110 transition-all duration-500 overflow-hidden relative group/logo">
                     <div class="absolute inset-0 bg-gradient-to-br from-white via-white to-purple-50 opacity-0 group-hover/logo:opacity-100 transition-opacity"></div>
-                    <img src="{{ asset('Clinova Logo.png') }}" alt="Clinova" class="w-16 h-16 object-contain relative z-10 drop-shadow-lg group-hover/logo:rotate-3 transition-transform">
+                    <img src="{{ asset('Clinova Logo.png') }}" alt="Clinova" class="w-10 h-10 object-contain relative z-10 drop-shadow-lg group-hover/logo:rotate-3 transition-transform">
                 </div>
                 <div class="text-center">
-                    <h1 class="text-3xl font-black tracking-tight text-white leading-none drop-shadow-md">
+                    <h1 class="text-xl font-black tracking-tight text-white leading-none drop-shadow-md">
                         {{ \App\Models\Setting::get('clinic_name', 'Clinova') }}
                     </h1>
-                    <p class="text-[10px] text-purple-200 mt-1 uppercase tracking-[0.3em] opacity-80 font-black italic">{{ __('Smart Clinic') }}</p>
+                    <p class="text-[8px] text-purple-200 mt-0.5 uppercase tracking-[0.3em] opacity-80 font-black italic">{{ __('Smart Clinic') }}</p>
                 </div>
             </div>
 
-            <nav class="flex-1 px-4 space-y-2 mt-6 overflow-y-auto custom-scrollbar">
-                <div class="px-4 text-xs font-bold text-purple-300 uppercase tracking-wider mb-4 opacity-70">{{ __('Main Menu') }}</div>
+            <nav class="flex-1 px-4 space-y-1 mt-4 overflow-y-auto no-scrollbar">
+                <div class="px-4 text-xs font-bold text-purple-300 uppercase tracking-wider mb-2 opacity-70">{{ __('Main Menu') }}</div>
                 @foreach($links as $link)
                     <a href="{{ route($link['route']) }}" 
-                       class="flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 font-medium group
+                       class="flex items-center gap-4 px-4 py-2.5 rounded-2xl transition-all duration-300 font-medium group
                               {{ request()->routeIs($link['route']) 
                                   ? 'bg-white text-[#4A26AB] shadow-[0_8px_30px_rgb(255,255,255,0.12)]' 
                                   : 'text-purple-100 hover:bg-white/10 hover:translate-x-1' }}">
@@ -239,7 +245,7 @@
                 @endforeach
             </nav>
 
-            <div class="p-6 border-t border-white/10 space-y-4 glass-panel m-4 rounded-3xl mt-auto">
+            <div class="p-4 border-t border-white/10 space-y-3 glass-panel m-3 rounded-2xl mt-auto">
                 @php
                     $user = auth()->user();
                     $displayUser = $user->isSecretary() ? $user->assignedDoctor : $user;
@@ -288,10 +294,10 @@
             <div class="absolute top-0 right-0 w-[1000px] h-[1000px] -z-10 pointer-events-none -translate-y-1/2 translate-x-1/3 blur-[100px]" style="background: radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%);"></div>
             
             <!-- Header -->
-            <header class="h-24 bg-white/95 backdrop-blur-2xl border-b border-gray-100 flex items-center px-8 md:px-12 sticky top-0 z-40 shadow-sm transition-all duration-300">
-                <div class="flex items-center justify-between w-full h-full py-2 relative">
+            <header class="h-24 bg-white/95 backdrop-blur-2xl border-b border-gray-100 flex items-center px-4 md:px-12 sticky top-0 z-40 shadow-sm transition-all duration-300">
+                <div class="flex items-center justify-between w-full h-full py-2 relative gap-2">
                     <!-- Left: Title & Mobile Toggle -->
-                    <div class="flex items-center gap-4 w-1/4">
+                    <div class="flex items-center gap-4 w-auto sm:w-1/4 shrink-0">
                         <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden p-2 text-gray-500 hover:text-[#4A26AB] transition-colors rounded-xl hover:bg-purple-50">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                         </button>
@@ -303,11 +309,11 @@
                     </div>
                     
                     <!-- Center: Centered Doctor Name -->
-                    <div class="flex flex-col items-center justify-center text-center cursor-default w-2/4">
-                        <span class="text-[10px] font-black text-purple-600/60 uppercase tracking-widest leading-none mb-1">
+                    <div class="flex-1 flex flex-col items-center justify-center text-center cursor-default min-w-0">
+                        <span class="text-[9px] sm:text-[10px] font-black text-purple-600/60 uppercase tracking-widest leading-none mb-1">
                             {{ __('Welcome Doctor') }}
                         </span>
-                        <h1 class="text-2xl font-black tracking-tight leading-none text-slate-900">
+                        <h1 class="text-lg sm:text-2xl font-black tracking-tight leading-none text-slate-900 truncate max-w-full">
                             @if(auth()->user()->isSecretary())
                                 {{ __('Dr.') }} {{ auth()->user()->assignedDoctor->name ?? '' }}
                             @else
@@ -315,15 +321,15 @@
                             @endif
                         </h1>
                     </div>
-
+ 
                     <!-- Right: Premium Status -->
-                    <div class="flex items-center justify-end gap-6 w-1/4">
-                        <div class="flex items-center gap-3 px-4 py-2.5 bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] rounded-2xl border border-emerald-100/30 group/status">
-                            <div class="relative flex h-2.5 w-2.5">
+                    <div class="flex items-center justify-end w-auto sm:w-1/4 shrink-0">
+                        <div class="flex items-center gap-3 sm:px-4 sm:py-2.5 sm:bg-white sm:shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] sm:rounded-2xl sm:border sm:border-emerald-100/30 group/status">
+                            <div class="relative flex h-2.5 w-2.5 shrink-0">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span>
                             </div>
-                            <div class="flex flex-col text-right">
+                            <div class="hidden sm:flex flex-col text-right">
                                 <span class="text-emerald-600 text-[10px] font-black uppercase tracking-wider leading-none mb-1 opacity-80">{{ __('System Status') }}</span>
                                 <span class="text-slate-900 text-xs font-black uppercase tracking-widest leading-none">{{ __('Online') }}</span>
                             </div>
@@ -333,12 +339,143 @@
             </header>
 
             <!-- Content Area -->
-            <div class="p-6 md:p-10 z-0">
+            <div class="p-6 pb-24 md:pb-10 md:p-10 z-0">
                 <div class="max-w-7xl mx-auto drop-shadow-sm">
                     {{ $slot }}
                 </div>
             </div>
         </main>
+    </div>
+
+    @php
+        $role = auth()->user()->role;
+        $barItems = [];
+        $menuItems = [];
+        
+        $findLink = function($routePattern) use ($links) {
+            foreach ($links as $link) {
+                if (str_contains($link['route'], $routePattern)) {
+                    return $link;
+                }
+            }
+            return null;
+        };
+
+        $dashboardLink = $findLink('dashboard');
+        $patientsLink = $findLink('patients');
+        $statisticsLink = $findLink('statistics');
+        $bookingsLink = $findLink('appointments');
+        
+        if ($dashboardLink) $barItems[] = $dashboardLink;
+        if ($patientsLink) $barItems[] = $patientsLink;
+        
+        if ($statisticsLink) {
+            $barItems[] = $statisticsLink;
+        } elseif ($bookingsLink) {
+            $barItems[] = $bookingsLink;
+        }
+
+        foreach ($links as $link) {
+            $isAlreadyOnBar = false;
+            foreach ($barItems as $barItem) {
+                if ($barItem['route'] === $link['route']) {
+                    $isAlreadyOnBar = true;
+                    break;
+                }
+            }
+            if (!$isAlreadyOnBar) {
+                $menuItems[] = $link;
+            }
+        }
+
+        $isMenuRouteActive = false;
+        foreach($menuItems as $item) {
+            if (request()->routeIs($item['route'])) {
+                $isMenuRouteActive = true;
+                break;
+            }
+        }
+    @endphp
+
+    <!-- Floating Bottom Navigation Bar for Mobile & Tablet -->
+    <div class="lg:hidden fixed bottom-6 left-0 right-0 w-full px-4 z-[9999] flex justify-center pointer-events-none" x-data="{ menuOpen: false }">
+        <div class="bg-white/95 backdrop-blur-2xl border border-gray-100/85 shadow-[0_20px_50px_rgba(0,0,0,0.12)] rounded-[2rem] px-4 py-2.5 flex items-center justify-between w-full max-w-md pointer-events-auto relative">
+            @foreach($barItems as $item)
+                @php $isActive = request()->routeIs($item['route']); @endphp
+                @if($loop->index == 2)
+                    <!-- Primary Dark Action Button (e.g. Statistics) -->
+                    <a href="{{ route($item['route']) }}" 
+                       class="w-12 h-12 flex flex-col items-center justify-center rounded-full transition-all duration-300 relative group bg-[#0A2540] text-white shadow-[0_8px_20px_rgba(10,37,64,0.3)] hover:shadow-[0_10px_25px_rgba(10,37,64,0.4)] hover:-translate-y-0.5">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="{{ $item['icon'] }}"></path>
+                        </svg>
+                        @if($isActive)
+                            <span class="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-[#0A2540]"></span>
+                        @endif
+                    </a>
+                @else
+                    <!-- Standard Nav Button (e.g. Dashboard, Archive) -->
+                    <a href="{{ route($item['route']) }}" 
+                       class="w-12 h-12 flex flex-col items-center justify-center rounded-2xl transition-all duration-300 relative group
+                              {{ $isActive 
+                                  ? 'bg-slate-100 text-slate-800 shadow-sm' 
+                                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50' }}">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="{{ $item['icon'] }}"></path>
+                        </svg>
+                        @if($isActive)
+                            <span class="absolute bottom-1 w-1 h-1 rounded-full bg-slate-800"></span>
+                        @endif
+                    </a>
+                @endif
+            @endforeach
+
+            <!-- Three Dots Dropup Menu -->
+            @if(count($menuItems) > 0)
+                <div class="relative" x-data="{ localMenuOpen: false }" @click.away="localMenuOpen = false">
+                    <button @click="localMenuOpen = !localMenuOpen" 
+                            class="w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 relative
+                                   {{ $isMenuRouteActive 
+                                       ? 'bg-slate-100 text-slate-800 shadow-sm' 
+                                       : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50' }}">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h.01M12 12h.01M19 12h.01M5 12a1 1 0 110-2 1 1 0 010 2zm7 0a1 1 0 110-2 1 1 0 010 2zm7 0a1 1 0 110-2 1 1 0 010 2z"></path>
+                        </svg>
+                        @if($isMenuRouteActive)
+                            <span class="absolute bottom-1 w-1 h-1 rounded-full bg-slate-800"></span>
+                        @endif
+                    </button>
+
+                    <!-- Dropup Menu Content -->
+                    <div x-show="localMenuOpen"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+                         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                         x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+                         class="absolute bottom-16 ltr:right-0 rtl:left-0 min-w-[220px] bg-white border border-gray-100/80 rounded-3xl shadow-2xl p-2 z-[60] flex flex-col gap-1"
+                         x-cloak>
+                         <div class="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-gray-50 mb-1">
+                             {{ __('More Pages') }}
+                         </div>
+                         @foreach($menuItems as $item)
+                             @php $isSubActive = request()->routeIs($item['route']); @endphp
+                             <a href="{{ route($item['route']) }}" 
+                                class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-200
+                                       {{ $isSubActive 
+                                           ? 'bg-purple-50 text-[#4A26AB]' 
+                                           : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                                 <svg class="w-5 h-5 {{ $isSubActive ? 'text-[#4A26AB]' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}"></path>
+                                 </svg>
+                                 <span>{{ $item['name'] }}</span>
+                             </a>
+                         @endforeach
+                    </div>
+                </div>
+            @endif
+        </div>
     </div>
 
     @livewireScripts

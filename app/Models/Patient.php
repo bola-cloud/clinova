@@ -5,21 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Patient extends Model
 {
     /** @use HasFactory<\Database\Factories\PatientFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected static function booted()
     {
         static::deleting(function ($patient) {
             /** @var Patient $patient */
+            if (!$patient->isForceDeleting()) {
+                return; // Do not delete physical files on soft delete
+            }
+
             $doctor = $patient->doctor;
             $totalDeletedSize = 0;
 
             // 1. Calculate and delete standalone medical files
-            foreach ($patient->files as $file) {
+            foreach ($patient->files()->withTrashed()->get() as $file) {
                 if (\Illuminate\Support\Facades\Storage::disk('public')->exists($file->file_path)) {
                     $totalDeletedSize += \Illuminate\Support\Facades\Storage::disk('public')->size($file->file_path);
                     \Illuminate\Support\Facades\Storage::disk('public')->delete($file->file_path);
@@ -27,7 +32,7 @@ class Patient extends Model
             }
 
             // 2. Calculate and delete visit attachments (legacy treatment_file_path)
-            foreach ($patient->visits as $visit) {
+            foreach ($patient->visits()->withTrashed()->get() as $visit) {
                 if ($visit->treatment_file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($visit->treatment_file_path)) {
                     $totalDeletedSize += \Illuminate\Support\Facades\Storage::disk('public')->size($visit->treatment_file_path);
                     \Illuminate\Support\Facades\Storage::disk('public')->delete($visit->treatment_file_path);

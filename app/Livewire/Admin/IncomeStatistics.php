@@ -40,6 +40,27 @@ class IncomeStatistics extends Component
         $checkupIncome = 0;
         $followupIncome = 0;
         $appointmentsCount = $appointments->count();
+        $customIncomes = [];
+
+        // Identify doctor context
+        $selectedDoctor = null;
+        if (auth()->user()->role === 'doctor') {
+            $selectedDoctor = auth()->user();
+        } elseif ($this->doctorId) {
+            $selectedDoctor = \App\Models\User::find($this->doctorId);
+        }
+
+        // Initialize doctor's current custom fees with 0 income to display them even if no appointments exist yet
+        if ($selectedDoctor && is_array($selectedDoctor->custom_fees)) {
+            foreach ($selectedDoctor->custom_fees as $fee) {
+                if (!empty($fee['id']) && !empty($fee['name'])) {
+                    $customIncomes[$fee['id']] = [
+                        'name' => $fee['name'],
+                        'income' => 0
+                    ];
+                }
+            }
+        }
 
         foreach ($appointments as $appointment) {
             $doctor = $appointment->doctor;
@@ -51,9 +72,19 @@ class IncomeStatistics extends Component
                 $fee = $doctor->followup_fee ?? 0;
                 $followupIncome += $fee;
                 $totalIncome += $fee;
-            } else {
+            } elseif (!empty($appointment->type)) {
                 $customFee = collect($doctor->custom_fees ?? [])->firstWhere('id', $appointment->type);
                 $fee = $customFee ? ($customFee['fee'] ?? 0) : 0;
+                
+                $feeName = $customFee ? $customFee['name'] : __('Custom Fee');
+                
+                if (!isset($customIncomes[$appointment->type])) {
+                    $customIncomes[$appointment->type] = [
+                        'name' => $feeName,
+                        'income' => 0
+                    ];
+                }
+                $customIncomes[$appointment->type]['income'] += $fee;
                 $totalIncome += $fee;
             }
         }
@@ -98,6 +129,7 @@ class IncomeStatistics extends Component
             'totalIncome' => $totalIncome,
             'checkupIncome' => $checkupIncome,
             'followupIncome' => $followupIncome,
+            'customIncomes' => $customIncomes,
             'appointmentsCount' => $appointmentsCount,
             'chartLabels' => $chartLabels,
             'chartData' => $chartData,

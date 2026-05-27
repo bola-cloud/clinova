@@ -142,62 +142,48 @@ new class extends Component
 
     <div class="w-full">
         <!-- New Top Statistics Row - Reordered for RTL Visual Logic -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-            <!-- Card 3: Weekly Stats (Right in RTL - Colored) - FIRST in DOM -->
-            <div class="h-[240px] bg-gradient-to-br from-[#1A0B3B] via-[#4A26AB] to-[#6366F1] rounded-[3rem] p-10 text-white shadow-2xl shadow-indigo-900/30 relative overflow-hidden group hover:scale-[1.02] transition-all duration-500">
+        <div class="grid grid-cols-2 gap-3 sm:gap-6 max-w-4xl lg:max-w-6xl">
+            <!-- Card 1: Daily Appointments (Colored) -->
+            <div class="h-24 sm:h-32 lg:h-40 bg-gradient-to-br from-[#1A0B3B] via-[#4A26AB] to-[#6366F1] rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] p-3 sm:p-6 lg:p-10 text-white shadow-xl shadow-indigo-900/20 relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 flex items-center justify-between">
                 <!-- Sparkline SVG -->
-                <div class="absolute inset-x-0 bottom-0 h-2/3 opacity-30 pointer-events-none flex items-end">
+                <div class="absolute inset-x-0 bottom-0 h-2/3 opacity-20 pointer-events-none flex items-end">
                     <svg viewBox="0 0 400 100" class="w-full h-full preserve-3d" preserveAspectRatio="none">
                         <path d="M0,80 Q 50,20, 100,50 T 200,30 T 300,60 T 400,10" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" class="animate-sweep" style="stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 5s forwards;"></path>
                     </svg>
                 </div>
                 
-                <div class="flex items-start justify-between relative z-10 h-full">
-                    <div class="w-16 h-16 rounded-[1.5rem] bg-white/10 flex items-center justify-center border border-white/20 backdrop-blur-md shrink-0">
-                        <svg class="w-8 h-8 text-white relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    </div>
-                    <div class="text-right flex-1 pr-6 flex flex-col justify-between h-full pb-2">
-                        <p class="text-indigo-100 text-base md:text-xl font-black tracking-tight">{{ __("Daily Appointments") }}</p>
-                        <div class="flex items-baseline justify-end mt-auto">
-                            <span class="text-[4rem] md:text-[5rem] leading-none font-black tracking-tighter">{{ $doctorStats['todayTotal'] }}</span>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between relative z-10 w-full gap-2 sm:gap-4">
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <div class="w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 rounded-lg sm:rounded-xl lg:rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 backdrop-blur-md shrink-0">
+                            <svg class="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-white relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                         </div>
+                        <div class="text-right">
+                            <p class="text-indigo-100 text-[10px] sm:text-sm lg:text-xl font-black tracking-tight leading-tight">{{ __("Daily Appointments") }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-baseline mt-1 sm:mt-0">
+                        <span class="text-xl sm:text-4xl lg:text-7xl font-black tracking-tighter leading-none">{{ $doctorStats['todayTotal'] }}</span>
                     </div>
                 </div>
                 <!-- Animated Blobs -->
-                <div class="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/5 blur-3xl animate-blob"></div>
-                <div class="absolute -left-10 -bottom-10 w-48 h-48 rounded-full bg-indigo-400/10 blur-3xl animate-blob" style="animation-delay: 2s;"></div>
+                <div class="absolute -right-10 -top-10 w-24 h-24 rounded-full bg-white/5 blur-xl animate-blob"></div>
+                <div class="absolute -left-10 -bottom-10 w-24 h-24 rounded-full bg-indigo-400/10 blur-xl animate-blob" style="animation-delay: 2s;"></div>
             </div>
 
             <!-- Card 2: Patients Remaining (Middle) -->
-            <div class="h-[240px] bg-white rounded-[3rem] p-10 shadow-xl shadow-gray-100/50 border border-gray-50 flex flex-col justify-between group hover:-translate-y-1 transition-all duration-300">
-                <div class="flex items-start justify-between">
-                    <div class="w-16 h-16 rounded-[1.5rem] bg-emerald-50 flex items-center justify-center border border-emerald-100 shrink-0">
-                        <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div class="h-24 sm:h-32 lg:h-40 bg-white rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] p-3 sm:p-6 lg:p-10 shadow-xl shadow-gray-100/50 border border-gray-50 flex items-center justify-between group hover:scale-[1.02] transition-all duration-300">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-2 sm:gap-4">
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <div class="w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 rounded-lg sm:rounded-xl lg:rounded-2xl bg-emerald-50 flex items-center justify-center border border-emerald-100 shrink-0">
+                            <svg class="w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-gray-900 text-[10px] sm:text-sm lg:text-xl font-black tracking-tight leading-tight">{{ __("Patients Remaining Today") }}</p>
+                        </div>
                     </div>
-                    <div class="text-right flex flex-col justify-between h-full">
-                        <p class="text-gray-900 text-base md:text-xl font-black tracking-tight mb-2">{{ __("Patients Remaining Today") }}</p>
-                        <span class="text-[4rem] md:text-[5rem] leading-none font-black text-slate-900 tracking-tighter mt-auto">{{ $doctorStats['remainingToday'] }}</span>
+                    <div class="flex items-baseline mt-1 sm:mt-0">
+                        <span class="text-xl sm:text-4xl lg:text-7xl font-black text-slate-900 tracking-tighter leading-none">{{ $doctorStats['remainingToday'] }}</span>
                     </div>
-                </div>
-                <p class="text-xs md:text-sm text-gray-400 font-bold mt-auto">{{ __("No more patients yet, enjoy your time!") }}</p>
-            </div>
-
-            <!-- Card 1: Performance (Left in RTL) -->
-            <div class="h-[240px] bg-white rounded-[3rem] p-10 shadow-xl shadow-gray-100/50 border border-gray-50 flex flex-col justify-between group hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
-                <div class="flex items-start justify-between mb-8">
-                    <div class="w-16 h-16 rounded-[1.5rem] bg-emerald-50 flex items-center justify-center border border-emerald-100 shrink-0">
-                        <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <div class="text-right flex flex-col justify-between h-full">
-                        <p class="text-gray-900 text-base md:text-xl font-black tracking-tight mb-2">{{ __("Performance Yesterday") }}</p>
-                        <span class="text-[4rem] md:text-[5rem] leading-none font-black text-slate-900 tracking-tighter mt-auto">{{ $doctorStats['yesterdayPerformance'] }}%</span>
-                    </div>
-                </div>
-                <div class="space-y-3 mt-auto">
-                    <div class="w-full h-3 md:h-4 bg-gray-100 rounded-full overflow-hidden border border-gray-50">
-                        <div class="h-full bg-[#10b981] rounded-full transition-all duration-1000" style="width: {{ $doctorStats['yesterdayPerformance'] }}%"></div>
-                    </div>
-                    <p class="text-xs md:text-sm text-gray-400 font-bold">{{ $doctorStats['yesterdayCompleted'] }} {{ __("out of tasks completed") }}</p>
                 </div>
             </div>
         </div>
@@ -209,29 +195,27 @@ new class extends Component
         <div class="lg:col-span-8 space-y-6 pt-12">
             <!-- Header -->
             <div class="flex items-center justify-between px-2">
-                <h2 class="text-5xl font-black text-slate-900 tracking-tighter">{{ __("Today at a Glance") }}</h2>
+                <h2 class="text-3xl md:text-5xl font-black text-slate-900 tracking-tighter">{{ __("Today at a Glance") }}</h2>
             </div>
 
             <!-- Central Card (Contains Day Selector & Status/List) -->
-            <div class="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl shadow-gray-100/50 border border-gray-100 relative overflow-hidden">
-                <div class="flex items-center justify-between mb-8">
-                    <h3 class="text-xl font-bold text-slate-900 opacity-0">{{ __("Day") }}</h3> <!-- Spacer to align tools to left in RTL -->
-                    <div class="flex items-center gap-3 flex-row-reverse">
-                        <button class="text-indigo-600 font-bold text-sm flex items-center gap-2 bg-indigo-50/50 hover:bg-indigo-100 px-4 py-2.5 rounded-2xl transition-colors shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                            {{ __("Refresh List") }}
-                        </button>
-                        <div class="flex items-center gap-1.5 ml-auto">
-                            {{-- Calendar date picker --}}
-                            <div class="relative">
-                                <button onclick="document.getElementById('dashboardDatePicker').showPicker()" class="w-10 h-10 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-indigo-500 transition-colors shrink-0 cursor-pointer"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></button>
-                                <input type="date" id="dashboardDatePicker" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer" value="{{ $selectedDate }}" wire:change="setDate($event.target.value)" />
-                            </div>
-                            {{-- Previous day --}}
-                            <button wire:click="setDate('{{ \Carbon\Carbon::parse($selectedDate)->subDay()->format('Y-m-d') }}')" class="w-10 h-10 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-indigo-500 transition-colors shrink-0 cursor-pointer"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg></button>
-                            <button class="px-5 py-2.5 rounded-2xl bg-indigo-50 text-indigo-600 font-black text-xs shrink-0 tracking-tight">{{ \Carbon\Carbon::parse($selectedDate)->translatedFormat('d F Y') }}</button>
+            <div class="bg-white rounded-[2rem] md:rounded-[3rem] p-4 sm:p-8 md:p-12 shadow-xl shadow-gray-100/50 border border-gray-100 relative overflow-hidden">
+                <div class="flex items-center justify-between mb-8 gap-4">
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        {{-- Calendar date picker --}}
+                        <div class="relative">
+                            <button onclick="document.getElementById('dashboardDatePicker').showPicker()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-[0.75rem] sm:rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-indigo-500 transition-colors shrink-0 cursor-pointer"><svg class="w-4.5 h-4.5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></button>
+                            <input type="date" id="dashboardDatePicker" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer" value="{{ $selectedDate }}" wire:change="setDate($event.target.value)" />
                         </div>
+                        {{-- Previous day --}}
+                        <button wire:click="setDate('{{ \Carbon\Carbon::parse($selectedDate)->subDay()->format('Y-m-d') }}')" class="w-9 h-9 sm:w-10 sm:h-10 rounded-[0.75rem] sm:rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-indigo-500 transition-colors shrink-0 cursor-pointer"><svg class="w-4.5 h-4.5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg></button>
+                        <button class="px-3 sm:px-5 py-2 sm:py-2.5 rounded-[0.75rem] sm:rounded-2xl bg-indigo-50 text-indigo-600 font-black text-[10px] sm:text-xs shrink-0 tracking-tight">{{ \Carbon\Carbon::parse($selectedDate)->translatedFormat('d F Y') }}</button>
                     </div>
+
+                    <button class="text-indigo-600 font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 bg-indigo-50/50 hover:bg-indigo-100 p-2 sm:px-4 sm:py-2.5 rounded-[0.75rem] sm:rounded-2xl transition-colors shrink-0">
+                        <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        <span class="hidden sm:inline">{{ __("Refresh List") }}</span>
+                    </button>
                 </div>
 
                 <!-- Horizontal Scroller with Pagination -->
@@ -281,11 +265,11 @@ new class extends Component
                         <thead class="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] border-b border-gray-50">
                             <tr>
                                 <th class="px-2 py-6 font-black text-right w-10">#</th>
-                                <th class="px-6 py-6 font-black text-right min-w-[250px] w-full">{{ __('Patient') }}</th>
-                                <th class="px-6 py-6 font-black text-center min-w-[160px]">{{ __('Type') }}</th>
-                                <th class="px-6 py-6 font-black text-center min-w-[120px]">{{ __('Appointment') }}</th>
-                                <th class="px-6 py-6 font-black text-center min-w-[140px]">{{ __('Status') }}</th>
-                                <th class="px-6 py-6 font-black text-left">{{ __('Actions') }}</th>
+                                <th class="px-6 py-6 font-black text-right min-w-[200px] w-full">{{ __('Patient') }}</th>
+                                <th class="hidden lg:table-cell px-6 py-6 font-black text-center min-w-[160px]">{{ __('Type') }}</th>
+                                <th class="hidden lg:table-cell px-6 py-6 font-black text-center min-w-[120px]">{{ __('Appointment') }}</th>
+                                <th class="hidden lg:table-cell px-6 py-6 font-black text-center min-w-[140px]">{{ __('Status') }}</th>
+                                <th class="hidden lg:table-cell px-6 py-6 font-black text-left">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
@@ -308,25 +292,23 @@ new class extends Component
                                             </div>
                                             
                                             <!-- Merged start buttons on mobile/tablet for easy horizontal navigation -->
-                                            @if($appointment->status === 'checked-in')
-                                                <div class="lg:hidden block mt-1">
-                                                    @if($appointment->type === 'checkup')
-                                                        <button wire:click="startVisit({{ $appointment->id }})" class="w-fit px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-md hover:bg-slate-800 transition-all flex items-center gap-1">
-                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
-                                                            {{ __('Start Consultation') }}
-                                                        </button>
-                                                    @else
-                                                        <button wire:click="startVisit({{ $appointment->id }})" class="w-fit px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-md hover:bg-indigo-700 transition-all flex items-center gap-1">
-                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
-                                                            {{ __('Start Follow-up') }}
-                                                        </button>
-                                                    @endif
-                                                </div>
-                                            @endif
+                                            <div class="lg:hidden block mt-1">
+                                                @if($appointment->type === 'checkup')
+                                                    <button wire:click="startVisit({{ $appointment->id }})" class="w-fit px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-md hover:bg-slate-800 transition-all flex items-center gap-1">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
+                                                        {{ __('Start Consultation') }}
+                                                    </button>
+                                                @else
+                                                    <button wire:click="startVisit({{ $appointment->id }})" class="w-fit px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-md hover:bg-indigo-700 transition-all flex items-center gap-1">
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
+                                                        {{ __('Start Follow-up') }}
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-8 text-center">
+                                <td class="hidden lg:table-cell px-6 py-8 text-center">
                                     @if($appointment->type === 'checkup')
                                         <span class="px-3 py-1.5 bg-purple-100 text-purple-700 text-xs rounded-full font-black uppercase tracking-widest border border-purple-200">{{ __('Consultation Case') }}</span>
                                     @elseif($appointment->type === 'follow_up')
@@ -340,10 +322,10 @@ new class extends Component
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-8 text-center">
+                                <td class="hidden lg:table-cell px-6 py-8 text-center">
                                     <span class="text-lg font-black text-slate-800 tracking-tighter">{{ $appointment->scheduled_at->format('H:i') }}</span>
                                 </td>
-                                <td class="px-6 py-8 text-center">
+                                <td class="hidden lg:table-cell px-6 py-8 text-center">
                                     @if($appointment->status === 'checked-in')
                                         <div class="flex items-center justify-center gap-2">
                                             <div class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] animate-pulse"></div>
@@ -356,17 +338,11 @@ new class extends Component
                                         </div>
                                     @endif
                                 </td>
-                                <td class="px-6 py-8 text-left">
-                                    @if($appointment->status === 'checked-in')
-                                        @if($appointment->type === 'checkup')
-                                            <button wire:click="startVisit({{ $appointment->id }})" class="px-6 py-2.5 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.1em] shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition-all inline-block">{{ __('Start Consultation') }}</button>
-                                        @else
-                                            <button wire:click="startVisit({{ $appointment->id }})" class="px-6 py-2.5 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.1em] shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all inline-block">{{ __('Start Follow-up') }}</button>
-                                        @endif
+                                <td class="hidden lg:table-cell px-6 py-8 text-left">
+                                    @if($appointment->type === 'checkup')
+                                        <button wire:click="startVisit({{ $appointment->id }})" class="px-6 py-2.5 bg-slate-900 text-white rounded-full text-[10px] font-black uppercase tracking-[0.1em] shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition-all inline-block">{{ __('Start Consultation') }}</button>
                                     @else
-                                        <a href="{{ route('patients.show', $appointment->patient_id) }}" class="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 transition-all">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                                        </a>
+                                        <button wire:click="startVisit({{ $appointment->id }})" class="px-6 py-2.5 bg-indigo-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.1em] shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all inline-block">{{ __('Start Follow-up') }}</button>
                                     @endif
                                 </td>
                             </tr>

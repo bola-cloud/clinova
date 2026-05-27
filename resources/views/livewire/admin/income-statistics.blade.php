@@ -100,6 +100,35 @@
                 </div>
             </div>
         </div>
+
+        <!-- Custom Fees Income -->
+        @foreach($customIncomes as $customFeeId => $customData)
+            @php
+                $colorIndex = $loop->index % 5;
+                $colors = [
+                    ['strip' => 'bg-purple-500', 'bg' => 'bg-purple-50', 'border' => 'border-purple-100', 'text' => 'text-purple-600'],
+                    ['strip' => 'bg-amber-500', 'bg' => 'bg-amber-50', 'border' => 'border-amber-100', 'text' => 'text-amber-600'],
+                    ['strip' => 'bg-rose-500', 'bg' => 'bg-rose-50', 'border' => 'border-rose-100', 'text' => 'text-rose-600'],
+                    ['strip' => 'bg-sky-500', 'bg' => 'bg-sky-50', 'border' => 'border-sky-100', 'text' => 'text-sky-600'],
+                    ['strip' => 'bg-emerald-500', 'bg' => 'bg-emerald-50', 'border' => 'border-emerald-100', 'text' => 'text-emerald-600'],
+                ];
+                $currentColor = $colors[$colorIndex];
+            @endphp
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-1 h-full {{ $currentColor['strip'] }}"></div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-400 text-xs font-bold tracking-wider uppercase mb-1">{{ $customData['name'] }}</p>
+                        <h3 class="text-2xl font-black text-gray-800">{{ number_format($customData['income'], 2) }} <span class="text-sm text-gray-400 font-medium">{{ __('EGP') }}</span></h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl {{ $currentColor['bg'] }} flex items-center justify-center border {{ $currentColor['border'] }}">
+                        <svg class="w-5 h-5 {{ $currentColor['text'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        @endforeach
         @endif
 
         <!-- Total Patients Seen -->

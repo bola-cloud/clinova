@@ -7,19 +7,24 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
     
     protected static function booted()
     {
         static::deleting(function ($user) {
+            if (!$user->isForceDeleting()) {
+                return; // Do not delete actual physical files or force delete patients on soft delete
+            }
+
             if ($user->isDoctor()) {
                 // Manually delete patients to trigger their 'deleting' event (for file cleanup)
-                foreach ($user->patients as $patient) {
-                    $patient->delete();
+                foreach ($user->patients()->withTrashed()->get() as $patient) {
+                    $patient->forceDelete();
                 }
 
                 // Delete profile photo

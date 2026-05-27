@@ -121,6 +121,11 @@ class DoctorSettings extends Component
         session()->flash('success', __('Security settings updated successfully.'));
     }
 
+    public function downloadBackup()
+    {
+        return app(\App\Http\Controllers\BackupController::class)->download();
+    }
+
     public function render()
     {
         return view('livewire.doctor.doctor-settings');

@@ -96,9 +96,9 @@
 
                 <!-- Custom Dynamic Fees -->
                 <div class="space-y-3 pt-6 border-t border-dashed border-gray-200">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <label class="text-sm font-black text-gray-800">{{ __('Additional Booking Types & Fees') }}</label>
-                        <button type="button" wire:click="addCustomFee" class="px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-xs rounded-lg transition-colors flex items-center gap-1">
+                        <button type="button" wire:click="addCustomFee" class="w-fit px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-xs rounded-lg transition-colors flex items-center gap-1">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
                             {{ __('Add Type') }}
                         </button>
@@ -107,22 +107,24 @@
                     @if(count($customFees) > 0)
                         <div class="space-y-3">
                             @foreach($customFees as $index => $feeItem)
-                                <div wire:key="custom-fee-{{ $index }}" class="flex items-start gap-3 bg-slate-50/50 p-3 rounded-2xl border border-gray-100 shadow-sm">
+                                <div wire:key="custom-fee-{{ $index }}" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-slate-50/50 p-3 rounded-2xl border border-gray-100 shadow-sm">
                                     <!-- Name -->
-                                    <div class="flex-1 space-y-1">
+                                    <div class="flex-1">
                                         <input type="text" wire:model="customFees.{{ $index }}.name" placeholder="{{ __('e.g., Urgent Booking, Home Visit') }}" class="w-full bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-xs py-2 px-3 shadow-inner">
                                     </div>
-                                    <!-- Fee -->
-                                    <div class="w-1/3 space-y-1 relative">
-                                        <div class="absolute inset-y-0 {{ app()->getLocale() === 'ar' ? 'left-0 pl-3' : 'right-0 pr-3' }} flex items-center pointer-events-none">
-                                            <span class="text-gray-400 font-bold text-[10px]">{{ __('EGP') }}</span>
+                                    <div class="flex items-center gap-3">
+                                        <!-- Fee -->
+                                        <div class="w-32 sm:w-36 min-w-[100px] relative">
+                                            <div class="absolute inset-y-0 {{ app()->getLocale() === 'ar' ? 'left-0 pl-3' : 'right-0 pr-3' }} flex items-center pointer-events-none">
+                                                <span class="text-gray-400 font-bold text-[10px]">{{ __('EGP') }}</span>
+                                            </div>
+                                            <input type="number" step="0.01" min="0" wire:model="customFees.{{ $index }}.fee" placeholder="0.00" dir="ltr" class="w-full bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-xs py-2 {{ app()->getLocale() === 'ar' ? 'pl-8 pr-3 text-right' : 'pr-8 pl-3 text-left' }} shadow-inner">
                                         </div>
-                                        <input type="number" step="0.01" min="0" wire:model="customFees.{{ $index }}.fee" placeholder="0.00" dir="ltr" class="w-full bg-white border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-xs py-2 {{ app()->getLocale() === 'ar' ? 'pl-8 pr-3 text-right' : 'pr-8 pl-3 text-left' }} shadow-inner">
+                                        <!-- Remove Button -->
+                                        <button type="button" wire:click="removeCustomFee({{ $index }})" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors" title="{{ __('Delete') }}">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
                                     </div>
-                                    <!-- Remove Button -->
-                                    <button type="button" wire:click="removeCustomFee({{ $index }})" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors mt-0.5" title="{{ __('Delete') }}">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
                                 </div>
                             @endforeach
                         </div>
@@ -179,5 +181,47 @@
                 </button>
             </div>
         </form>
+    </div>
+
+    <!-- Data Export / Backup Settings -->
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 md:p-8 border-b border-gray-100 bg-slate-50/50">
+            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                {{ __('Data Backup & Export') }}
+            </h3>
+        </div>
+
+        <div class="p-6 md:p-8 space-y-6">
+            <p class="text-sm text-gray-500 max-w-2xl">
+                {{ __('Download a complete backup of all your data including patients, appointments, visits, and medical files in JSON format. This includes all active and soft-deleted records.') }}
+            </p>
+            
+            <div class="flex">
+                <button type="button" wire:click="downloadBackup" wire:loading.attr="disabled" class="px-8 py-3 bg-emerald-100 border border-emerald-200 text-emerald-700 hover:bg-emerald-600 hover:text-white font-black rounded-xl shadow-sm transition-all uppercase tracking-widest text-xs flex items-center gap-2 disabled:opacity-55 disabled:cursor-not-allowed">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    {{ __('Export Backup Data') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Backup Overlay -->
+    <div wire:loading wire:target="downloadBackup" class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-md transition-all duration-300">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-5 max-w-sm text-center relative overflow-hidden">
+            <!-- Glowing background accent -->
+            <div class="absolute -top-10 -left-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-10 -right-10 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
+            
+            <!-- Spinner -->
+            <div class="relative w-16 h-16">
+                <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-t-emerald-500 animate-spin"></div>
+            </div>
+            <div class="space-y-2 z-10">
+                <h3 class="text-lg font-black text-white tracking-tight">{{ __('Preparing Backup...') }}</h3>
+                <p class="text-xs text-slate-400 font-medium leading-relaxed">{{ __('This may take a moment as we package your clinical records and files.') }}</p>
+            </div>
+        </div>
     </div>
 </div>
