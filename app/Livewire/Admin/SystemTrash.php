@@ -52,7 +52,7 @@ class SystemTrash extends Component
 
     public function downloadBackup()
     {
-        return app(\App\Http\Controllers\BackupController::class)->download();
+        return redirect()->route('admin.backup');
     }
 
     private function getModelInstance($type, $id)

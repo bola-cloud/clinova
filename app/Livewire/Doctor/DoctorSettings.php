@@ -123,7 +123,7 @@ class DoctorSettings extends Component
 
     public function downloadBackup()
     {
-        return app(\App\Http\Controllers\BackupController::class)->download();
+        return redirect()->route('doctor.backup');
     }
 
     public function render()

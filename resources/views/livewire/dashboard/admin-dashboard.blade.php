@@ -233,18 +233,17 @@ new class extends Component
 
     public function downloadDatabase()
     {
-        return app(\App\Http\Controllers\BackupController::class)->databaseBackup();
+        return redirect()->route('admin.backup.database');
     }
 
     public function downloadFullSystem()
     {
-        return app(\App\Http\Controllers\BackupController::class)->fullSystemBackup();
+        return redirect()->route('admin.backup.full-system');
     }
 
     public function downloadDoctorBackup($doctorId)
     {
-        request()->merge(['doctor_id' => $doctorId]);
-        return app(\App\Http\Controllers\BackupController::class)->download();
+        return redirect()->route('admin.backup', ['doctor_id' => $doctorId]);
     }
 };
 ?>

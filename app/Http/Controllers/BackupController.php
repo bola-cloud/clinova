@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
-use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as Pdf;
 use ZipArchive;
 
 class BackupController extends Controller
@@ -68,9 +67,9 @@ class BackupController extends Controller
             // Sanitize folder name
             $folderName = $this->sanitizeName($patient->name) . '_' . $patient->id;
 
-            // Generate PDF record for this patient
-            $pdfContent = $this->generatePatientPDF($patient, $doctor, $clinicName);
-            $zip->addFromString("{$folderName}/سجل_المريض.pdf", $pdfContent);
+            // Generate HTML record for this patient (100x faster than PDF)
+            $htmlContent = $this->generatePatientHTML($patient, $doctor, $clinicName);
+            $zip->addFromString("{$folderName}/سجل_المريض.html", $htmlContent);
 
             // Add standalone medical files
             foreach ($patient->files as $file) {
@@ -95,18 +94,16 @@ class BackupController extends Controller
     }
 
     /**
-     * Generate a PDF for a single patient's full record.
+     * Generate HTML for a single patient's full record.
      */
-    private function generatePatientPDF(Patient $patient, User $doctor, string $clinicName): string
+    private function generatePatientHTML(Patient $patient, User $doctor, string $clinicName): string
     {
-        $pdf = Pdf::loadView('pdf.patient-record', [
+        return view('pdf.patient-record', [
             'patient' => $patient,
             'doctorName' => __('Dr.') . ' ' . $doctor->name,
             'clinicName' => $clinicName,
             'exportDate' => now()->format('Y-m-d H:i'),
-        ]);
-
-        return $pdf->output();
+        ])->render();
     }
 
     /**
