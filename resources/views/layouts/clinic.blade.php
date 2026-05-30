@@ -149,7 +149,7 @@
                x-transition:leave="transition ease-in duration-200 transform"
                x-transition:leave-start="translate-x-0"
                x-transition:leave-end="-translate-x-full"
-               class="fixed inset-y-0 left-0 w-72 bg-gradient-to-b from-[#8A2BE2] via-[#4A26AB] to-[#0C3E8A] text-white z-[60] flex flex-col shadow-2xl md:hidden"
+               class="fixed inset-y-0 left-0 w-72 bg-gradient-to-b from-[#8A2BE2] via-[#4A26AB] to-[#0C3E8A] text-white z-[60] flex flex-col pb-24 shadow-2xl md:hidden"
                dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}">
             <!-- Reusing Sidebar Content -->
             <div class="p-6 pb-2 flex flex-col items-center gap-2">
@@ -405,7 +405,7 @@
                 @if($loop->index == 2)
                     <!-- Primary Dark Action Button (e.g. Statistics) -->
                     <a href="{{ route($item['route']) }}" 
-                       class="w-12 h-12 flex flex-col items-center justify-center rounded-full transition-all duration-300 relative group bg-[#0A2540] text-white shadow-[0_8px_20px_rgba(10,37,64,0.3)] hover:shadow-[0_10px_25px_rgba(10,37,64,0.4)] hover:-translate-y-0.5">
+                       class="w-12 h-12 flex flex-col items-center justify-center rounded-full transition-all duration-300 relative group bg-[#0A2540] text-white hover:-translate-y-0.5">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="{{ $item['icon'] }}"></path>
                         </svg>
@@ -472,6 +472,17 @@
                                  <span>{{ $item['name'] }}</span>
                              </a>
                          @endforeach
+                         
+                         <!-- Mobile Logout in Dropup -->
+                         <div class="px-2 py-2 mt-1 border-t border-gray-50">
+                             <form method="POST" action="{{ route('logout') }}">
+                                 @csrf
+                                 <button type="submit" class="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors">
+                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                     <span>{{ __('Logout') }}</span>
+                                 </button>
+                             </form>
+                         </div>
                     </div>
                 </div>
             @endif
