@@ -17,6 +17,10 @@ class BackupController extends Controller
      */
     public function download()
     {
+        // Prevent timeout for large backups
+        set_time_limit(0);
+        ini_set('memory_limit', '-1');
+
         $authUser = auth()->user();
 
         // Determine which doctor to back up
@@ -151,6 +155,10 @@ class BackupController extends Controller
      */
     public function databaseBackup()
     {
+        // Prevent timeout for large databases
+        set_time_limit(0);
+        ini_set('memory_limit', '-1');
+
         if (!auth()->user() || !auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
@@ -178,6 +186,10 @@ class BackupController extends Controller
      */
     public function fullSystemBackup()
     {
+        // Prevent timeout for large system backups
+        set_time_limit(0);
+        ini_set('memory_limit', '-1');
+
         if (!auth()->user() || !auth()->user()->isAdmin()) {
             abort(403, 'Unauthorized action.');
         }
