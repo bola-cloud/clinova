@@ -614,5 +614,7 @@
     "Database Backup": "نسخة قاعدة البيانات",
     "Full System Backup": "نسخة احتياطية للنظام بالكامل",
     "Preparing Backup...": "جاري تحضير النسخة الاحتياطية...",
-    "This may take a moment as we package your clinical records and files.": "قد يستغرق هذا بعض الوقت لتجميع السجلات الطبية والملفات المرفقة."
+    "This may take a moment as we package your clinical records and files.": "قد يستغرق هذا بعض الوقت لتجميع السجلات الطبية والملفات المرفقة.",
+    "Yes": "نعم",
+    "No": "لا"
 }

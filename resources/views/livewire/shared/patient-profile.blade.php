@@ -131,11 +131,21 @@
                                 {{ $doctorSpecialty ? $doctorSpecialty->name : __('Specialty Details') }}
                             </h4>
                             @foreach($visit->specialty_data as $fieldId => $answer)
-                                @php $field = \App\Models\SpecialtyField::find($fieldId); @endphp
+                                @php 
+                                    $field = \App\Models\SpecialtyField::find($fieldId);
+                                    $displayAnswer = $answer;
+                                    if (is_array($answer)) {
+                                        $displayAnswer = implode(', ', $answer);
+                                    } elseif ($field && $field->type !== 'number' && ($answer === 1 || $answer === '1' || $answer === true || $answer === 'true')) {
+                                        $displayAnswer = __('Yes');
+                                    } elseif ($field && $field->type !== 'number' && ($answer === 0 || $answer === '0' || $answer === false || $answer === 'false')) {
+                                        $displayAnswer = __('No');
+                                    }
+                                @endphp
                                 @if($field)
                                 <div class="flex flex-col">
                                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ $field->label }}</span>
-                                    <span class="text-sm font-bold text-slate-800">{{ is_array($answer) ? implode(', ', $answer) : $answer }}</span>
+                                    <span class="text-sm font-bold text-slate-800">{{ $displayAnswer }}</span>
                                 </div>
                                 @endif
                             @endforeach
@@ -402,6 +412,47 @@
                         </div>
 
                         <div class="md:col-span-2 space-y-2">
+                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Attach Files') }}</label>
+                            <div class="relative w-full h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] flex flex-col items-center justify-center group hover:bg-slate-100 transition-all cursor-pointer overflow-hidden">
+                                <input type="file" wire:model.live="uploads" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                <div class="flex flex-col items-center gap-2 text-slate-400 group-hover:text-emerald-600 transition-colors">
+                                    <div class="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                                    </div>
+                                    <span class="text-[10px] font-black uppercase tracking-[0.2em]">{{ __('Select Files (Max 5MB)') }}</span>
+                                </div>
+                                <div wire:loading wire:target="uploads" class="absolute inset-0 bg-slate-50/90 backdrop-blur-sm flex items-center justify-center z-20">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="animate-spin h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        <span class="text-xs font-black text-emerald-700 uppercase tracking-widest">{{ __('Uploading...') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            @if($patientFiles)
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                                @foreach($patientFiles as $file)
+                                <div class="flex items-center justify-between p-3 bg-white rounded-2xl border border-emerald-100 shadow-sm animate-fade-in" wire:key="visit-temp-file-{{ $file['id'] }}">
+                                    <div class="flex items-center gap-3 overflow-hidden">
+                                        <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                        </div>
+                                        <div class="flex flex-col min-w-0">
+                                            <span class="text-xs font-black text-slate-700 truncate">{{ $file['name'] }}</span>
+                                            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{{ __('Temp Ready') }}</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" wire:click="deletePatientFile('{{ $file['id'] }}')" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
+                                @endforeach
+                            </div>
+                            @endif
+                            @error('uploads.*') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="md:col-span-2 space-y-2">
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Preliminary Diagnosis') }}</label>
                             <div class="relative">
                                 <input type="text" wire:model.live="diagnosis" placeholder="{{ __('Enter diagnosis...') }}"
@@ -498,47 +549,6 @@
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Follow Up Notes') }}</label>
                             <textarea wire:model.live="followUpNotes" rows="3" placeholder="{{ __('Notes regarding patient progress...') }}"
                                       class="w-full bg-indigo-50/50 border-indigo-100 rounded-2xl py-4 px-5 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"></textarea>
-                        </div>
-
-                        <div class="md:col-span-2 space-y-2">
-                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Attach Files') }}</label>
-                            <div class="relative w-full h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] flex flex-col items-center justify-center group hover:bg-slate-100 transition-all cursor-pointer overflow-hidden">
-                                <input type="file" wire:model.live="uploads" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                                <div class="flex flex-col items-center gap-2 text-slate-400 group-hover:text-emerald-600 transition-colors">
-                                    <div class="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
-                                    </div>
-                                    <span class="text-[10px] font-black uppercase tracking-[0.2em]">{{ __('Select Files (Max 5MB)') }}</span>
-                                </div>
-                                <div wire:loading wire:target="uploads" class="absolute inset-0 bg-slate-50/90 backdrop-blur-sm flex items-center justify-center z-20">
-                                    <div class="flex items-center gap-2">
-                                        <svg class="animate-spin h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                        <span class="text-xs font-black text-emerald-700 uppercase tracking-widest">{{ __('Uploading...') }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            @if($patientFiles)
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                                @foreach($patientFiles as $file)
-                                <div class="flex items-center justify-between p-3 bg-white rounded-2xl border border-emerald-100 shadow-sm animate-fade-in" wire:key="visit-temp-file-{{ $file['id'] }}">
-                                    <div class="flex items-center gap-3 overflow-hidden">
-                                        <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                        </div>
-                                        <div class="flex flex-col min-w-0">
-                                            <span class="text-xs font-black text-slate-700 truncate">{{ $file['name'] }}</span>
-                                            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{{ __('Temp Ready') }}</span>
-                                        </div>
-                                    </div>
-                                    <button type="button" wire:click="deletePatientFile('{{ $file['id'] }}')" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                    </button>
-                                </div>
-                                @endforeach
-                            </div>
-                            @endif
-                            @error('uploads.*') <span class="text-rose-500 text-xs font-bold block mt-1">{{ $message }}</span> @enderror
                         </div>
                     </div>
 

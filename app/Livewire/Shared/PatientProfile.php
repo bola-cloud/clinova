@@ -152,10 +152,15 @@ class PatientProfile extends Component
         $this->personalHistoryEdit = $patient->personal_history;
         
         $user = auth()->user();
-        if ($user->role === 'doctor') {
-            $specialty = $user->specialty;
-            if ($specialty) {
-                $this->specialtyFields = $specialty->fields;
+        $doctor = $user->isDoctor() ? $user : ($user->isSecretary() ? $user->assignedDoctor : null);
+        if (!$doctor && $this->patient->doctor_id) {
+            $doctor = \App\Models\User::find($this->patient->doctor_id);
+        }
+        
+        if ($doctor && $doctor->specialty) {
+            $this->specialtyFields = $doctor->specialty->fields;
+            foreach ($this->specialtyFields as $field) {
+                $this->dynamicAnswers[$field->id] = $field->type === 'multi_select' ? [] : '';
             }
         }
     }
@@ -283,8 +288,12 @@ class PatientProfile extends Component
         $this->reset([
             'complaint', 'diagnosis', 'investigation', 'treatmentText', 
             'parentVisitId', 'visitType', 'followUpNotes', 
-            'dynamicAnswers', 'patientFiles', 'uploads'
+            'patientFiles', 'uploads'
         ]);
+        $this->dynamicAnswers = [];
+        foreach ($this->specialtyFields as $field) {
+            $this->dynamicAnswers[$field->id] = $field->type === 'multi_select' ? [] : '';
+        }
         $this->complaintSuggestions = [];
         $this->diagnosisSuggestions = [];
         $this->investigationSuggestions = [];

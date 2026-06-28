@@ -231,8 +231,20 @@
                     @endif
                     @if($visit->specialty_data && is_array($visit->specialty_data))
                         @foreach($visit->specialty_data as $key => $value)
-                            @if($value)
-                                <p><strong>{{ $key }}:</strong> {{ is_array($value) ? implode(', ', $value) : $value }}</p>
+                            @if($value !== null && $value !== '')
+                                @php
+                                    $field = \App\Models\SpecialtyField::find($key);
+                                    $label = $field ? $field->label : $key;
+                                    $displayValue = $value;
+                                    if (is_array($value)) {
+                                        $displayValue = implode(', ', $value);
+                                    } elseif ($field && $field->type !== 'number' && ($value === 1 || $value === '1' || $value === true || $value === 'true')) {
+                                        $displayValue = __('Yes');
+                                    } elseif ($field && $field->type !== 'number' && ($value === 0 || $value === '0' || $value === false || $value === 'false')) {
+                                        $displayValue = __('No');
+                                    }
+                                @endphp
+                                <p><strong>{{ $label }}:</strong> {{ $displayValue }}</p>
                             @endif
                         @endforeach
                     @endif
