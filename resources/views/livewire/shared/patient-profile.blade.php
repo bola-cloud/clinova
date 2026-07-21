@@ -89,6 +89,17 @@
                     @endif
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    @if($visit->visit_mode === 'canvas' && $visit->canvas_image_path)
+                    <div class="md:col-span-2">
+                        <h4 class="text-indigo-900 font-bold text-sm mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            {{ __('Freehand Board Record') }}
+                        </h4>
+                        <div class="bg-indigo-50/30 p-2 rounded-3xl border border-indigo-100">
+                            <img src="{{ Storage::url($visit->canvas_image_path) }}" alt="Canvas" class="w-full h-auto rounded-2xl shadow-sm mix-blend-multiply bg-white">
+                        </div>
+                    </div>
+                    @else
                     <div>
                         <h4 class="text-purple-900 font-bold text-sm mb-2">{{ __('Complaint') }}</h4>
                         <p class="text-gray-700 leading-relaxed">{{ $visit->complaint }}</p>
@@ -113,6 +124,7 @@
                             <p class="text-gray-700 leading-relaxed whitespace-pre-line bg-slate-50 p-4 rounded-xl border border-slate-100">{{ $visit->treatment_text ?: __('No data.') }}</p>
                         </div>
                     </div>
+                    @endif
 
                     @if($visit->follow_up_notes)
                     <div class="md:col-span-2 mt-4 p-4 bg-indigo-50/30 rounded-2xl border border-indigo-100/50">
@@ -121,7 +133,7 @@
                     </div>
                     @endif
 
-                    @if($visit->specialty_data && count($visit->specialty_data) > 0)
+                    @if($visit->visit_mode !== 'canvas' && $visit->specialty_data && count($visit->specialty_data) > 0)
                     <div class="md:col-span-2 pt-4 border-t border-gray-100">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-purple-50/30 p-4 rounded-2xl border border-purple-100">
                             @php 
@@ -142,10 +154,10 @@
                                         $displayAnswer = __('No');
                                     }
                                 @endphp
-                                @if($field)
-                                <div class="flex flex-col">
-                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{{ $field->label }}</span>
-                                    <span class="text-sm font-bold text-slate-800">{{ $displayAnswer }}</span>
+                                @if(!empty($displayAnswer) || $displayAnswer === '0')
+                                <div>
+                                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-0.5">{{ $field ? $field->label : __('Field') }}</span>
+                                    <span class="text-sm font-bold text-purple-900">{{ $displayAnswer }}</span>
                                 </div>
                                 @endif
                             @endforeach
@@ -392,7 +404,48 @@
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    @if(count($availableTemplates) > 0)
+                    <div class="mb-6 bg-blue-50/50 border border-blue-100 rounded-2xl p-4 flex items-center gap-4">
+                        <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-xs font-bold text-blue-800 uppercase tracking-widest block mb-1">{{ __('Load Template') }}</label>
+                            <select wire:model.live="selectedTemplateId" class="w-full bg-white border-blue-200 rounded-xl py-2 px-3 text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-gray-700">
+                                <option value="">{{ __('Select a template to auto-fill...') }}</option>
+                                @foreach($availableTemplates as $template)
+                                    <option value="{{ $template->id }}">{{ $template->template_name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="mb-6 flex justify-center">
+                        <div class="bg-gray-100 p-1 rounded-2xl inline-flex relative shadow-inner">
+                            <button type="button" wire:click="$set('visitMode', 'text')" class="relative z-10 px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $visitMode === 'text' ? 'text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                                @if($visitMode === 'text')
+                                    <div class="absolute inset-0 bg-white rounded-xl shadow-sm -z-10"></div>
+                                @endif
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                                    {{ __('Standard Fields') }}
+                                </div>
+                            </button>
+                            <button type="button" wire:click="$set('visitMode', 'canvas')" class="relative z-10 px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $visitMode === 'canvas' ? 'text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                                @if($visitMode === 'canvas')
+                                    <div class="absolute inset-0 bg-white rounded-xl shadow-sm -z-10"></div>
+                                @endif
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    {{ __('Freehand Board') }}
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    @if($visitMode === 'text')
+                    <div wire:key="visit-mode-text" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2 space-y-2">
                             <div class="flex items-center justify-between">
                                 <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Patient Complaint') }}</label>
@@ -541,6 +594,32 @@
                             </div>
                         </div>
 
+                    </div>
+                    @else
+                    <div wire:key="visit-mode-canvas" wire:ignore class="w-full min-h-[300px] h-[500px] border-2 border-dashed border-indigo-200 rounded-3xl bg-indigo-50/10 relative animate-fade-in shadow-sm group resize-y overflow-hidden flex flex-col"
+                         x-data="window.freehandBoardData ? window.freehandBoardData() : {}"
+                         x-init="$nextTick(() => { if(typeof initBoard === 'function') initBoard($refs.canvas) })"
+                    >
+                        <!-- Controls -->
+                        <div class="absolute top-4 right-4 flex items-center gap-2 z-10 bg-white p-2 rounded-2xl shadow-sm border border-indigo-100 opacity-80 group-hover:opacity-100 transition-opacity">
+                            <button type="button" @click="clearBoard()" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors" title="{{ __('Clear Board') }}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                            <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                            <button type="button" @click="setMode('draw')" class="p-2 rounded-xl transition-colors" :class="mode === 'draw' ? 'bg-indigo-100 text-indigo-700 shadow-inner' : 'text-gray-400 hover:bg-gray-100'">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button type="button" @click="setMode('erase')" class="p-2 rounded-xl transition-colors" :class="mode === 'erase' ? 'bg-indigo-100 text-indigo-700 shadow-inner' : 'text-gray-400 hover:bg-gray-100'">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16.24 3.56l4.2 4.2c.78.78.78 2.05 0 2.83l-9.9 9.9c-.38.38-.88.59-1.41.59H4c-1.1 0-2-.9-2-2v-5.17c0-.53.21-1.04.59-1.41l9.82-9.94c.78-.78 2.05-.78 2.83 0zm-5.66 12.02l4.95-4.95-2.83-2.83-4.95 4.95 2.83 2.83z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="flex-1 w-full h-full relative">
+                            <canvas x-ref="canvas" class="absolute inset-0 w-full h-full rounded-3xl touch-none cursor-crosshair"></canvas>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                         <div class="md:col-span-2 space-y-2 pt-4 border-t border-dashed border-gray-200">
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Follow Up Notes') }}</label>
                             <textarea wire:model.live="followUpNotes" rows="3" placeholder="{{ __('Notes regarding patient progress...') }}"
@@ -589,15 +668,28 @@
                         </div>
                     </div>
 
-                    <div class="mt-10 flex gap-4">
-                        <button type="button" wire:click="closeVisitModal" class="flex-1 py-4 text-slate-500 font-bold">{{ __('Cancel') }}</button>
-                        <button type="submit" wire:loading.attr="disabled" wire:target="uploads, saveVisit" class="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-bold shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
-                            <span wire:loading.remove wire:target="uploads, saveVisit">{{ __('Save Visit Record') }}</span>
-                            <span wire:loading wire:target="uploads, saveVisit" class="flex items-center justify-center gap-2">
-                                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                <span>{{ __('Please wait...') }}</span>
-                            </span>
-                        </button>
+                    <div class="mt-10 flex flex-col sm:flex-row gap-4 items-end">
+                        <div class="flex-1 w-full bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">{{ __('Save as Template (Optional)') }}</label>
+                            <div class="flex gap-2">
+                                <input type="text" wire:model="templateName" placeholder="{{ __('Template Name (e.g. Corona Protocol)') }}" class="flex-1 bg-white border-gray-200 rounded-xl py-2 px-3 text-xs focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all">
+                                <button type="button" wire:click="saveAsTemplate" class="px-3 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-colors whitespace-nowrap">
+                                    {{ __('Save Template') }}
+                                </button>
+                            </div>
+                            @error('templateName') <span class="text-rose-500 text-[10px] font-bold block mt-1">{{ $message }}</span> @enderror
+                            @if(session()->has('template_message')) <span class="text-emerald-600 text-[10px] font-bold block mt-1">{{ session('template_message') }}</span> @endif
+                        </div>
+                        <div class="flex gap-2 sm:w-1/2 w-full">
+                            <button type="button" wire:click="closeVisitModal" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-100 rounded-xl transition-colors">{{ __('Cancel') }}</button>
+                            <button type="submit" wire:loading.attr="disabled" wire:target="uploads, saveVisit" class="flex-[2] py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+                                <span wire:loading.remove wire:target="uploads, saveVisit">{{ __('Save Visit Record') }}</span>
+                                <span wire:loading wire:target="uploads, saveVisit" class="flex items-center justify-center gap-2">
+                                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <span class="text-sm">{{ __('Saving...') }}</span>
+                                </span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </form>
@@ -712,3 +804,116 @@
     </div>
     @endif
 </div>
+
+@push('scripts')
+<script>
+    window.freehandBoardData = function() {
+        return {
+            signaturePad: null,
+            mode: 'draw',
+            resizeObserver: null,
+            resizeTimeout: null,
+            
+            initBoard(canvasEl) {
+                if (!canvasEl) canvasEl = this.$refs.canvas;
+                if (!canvasEl) return;
+                
+                if (typeof SignaturePad === 'undefined') {
+                    let script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js';
+                    script.onload = () => {
+                        this.setupPad(canvasEl);
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    this.setupPad(canvasEl);
+                }
+            },
+            
+            setupPad(canvasEl) {
+                if (this.signaturePad) return; // Already initialized
+                if (!canvasEl) canvasEl = this.$refs.canvas;
+                if (!canvasEl) return;
+                
+                this.signaturePad = new SignaturePad(canvasEl, {
+                    backgroundColor: 'rgba(255, 255, 255, 0)',
+                    penColor: 'rgb(0, 0, 0)', // Force black color
+                    minWidth: 1.5,
+                    maxWidth: 3.5
+                });
+                
+                const resizeCanvas = () => {
+                    if (!this.signaturePad) return;
+                    
+                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                    const oldData = this.signaturePad.toData();
+                    
+                    canvasEl.width = canvasEl.offsetWidth * ratio;
+                    canvasEl.height = canvasEl.offsetHeight * ratio;
+                    canvasEl.getContext("2d").scale(ratio, ratio);
+                    
+                    this.signaturePad.clear();
+                    
+                    if (oldData && oldData.length > 0) {
+                        this.signaturePad.fromData(oldData);
+                    } else if (this.$wire.canvasData) {
+                        this.signaturePad.fromDataURL(this.$wire.canvasData);
+                    }
+                };
+                
+                let lastW = 0, lastH = 0;
+                this.resizeObserver = new ResizeObserver((entries) => {
+                    const rect = entries[0].contentRect;
+                    if (rect.width !== lastW || rect.height !== lastH) {
+                        lastW = rect.width;
+                        lastH = rect.height;
+                        clearTimeout(this.resizeTimeout);
+                        this.resizeTimeout = setTimeout(() => {
+                            if (canvasEl.offsetWidth > 0 && canvasEl.offsetHeight > 0) {
+                                resizeCanvas();
+                            }
+                        }, 100);
+                    }
+                });
+                
+                this.resizeObserver.observe(canvasEl.parentElement);
+
+                this.signaturePad.addEventListener("endStroke", () => {
+                    this.$wire.canvasData = this.signaturePad.toDataURL('image/png');
+                });
+                
+                window.addEventListener('canvas-data-loaded', () => {
+                    if (this.signaturePad && this.$wire.canvasData) {
+                        this.signaturePad.clear();
+                        this.signaturePad.fromDataURL(this.$wire.canvasData);
+                    }
+                });
+                
+                // Force initial resize to ensure canvas isn't 0x0
+                setTimeout(() => resizeCanvas(), 100);
+            },
+            
+            clearBoard() {
+                if (!this.signaturePad) return;
+                this.signaturePad.clear();
+                this.$wire.canvasData = null;
+            },
+            
+            setMode(m) {
+                this.mode = m;
+                if (!this.signaturePad) return;
+                
+                if (m === 'erase') {
+                    this.signaturePad.compositeOperation = 'destination-out';
+                    this.signaturePad.minWidth = 10;
+                    this.signaturePad.maxWidth = 20;
+                } else {
+                    this.signaturePad.compositeOperation = 'source-over';
+                    this.signaturePad.minWidth = 1.5;
+                    this.signaturePad.maxWidth = 3.5;
+                }
+            }
+        };
+    };
+</script>
+@endpush

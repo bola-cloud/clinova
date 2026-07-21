@@ -217,19 +217,28 @@
                     @endif
                 </div>
                 <div class="visit-body">
-                    @if($visit->complaint)
-                        <p><strong>الشكوى:</strong> {{ $visit->complaint }}</p>
+                    @if($visit->visit_mode === 'canvas' && $visit->canvas_image_path)
+                        <div style="margin: 10px 0; border: 1px solid #e2e8f0; border-radius: 4px; padding: 5px; text-align: center;">
+                            <p style="font-weight: bold; margin-bottom: 5px; color: #4f46e5;">لوحة الرسم الحرة</p>
+                            <img src="{{ public_path('storage/' . $visit->canvas_image_path) }}" alt="Canvas Image" style="max-width: 100%; height: auto;">
+                        </div>
+                    @else
+                        @if($visit->complaint)
+                            <p><strong>الشكوى:</strong> {{ $visit->complaint }}</p>
+                        @endif
+                        @if($visit->diagnosis)
+                            <p><strong>التشخيص:</strong> {{ $visit->diagnosis }}</p>
+                        @endif
+                        @if($visit->treatment_text)
+                            <p><strong>العلاج:</strong> {{ $visit->treatment_text }}</p>
+                        @endif
                     @endif
-                    @if($visit->diagnosis)
-                        <p><strong>التشخيص:</strong> {{ $visit->diagnosis }}</p>
-                    @endif
-                    @if($visit->treatment_text)
-                        <p><strong>العلاج:</strong> {{ $visit->treatment_text }}</p>
-                    @endif
+
                     @if($visit->follow_up_notes)
                         <p><strong>ملاحظات المتابعة:</strong> {{ $visit->follow_up_notes }}</p>
                     @endif
-                    @if($visit->specialty_data && is_array($visit->specialty_data))
+                    
+                    @if($visit->visit_mode !== 'canvas' && $visit->specialty_data && is_array($visit->specialty_data))
                         @foreach($visit->specialty_data as $key => $value)
                             @if($value !== null && $value !== '')
                                 @php

@@ -40,9 +40,16 @@ class PatientProfile extends Component
     public $treatmentText = '';
     public $parentVisitId = null;
     public $visitType = 'checkup';
+    public $visitMode = 'text'; // 'text' or 'canvas'
+    public $canvasData = null; // Base64 image data
     public $followUpNotes = '';
     public $specialtyFields = [];
     public $dynamicAnswers = [];
+
+    // Template properties
+    public $templateName = '';
+    public $selectedTemplateId = '';
+    public $availableTemplates = [];
 
     // Booking properties
     public $showBookingModal = false;
@@ -163,6 +170,72 @@ class PatientProfile extends Component
                 $this->dynamicAnswers[$field->id] = $field->type === 'multi_select' ? [] : '';
             }
         }
+        $this->loadTemplates();
+    }
+
+    private function getCurrentDoctorId()
+    {
+        return $this->patient->doctor_id 
+            ?? (auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id);
+    }
+
+    public function loadTemplates()
+    {
+        $doctorId = $this->getCurrentDoctorId();
+        if ($doctorId) {
+            $this->availableTemplates = \App\Models\VisitTemplate::where('doctor_id', $doctorId)->get();
+        }
+    }
+
+    public function saveAsTemplate()
+    {
+        $this->validate(['templateName' => 'required|string|max:255']);
+        $doctorId = $this->getCurrentDoctorId();
+
+        \App\Models\VisitTemplate::create([
+            'doctor_id' => $doctorId,
+            'template_name' => $this->templateName,
+            'complaint' => $this->complaint,
+            'diagnosis' => $this->diagnosis,
+            'treatment' => $this->treatmentText,
+            'follow_up_notes' => $this->followUpNotes,
+            'specialties_data' => $this->dynamicAnswers,
+            'visit_mode' => $this->visitMode,
+            'canvas_data' => $this->canvasData,
+        ]);
+
+        $this->templateName = '';
+        $this->loadTemplates();
+        session()->flash('template_message', __('Template saved successfully.'));
+    }
+
+    public function updatedSelectedTemplateId($value)
+    {
+        if (!$value) return;
+        
+        $template = \App\Models\VisitTemplate::find($value);
+        if ($template) {
+            $this->complaint = $template->complaint;
+            $this->diagnosis = $template->diagnosis;
+            $this->treatmentText = $template->treatment;
+            $this->followUpNotes = $template->follow_up_notes;
+            
+            if (is_array($template->specialties_data)) {
+                foreach ($template->specialties_data as $key => $val) {
+                    $this->dynamicAnswers[$key] = $val;
+                }
+            }
+            
+            if ($template->visit_mode) {
+                $this->visitMode = $template->visit_mode;
+            }
+            if ($template->canvas_data) {
+                $this->canvasData = $template->canvas_data;
+                // Dispatch event to re-render the canvas if it's already open
+                $this->dispatch('canvas-data-loaded');
+            }
+        }
+        $this->selectedTemplateId = '';
     }
 
     public function openVisitModal()
@@ -233,7 +306,34 @@ class PatientProfile extends Component
             return;
         }
 
-        $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
+        $doctorId = $this->getCurrentDoctorId();
+
+        // Process Canvas Image if in canvas mode
+        $canvasImagePath = null;
+        if ($this->visitMode === 'canvas' && $this->canvasData) {
+            // $this->canvasData is expected to be a base64 encoded data URI
+            if (preg_match('/^data:image\/(\w+);base64,/', $this->canvasData, $type)) {
+                $data = substr($this->canvasData, strpos($this->canvasData, ',') + 1);
+                $type = strtolower($type[1]); // jpg, png, gif
+
+                if (in_array($type, ['jpg', 'jpeg', 'gif', 'png'])) {
+                    $data = base64_decode($data);
+                    if ($data === false) {
+                        // Error decoding base64
+                    } else {
+                        $canvasFileName = 'canvas_' . time() . '_' . uniqid() . '.' . $type;
+                        $canvasImagePath = "patient_files/" . $canvasFileName;
+                        \Illuminate\Support\Facades\Storage::disk('public')->put($canvasImagePath, $data);
+                        
+                        // Storage increment
+                        if ($doctor) {
+                            $size = \Illuminate\Support\Facades\Storage::disk('public')->size($canvasImagePath);
+                            $doctor->increment('used_storage_bytes', $size);
+                        }
+                    }
+                }
+            }
+        }
 
         $visit = $this->patient->visits()->create([
             'doctor_id' => $doctorId,
@@ -245,6 +345,9 @@ class PatientProfile extends Component
             'parent_visit_id' => $this->parentVisitId,
             'type' => $this->visitType,
             'specialty_data' => $this->dynamicAnswers,
+            'visit_mode' => $this->visitMode,
+            'canvas_data' => $this->canvasData, // Original JSON or raw if needed, but we rely on canvas_image_path for display
+            'canvas_image_path' => $canvasImagePath,
         ]);
 
         // Process Files
@@ -287,7 +390,7 @@ class PatientProfile extends Component
     {
         $this->reset([
             'complaint', 'diagnosis', 'investigation', 'treatmentText', 
-            'parentVisitId', 'visitType', 'followUpNotes', 
+            'parentVisitId', 'visitType', 'visitMode', 'canvasData', 'followUpNotes', 
             'patientFiles', 'uploads'
         ]);
         $this->dynamicAnswers = [];
