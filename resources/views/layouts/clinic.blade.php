@@ -278,15 +278,12 @@
                     </a>
                 </div>
                 <!-- Desktop Logout inside dropup -->
-                <a href="{{ route('doctor.schedule') }}" class="group flex items-center px-4 py-3 text-sm font-bold rounded-2xl {{ request()->routeIs('doctor.schedule') ? 'bg-indigo-600 text-white shadow-md' : 'text-purple-100 hover:text-white hover:bg-white/10' }} transition-all">
-                    <svg class="w-5 h-5 ml-3 {{ request()->routeIs('doctor.schedule') ? 'text-white' : 'text-purple-300 group-hover:text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    {{ __('Schedule Settings') }}
-                </a>
-                
+                @if(auth()->user()->isDoctor())
                 <a href="{{ route('doctor.prescription') }}" class="group flex items-center px-4 py-3 text-sm font-bold rounded-2xl {{ request()->routeIs('doctor.prescription') ? 'bg-indigo-600 text-white shadow-md' : 'text-purple-100 hover:text-white hover:bg-white/10' }} transition-all">
                     <svg class="w-5 h-5 ml-3 {{ request()->routeIs('doctor.prescription') ? 'text-white' : 'text-purple-300 group-hover:text-white' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
                     {{ __('Prescription Builder') }}
                 </a>
+                @endif
                 <form method="POST" action="{{ route('logout') }}" class="mt-2">
                     @csrf
                     <button type="submit" class="w-full flex items-center justify-center gap-2 p-3 hover:bg-white/10 rounded-xl text-rose-200 hover:text-rose-100 transition-colors text-sm font-bold border border-rose-300/20">
@@ -486,15 +483,12 @@
                          
                          <!-- Mobile Logout in Dropup -->
                          <div class="px-2 py-2 mt-1 border-t border-gray-50">
-                             <a href="{{ route('doctor.schedule') }}" class="group flex items-center px-4 py-3 text-sm font-bold rounded-2xl {{ request()->routeIs('doctor.schedule') ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} transition-all">
-                                <svg class="w-5 h-5 ml-3 {{ request()->routeIs('doctor.schedule') ? 'text-white' : 'text-gray-400 group-hover:text-indigo-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                {{ __('Schedule Settings') }}
-                            </a>
-                            
+                             @if(auth()->user()->isDoctor())
                             <a href="{{ route('doctor.prescription') }}" class="group flex items-center px-4 py-3 text-sm font-bold rounded-2xl {{ request()->routeIs('doctor.prescription') ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} transition-all">
                                 <svg class="w-5 h-5 ml-3 {{ request()->routeIs('doctor.prescription') ? 'text-white' : 'text-gray-400 group-hover:text-indigo-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
                                 {{ __('Prescription Builder') }}
                             </a>
+                            @endif
                              <form method="POST" action="{{ route('logout') }}">
                                  @csrf
                                  <button type="submit" class="w-full flex items-center gap-3 px-2 py-2.5 rounded-xl text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors">
