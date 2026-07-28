@@ -26,6 +26,9 @@ class Visit extends Model
         'parent_visit_id',
         'type',
         'specialty_data',
+        'visit_mode',
+        'canvas_data',
+        'canvas_image_path',
     ];
 
     protected $casts = [

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 use App\Livewire\Doctor\DoctorSettings;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\PrintController;
 use App\Livewire\Admin\IncomeStatistics;
 use App\Livewire\Admin\AdminDashboard;
 use App\Livewire\Admin\SystemRevenue;
@@ -42,6 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(['can:doctor', 'subscription.active'])->group(function () {
         Route::view('doctor', 'dashboard.doctor')->name('doctor.dashboard');
         Route::get('doctor/settings', DoctorSettings::class)->name('doctor.settings');
+        Route::get('doctor/prescription-settings', \App\Livewire\Doctor\PrescriptionBuilder::class)->name('doctor.prescription');
         Route::get('doctor/staff', StaffManagement::class)->name('doctor.staff');
         Route::get('doctor/statistics', IncomeStatistics::class)->name('doctor.statistics');
         Route::get('doctor/trash', \App\Livewire\Admin\SystemTrash::class)->name('doctor.trash');
@@ -61,6 +63,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Volt::route('patients', 'shared.patients-list')->name('patients.index');
         Volt::route('appointments', 'shared.appointments-list')->name('appointments.index');
 
+        Route::get('doctor/schedule-settings', \App\Livewire\Doctor\ScheduleSettings::class)
+            ->middleware(['can:doctor,secretary'])
+            ->name('doctor.schedule');
+
         Route::get('patients/{patient}', \App\Livewire\Shared\PatientProfile::class)
             ->middleware(['can:doctor,secretary'])
             ->name('patients.show');
@@ -69,6 +75,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('appointments/{appointment}/visit', \App\Livewire\Doctor\VisitForm::class)
             ->middleware(['can:doctor'])
             ->name('appointments.visit');
+            
+        Route::get('visits/{visit}/print-prescription', [PrintController::class, 'prescription'])
+            ->middleware(['can:doctor,secretary'])
+            ->name('visits.print-prescription');
 
         // File Serving with decompression
         Route::get('files/serve/{path}', [FileController::class, 'serve'])->where('path', '.*')->name('files.serve');
@@ -85,5 +95,8 @@ Route::get('lang/{locale}', function ($locale) {
     }
     return redirect()->back();
 })->name('lang.switch');
+
+// Public Booking Portal
+Route::get('book/{slug}', \App\Livewire\Public\BookingPortal::class)->name('public.booking');
 
 require __DIR__.'/auth.php';

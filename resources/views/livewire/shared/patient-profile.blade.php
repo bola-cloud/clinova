@@ -81,12 +81,20 @@
                             </div>
                         </div>
                     </div>
-                    @if($visit->type === 'checkup' && auth()->user()->isDoctor())
-                    <button wire:click="startFollowUp({{ $visit->id }})" class="px-4 py-1.5 bg-white border border-emerald-200 text-emerald-600 rounded-lg text-xs font-bold hover:bg-emerald-50 transition-colors flex items-center gap-1.5 shadow-sm">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        {{ __('Add Follow-up') }}
-                    </button>
-                    @endif
+                    <div class="flex items-center gap-2">
+                        @if(auth()->user()->isDoctor() || auth()->user()->isSecretary())
+                        <a href="{{ route('visits.print-prescription', $visit->id) }}" target="_blank" class="px-4 py-1.5 bg-white border border-indigo-200 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-50 transition-colors flex items-center gap-1.5 shadow-sm">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                            {{ __('Print Prescription') }}
+                        </a>
+                        @endif
+                        @if($visit->type === 'checkup' && auth()->user()->isDoctor())
+                        <button wire:click="startFollowUp({{ $visit->id }})" class="px-4 py-1.5 bg-white border border-emerald-200 text-emerald-600 rounded-lg text-xs font-bold hover:bg-emerald-50 transition-colors flex items-center gap-1.5 shadow-sm">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            {{ __('Add Follow-up') }}
+                        </button>
+                        @endif
+                    </div>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                     @if($visit->visit_mode === 'canvas' && $visit->canvas_image_path)
@@ -189,6 +197,17 @@
                         </div>
                     </div>
                     <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @if($followUp->visit_mode === 'canvas' && $followUp->canvas_image_path)
+                        <div class="md:col-span-2">
+                            <h5 class="text-emerald-900 font-bold mb-2 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                {{ __('Freehand Board Record') }}
+                            </h5>
+                            <div class="bg-emerald-50/50 p-2 rounded-xl border border-emerald-100">
+                                <img src="{{ Storage::url($followUp->canvas_image_path) }}" alt="Canvas" class="w-full h-auto rounded-lg shadow-sm mix-blend-multiply bg-white">
+                            </div>
+                        </div>
+                        @else
                         <div class="text-xs">
                             <h5 class="text-emerald-900 font-bold mb-1">{{ __('Complaint') }}</h5>
                             <p class="text-gray-600">{{ $followUp->complaint }}</p>
@@ -201,6 +220,7 @@
                             <h5 class="text-emerald-900 font-bold mb-1">{{ __('Treatment & Instructions') }}</h5>
                             <p class="text-gray-600 whitespace-pre-line">{{ $followUp->treatment_text ?: __('No data.') }}</p>
                         </div>
+                        @endif
                         @if($followUp->follow_up_notes)
                         <div class="md:col-span-2 text-xs mt-2 p-3 bg-white rounded-xl border border-emerald-100/50">
                             <h5 class="text-emerald-900 font-bold mb-1">{{ __('Follow Up Notes') }}</h5>

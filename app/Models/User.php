@@ -59,6 +59,8 @@ class User extends Authenticatable
         'subscription_price',
         'is_paid',
         'subscription_start_at',
+        'booking_slug',
+        'is_booking_active',
     ];
 
     /**
@@ -90,6 +92,7 @@ class User extends Authenticatable
             'subscription_start_at' => 'datetime',
             'subscription_price' => 'decimal:2',
             'custom_fees' => 'array',
+            'is_booking_active' => 'boolean',
         ];
     }
 
@@ -131,6 +134,16 @@ class User extends Authenticatable
     public function subscriptions()
     {
         return $this->hasMany(Subscription::class, 'user_id');
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(DoctorSchedule::class, 'doctor_id');
+    }
+
+    public function prescriptionSetting()
+    {
+        return $this->hasOne(PrescriptionSetting::class, 'doctor_id');
     }
 
     /**
