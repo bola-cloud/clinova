@@ -708,5 +708,6 @@
     "Clear Background" : "مسح الخلفية",
     "Remove" : "إزالة",
     "Toggle visibility and adjust font sizes for each field on your prescription.": "تبديل الرؤية وتعديل أحجام الخطوط لكل حقل في روشتتك.",
-    "Preview A5 Prescription" : "معاينة روشتة A5"
+    "Preview A5 Prescription" : "معاينة روشتة A5",
+    "Deep search in medical records (diagnosis, treatment...)" : "بحث دقيق في السجلات الطبية (تشخيص، علاج...)"
 }

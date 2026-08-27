@@ -14,6 +14,7 @@ new class extends Component
     use WithPagination, WithFileUploads;
 
     public $search = '';
+    public $globalSearch = '';
     public $showAddPatient = false;
     public $showAdvancedFilters = false;
     
@@ -54,7 +55,7 @@ new class extends Component
 
         $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
 
-        app(PatientService::class)->createPatient([
+        $patient = app(PatientService::class)->createPatient([
             'name' => $this->name,
             'phone' => $this->phone,
             'age_years' => $this->age_years,
@@ -65,8 +66,8 @@ new class extends Component
             'doctor_id' => $doctorId,
         ]);
 
-        $this->reset(['name', 'phone', 'age_years', 'age_months', 'age_days', 'weight', 'address', 'showAddPatient']);
         session()->flash('success', __('Patient added successfully.'));
+        return redirect()->route('patients.show', $patient->id);
     }
 
     public function openBooking($patientId)
@@ -188,6 +189,7 @@ new class extends Component
     }
 
     public function updatingSearch() { $this->resetPage(); }
+    public function updatingGlobalSearch() { $this->resetPage(); }
     public function updatingFilterDateFrom() { $this->resetPage(); }
     public function updatingFilterDateTo() { $this->resetPage(); }
     public function updatingFilterHasFiles() { $this->resetPage(); }
@@ -283,13 +285,33 @@ new class extends Component
                 }
             ])
             ->when($this->search, function($query) {
-                $query->where(function($q) {
-                    $q->where('name', 'like', '%'.$this->search.'%')
-                      ->orWhere('phone', 'like', '%'.$this->search.'%')
-                      ->orWhereHas('visits', function($vq) {
-                          $vq->where('diagnosis', 'like', '%'.$this->search.'%');
-                      });
-                });
+                $terms = array_filter(explode(' ', $this->search));
+                if (!empty($terms)) {
+                    $query->where(function($q) use ($terms) {
+                        foreach ($terms as $term) {
+                            $q->where(function($sq) use ($term) {
+                                $sq->where('name', 'like', '%'.$term.'%')
+                                   ->orWhere('phone', 'like', '%'.$term.'%');
+                            });
+                        }
+                    });
+                }
+            })
+            ->when($this->globalSearch, function($query) {
+                $terms = array_filter(explode(' ', $this->globalSearch));
+                if (!empty($terms)) {
+                    $query->whereHas('visits', function($vq) use ($terms) {
+                        foreach ($terms as $term) {
+                            $vq->where(function($sq) use ($term) {
+                                $sq->where('diagnosis', 'like', '%'.$term.'%')
+                                   ->orWhere('treatment_text', 'like', '%'.$term.'%')
+                                   ->orWhere('complaint', 'like', '%'.$term.'%')
+                                   ->orWhere('history', 'like', '%'.$term.'%')
+                                   ->orWhere('family_history', 'like', '%'.$term.'%');
+                            });
+                        }
+                    });
+                }
             })
             ->when($this->filterDateFrom, fn($q) => $q->whereDate('created_at', '>=', $this->filterDateFrom))
             ->when($this->filterDateTo, fn($q) => $q->whereDate('created_at', '<=', $this->filterDateTo))
@@ -377,25 +399,38 @@ new class extends Component
     </div>
 
     <!-- Header & Actions -->
-    <div class="flex flex-col lg:flex-row items-center justify-between gap-4 bg-white p-4 md:p-6 rounded-3xl border border-gray-100 shadow-sm">
-        <div class="relative w-full lg:w-[400px]">
-            <div class="absolute inset-y-0 {{ app()->getLocale() === 'ar' ? 'right-0 pr-4' : 'left-0 pl-4' }} flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    <div class="flex flex-col xl:flex-row items-center justify-between gap-4 bg-white p-4 md:p-6 rounded-3xl border border-gray-100 shadow-sm">
+        
+        <div class="flex flex-col md:flex-row w-full xl:w-auto gap-4 flex-1">
+            <!-- Normal Search -->
+            <div class="relative w-full md:w-1/2 xl:w-[320px]">
+                <div class="absolute inset-y-0 {{ app()->getLocale() === 'ar' ? 'right-0 pr-4' : 'left-0 pl-4' }} flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <input wire:model.live.debounce.300ms="search" type="text" placeholder="{{ __('Search by patient name or phone number...') }}" 
+                       class="w-full bg-slate-50 border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:bg-white block {{ app()->getLocale() === 'ar' ? 'pr-11 pl-4' : 'pl-11 pr-4' }} py-3 transition-colors shadow-inner">
             </div>
-            <input wire:model.live.debounce.300ms="search" type="text" placeholder="{{ __('Search by patient name or phone number...') }}" 
-                   class="w-full bg-slate-50 border-gray-200 text-gray-800 text-sm rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:bg-white block {{ app()->getLocale() === 'ar' ? 'pr-11 pl-4' : 'pl-11 pr-4' }} py-3 transition-colors shadow-inner">
+
+            <!-- Deep Medical Search -->
+            <div class="relative w-full md:w-1/2 xl:w-[350px]">
+                <div class="absolute inset-y-0 {{ app()->getLocale() === 'ar' ? 'right-0 pr-4' : 'left-0 pl-4' }} flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <input wire:model.live.debounce.300ms="globalSearch" type="text" placeholder="{{ __('Deep search in medical records (diagnosis, treatment...)') }}" 
+                       class="w-full bg-indigo-50/50 border-indigo-100 text-indigo-900 placeholder-indigo-400 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white block {{ app()->getLocale() === 'ar' ? 'pr-11 pl-4' : 'pl-11 pr-4' }} py-3 transition-colors shadow-inner font-medium">
+            </div>
         </div>
 
-        <div class="flex flex-wrap items-center justify-end gap-3 w-full lg:w-auto">
-            <button wire:click="$toggle('showAdvancedFilters')" class="flex-1 lg:flex-none px-4 py-3 bg-white hover:bg-gray-50 text-gray-700 font-bold rounded-xl border border-gray-200 transition-all flex items-center justify-center gap-2 text-sm shadow-sm hover:shadow">
+        <div class="flex flex-wrap items-center justify-end gap-3 w-full xl:w-auto">
+            <button wire:click="$toggle('showAdvancedFilters')" class="flex-1 xl:flex-none px-4 py-3 bg-white hover:bg-gray-50 text-gray-700 font-bold rounded-xl border border-gray-200 transition-all flex items-center justify-center gap-2 text-sm shadow-sm hover:shadow">
                 <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                 {{ __('Filters') }}
             </button>
-            <button wire:click="exportCSV" class="flex-1 lg:flex-none px-4 py-3 bg-white hover:bg-emerald-50 hover:border-emerald-200 text-emerald-700 font-bold rounded-xl border border-gray-200 transition-all flex items-center justify-center gap-2 text-sm shadow-sm hover:shadow">
+            <button wire:click="exportCSV" class="flex-1 xl:flex-none px-4 py-3 bg-white hover:bg-emerald-50 hover:border-emerald-200 text-emerald-700 font-bold rounded-xl border border-gray-200 transition-all flex items-center justify-center gap-2 text-sm shadow-sm hover:shadow">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 {{ __('Export CSV') }}
             </button>
-            <button wire:click="$toggle('showAddPatient')" class="w-full lg:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black rounded-2xl shadow-xl shadow-purple-200 transition-all flex items-center justify-center gap-3 text-base hover:-translate-y-1 hover:shadow-2xl active:scale-95 group">
+            <button wire:click="$toggle('showAddPatient')" class="w-full xl:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black rounded-2xl shadow-xl shadow-purple-200 transition-all flex items-center justify-center gap-3 text-base hover:-translate-y-1 hover:shadow-2xl active:scale-95 group">
                 <svg class="w-6 h-6 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
                 <span class="inline-block">{{ $showAddPatient ? __('Close Form') : __('New Patient') }}</span>
             </button>
