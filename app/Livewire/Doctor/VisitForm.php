@@ -42,7 +42,21 @@ class VisitForm extends Component
 
     public function selectSuggestionFor($field, $value)
     {
-        $this->$field = $value;
+        $currentValue = $this->$field ?? '';
+        
+        // Robustly parse using regex to find the last separator (newline, comma, etc.)
+        if (preg_match('/([\s\S]*)([\n\r،,])([^\n\r،,]*)$/u', $currentValue, $matches)) {
+            $prefix = $matches[1] . $matches[2];
+            // Add a space after a comma for better formatting
+            if (in_array($matches[2], [',', '،'])) {
+                $prefix .= ' ';
+            }
+            $this->$field = $prefix . $value . "\n";
+        } else {
+            // No separator found, replace entire value
+            $this->$field = $value . "\n";
+        }
+
         $suggestionField = $field . 'Suggestions';
         if ($field === 'history') $suggestionField = 'investigationSuggestions';
         if ($field === 'treatment_text') $suggestionField = 'treatmentSuggestions';

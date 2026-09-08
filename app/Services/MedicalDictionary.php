@@ -27,7 +27,20 @@ class MedicalDictionary
             $lang = $isArabic ? 'ar' : 'en';
 
             try {
-                if ($isArabic) {
+                if ($category === 'treatments') {
+                    // Try to fetch from local Egyptian Drugs Database first
+                    $egyptianResults = self::fetchEgyptianDrugs($query, $lang);
+                    if (!empty($egyptianResults)) {
+                        $results = array_merge($results, $egyptianResults);
+                    } else {
+                        // Fallback to RxTerms if no local results found
+                        $response = Http::timeout(3)->withoutVerifying()
+                            ->get('https://clinicaltables.nlm.nih.gov/api/rxterms/v3/search', ['terms' => $query, 'max' => 10]);
+                        if ($response->successful() && isset($response->json()[1])) {
+                            $results = array_merge($results, $response->json()[1]);
+                        }
+                    }
+                } elseif ($isArabic) {
                     // 1. Wikidata with Filtering for Arabic
                     $results = self::fetchFromWikidata($query, 'ar');
                 } else {
@@ -49,9 +62,6 @@ class MedicalDictionary
                             // LOINC is the standard for lab tests and investigations
                             $reqs[] = $pool->as('loinc')->timeout(3)->withoutVerifying()
                                 ->get('https://clinicaltables.nlm.nih.gov/api/loinc_items/v3/search', ['terms' => $query, 'max' => 10]);
-                        } elseif ($category === 'treatments') {
-                            $reqs[] = $pool->as('rxterms')->timeout(3)->withoutVerifying()
-                                ->get('https://clinicaltables.nlm.nih.gov/api/rxterms/v3/search', ['terms' => $query, 'max' => 10]);
                         }
 
                         return $reqs;
@@ -83,13 +93,6 @@ class MedicalDictionary
                         $data = $responses['medline']->json();
                         if (isset($data[3])) {
                             $results = array_merge($results, array_map(fn($item) => is_array($item) ? ($item[0]) : $item, $data[3]));
-                        }
-                    }
-
-                    if (isset($responses['rxterms']) && $responses['rxterms']->successful()) {
-                        $data = $responses['rxterms']->json();
-                        if (isset($data[1])) {
-                            $results = array_merge($results, $data[1]);
                         }
                     }
                 }
@@ -239,6 +242,65 @@ class MedicalDictionary
                 }
             }
         } catch (\Exception $e) {
+        }
+        return [];
+    }
+
+    // ─────────────────────────────────────────────
+    // Egyptian Drug Database (Local JSON)
+    // ─────────────────────────────────────────────
+    private static function fetchEgyptianDrugs($query, $lang = 'en')
+    {
+        try {
+            $path = storage_path('app/egyptian-drugs.json');
+            if (!file_exists($path)) {
+                return [];
+            }
+
+            // Read the file and cache the decoded array for fast access
+            $drugs = Cache::remember('egyptian_drugs_database', 86400, function() use ($path) {
+                return json_decode(file_get_contents($path), true) ?? [];
+            });
+
+            if (empty($drugs)) {
+                return [];
+            }
+
+            $query = mb_strtolower($query);
+            $results = [];
+
+            foreach ($drugs as $drug) {
+                $enName = mb_strtolower($drug['commercial_name_en'] ?? '');
+                $arName = mb_strtolower($drug['commercial_name_ar'] ?? '');
+                
+                // If it matches either English or Arabic commercial name
+                if (mb_strpos($enName, $query) !== false || mb_strpos($arName, $query) !== false) {
+                    // Format: COMMERCIAL_NAME (SCIENTIFIC_NAME)
+                    $scientific = $drug['scientific_name'] ?? '';
+                    $nameToUse = $lang === 'ar' && !empty($drug['commercial_name_ar']) 
+                        ? $drug['commercial_name_ar'] 
+                        : $drug['commercial_name_en'];
+                        
+                    // Fix encoding artifacts from the raw JSON if any (e.g. ????????)
+                    if (str_contains($nameToUse, '???')) {
+                        $nameToUse = $drug['commercial_name_en']; // Fallback to English if Arabic is garbled
+                    }
+                        
+                    if ($scientific && $scientific !== 'N/A' && $scientific !== '-' && $scientific !== 'null') {
+                        $results[] = $nameToUse . ' (' . $scientific . ')';
+                    } else {
+                        $results[] = $nameToUse;
+                    }
+
+                    if (count($results) >= 15) {
+                        break; // Stop after finding 15 matches to keep it fast
+                    }
+                }
+            }
+
+            return $results;
+        } catch (\Exception $e) {
+            \Log::error("Egyptian Drug Fetch Error: " . $e->getMessage());
         }
         return [];
     }

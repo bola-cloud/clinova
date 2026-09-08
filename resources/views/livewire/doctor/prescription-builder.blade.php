@@ -134,7 +134,7 @@
                         ></div>
 
                         <div class="p-1 min-h-[30px] flex items-start text-indigo-900 font-bold break-words pointer-events-none"
-                             :style="`font-size: ${field.fontSize}px; line-height: 1.2;`"
+                             :style="`font-size: ${field.fontSize}px; line-height: 1.2; text-align: start;`" dir="auto"
                         >
                             <span x-text="`[${field.label}]`"></span>
                         </div>

@@ -600,8 +600,12 @@
                         <div class="space-y-2">
                             <label class="text-xs font-black text-gray-500 uppercase tracking-widest">{{ __('Treatment Plan') }}</label>
                             <div class="relative">
-                                <textarea wire:model.live="treatmentText" rows="4" placeholder="{{ __('Instructions...') }}"
+                                <textarea wire:model.live="treatmentText" rows="4" placeholder="{{ __('e.g. PANADOL (Oral Pill)') }}"
                                           class="w-full bg-slate-50 border-gray-200 rounded-2xl py-4 px-5 text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"></textarea>
+                                <p class="text-[10px] text-gray-500 mt-1 mr-1">
+                                    <svg class="w-3 h-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    {{ __('Tip: Press Enter to add a new medication, and type usage instructions underneath it.') }}
+                                </p>
                                 @if(!empty($treatmentText) && count($treatmentSuggestions) > 0)
                                 <div class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto">
                                     @foreach($treatmentSuggestions as $suggestion)
@@ -617,11 +621,21 @@
                     </div>
                     @else
                     <div wire:key="visit-mode-canvas" wire:ignore class="w-full min-h-[300px] h-[500px] border-2 border-dashed border-indigo-200 rounded-3xl bg-indigo-50/10 relative animate-fade-in shadow-sm group resize-y overflow-hidden flex flex-col"
-                         x-data="window.freehandBoardData ? window.freehandBoardData() : {}"
+                         x-data="{ ...window.freehandBoardData ? window.freehandBoardData() : {}, zoomLevel: 1 }"
                          x-init="$nextTick(() => { if(typeof initBoard === 'function') initBoard($refs.canvas) })"
                     >
                         <!-- Controls -->
                         <div class="absolute top-4 right-4 flex items-center gap-2 z-10 bg-white p-2 rounded-2xl shadow-sm border border-indigo-100 opacity-80 group-hover:opacity-100 transition-opacity">
+                            <!-- Zoom Controls -->
+                            <button type="button" @click="zoomLevel = Math.min(zoomLevel + 0.2, 3)" class="p-2 text-indigo-500 hover:bg-indigo-50 rounded-xl transition-colors" title="{{ __('Zoom In') }}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                            </button>
+                            <div class="w-8 text-center text-xs font-bold text-gray-500" x-text="Math.round(zoomLevel * 100) + '%'"></div>
+                            <button type="button" @click="zoomLevel = Math.max(zoomLevel - 0.2, 0.5)" class="p-2 text-indigo-500 hover:bg-indigo-50 rounded-xl transition-colors" title="{{ __('Zoom Out') }}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path></svg>
+                            </button>
+                            
+                            <div class="w-px h-6 bg-gray-200 mx-1"></div>
                             <button type="button" @click="clearBoard()" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-colors" title="{{ __('Clear Board') }}">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
@@ -633,8 +647,8 @@
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16.24 3.56l4.2 4.2c.78.78.78 2.05 0 2.83l-9.9 9.9c-.38.38-.88.59-1.41.59H4c-1.1 0-2-.9-2-2v-5.17c0-.53.21-1.04.59-1.41l9.82-9.94c.78-.78 2.05-.78 2.83 0zm-5.66 12.02l4.95-4.95-2.83-2.83-4.95 4.95 2.83 2.83z"></path></svg>
                             </button>
                         </div>
-                        <div class="flex-1 w-full h-full relative">
-                            <canvas x-ref="canvas" class="absolute inset-0 w-full h-full rounded-3xl touch-none cursor-crosshair"></canvas>
+                        <div class="flex-1 w-full h-full relative overflow-auto rounded-3xl" style="background-image: repeating-linear-gradient(transparent, transparent 29px, #e5e7eb 29px, #e5e7eb 30px); background-position: 0 0; background-attachment: local;">
+                            <canvas x-ref="canvas" :style="`zoom: ${zoomLevel};`" class="absolute inset-0 w-full h-full touch-none cursor-crosshair min-w-full min-h-full"></canvas>
                         </div>
                     </div>
                     @endif

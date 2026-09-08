@@ -16,11 +16,12 @@ class BookingPortal extends Component
     public $doctor;
 
     public $selectedDate;
-    public $availableSlots = [];
-    public $selectedTime;
+    public $queueNumber; // To display on success
 
     public $patientName;
     public $patientPhone;
+    public $patientAgeYears;
+    public $patientAddress;
     public $type = 'checkup';
 
     public $bookingSuccess = false;
@@ -41,89 +42,24 @@ class BookingPortal extends Component
 
     public function updatedSelectedDate()
     {
-        $this->selectedTime = null;
-        $this->loadSlots();
-    }
-
-    public function loadSlots()
-    {
-        $this->availableSlots = [];
-        if (!$this->selectedDate) return;
-
-        $date = Carbon::parse($this->selectedDate);
-        if ($date->isBefore(now()->startOfDay())) {
-            return; // Cannot book in the past
-        }
-
-        $dayOfWeek = $date->dayOfWeek;
-        $schedule = DoctorSchedule::where('doctor_id', $this->doctor->id)
-            ->where('day_of_week', $dayOfWeek)
-            ->where('is_working_day', true)
-            ->first();
-
-        if (!$schedule) return;
-
-        $slotDuration = $schedule->slot_duration_minutes;
-        $startTime = Carbon::parse($this->selectedDate . ' ' . $schedule->start_time);
-        $endTime = Carbon::parse($this->selectedDate . ' ' . $schedule->end_time);
-
-        // Fetch existing appointments for this doctor on this day
-        $existingAppointments = Appointment::where('doctor_id', $this->doctor->id)
-            ->whereDate('scheduled_at', $this->selectedDate)
-            ->where('status', '!=', 'cancelled')
-            ->pluck('scheduled_at')
-            ->map(fn($dt) => Carbon::parse($dt)->format('H:i'))
-            ->toArray();
-
-        $currentTime = $startTime->copy();
-        
-        while ($currentTime->copy()->addMinutes($slotDuration)->lte($endTime)) {
-            $timeString = $currentTime->format('H:i');
-            
-            // Only add if not in past (if today)
-            if ($date->isToday() && $currentTime->isBefore(now())) {
-                $currentTime->addMinutes($slotDuration);
-                continue;
-            }
-
-            if (!in_array($timeString, $existingAppointments)) {
-                $this->availableSlots[] = $timeString;
-            }
-
-            $currentTime->addMinutes($slotDuration);
-        }
-    }
-
-    public function selectTime($time)
-    {
-        $this->selectedTime = $time;
+        // No time slots to load in a pure queue system
     }
 
     public function confirmBooking()
     {
         $this->validate([
             'selectedDate' => 'required|date|after_or_equal:today',
-            'selectedTime' => 'required',
             'patientName' => 'required|string|max:255',
             'patientPhone' => 'required|string|max:20',
+            'patientAgeYears' => 'nullable|integer|min:0|max:150',
+            'patientAddress' => 'nullable|string|max:500',
             'type' => 'required|in:checkup,follow_up',
         ]);
 
-        $scheduledAt = Carbon::parse($this->selectedDate . ' ' . $this->selectedTime);
+        $scheduledAt = Carbon::parse($this->selectedDate)->startOfDay();
 
         try {
             DB::transaction(function () use ($scheduledAt) {
-                // Lock check to prevent double booking race condition
-                $exists = Appointment::where('doctor_id', $this->doctor->id)
-                    ->where('scheduled_at', $scheduledAt)
-                    ->where('status', '!=', 'cancelled')
-                    ->lockForUpdate()
-                    ->exists();
-
-                if ($exists) {
-                    throw new \Exception(__('This slot has just been booked by someone else. Please choose another time.'));
-                }
-
                 // Identify or create patient scoped strictly to this doctor
                 $patient = Patient::where('doctor_id', $this->doctor->id)
                     ->where('phone', $this->patientPhone)
@@ -134,9 +70,14 @@ class BookingPortal extends Component
                         'doctor_id' => $this->doctor->id,
                         'name' => $this->patientName,
                         'phone' => $this->patientPhone,
-                        'age' => 0, // Default or nullable depending on schema
-                        'gender' => 'male', // Default
+                        'age_years' => $this->patientAgeYears,
+                        'address' => $this->patientAddress,
                     ]);
+                } else {
+                    // Update age and address if provided and not already set
+                    if ($this->patientAgeYears && !$patient->age_years) $patient->age_years = $this->patientAgeYears;
+                    if ($this->patientAddress && !$patient->address) $patient->address = $this->patientAddress;
+                    $patient->save();
                 }
 
                 // Prevent same patient from booking twice on the same day
@@ -149,13 +90,21 @@ class BookingPortal extends Component
                     throw new \Exception(__('You already have an appointment booked on this date.'));
                 }
 
+                // Calculate next queue order for the date
+                $maxQueue = Appointment::where('doctor_id', $this->doctor->id)
+                    ->whereDate('scheduled_at', $this->selectedDate)
+                    ->max('queue_order') ?? 0;
+                
+                $this->queueNumber = $maxQueue + 1;
+
                 Appointment::create([
                     'doctor_id' => $this->doctor->id,
                     'patient_id' => $patient->id,
                     'scheduled_at' => $scheduledAt,
                     'type' => $this->type,
                     'status' => 'pending',
-                    'notes' => 'Booked via Public Portal',
+                    'queue_order' => $this->queueNumber,
+                    'audit_log' => [['action' => 'Booked via Public Portal', 'timestamp' => now()->toIso8601String()]],
                 ]);
             });
 
@@ -164,8 +113,6 @@ class BookingPortal extends Component
 
         } catch (\Exception $e) {
             $this->errorMessage = $e->getMessage();
-            $this->loadSlots(); // Refresh slots
-            $this->selectedTime = null;
         }
     }
 

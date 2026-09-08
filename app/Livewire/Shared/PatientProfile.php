@@ -143,11 +143,24 @@ class PatientProfile extends Component
 
     public function selectSuggestionFor($field, $value)
     {
-        $currentText = $this->$field;
-        $this->$field = $value;
+        $currentValue = $this->$field ?? '';
+        
+        // Robustly parse using regex to find the last separator (newline, comma, etc.)
+        if (preg_match('/([\s\S]*)([\n\r،,])([^\n\r،,]*)$/u', $currentValue, $matches)) {
+            $prefix = $matches[1] . $matches[2];
+            // Add a space after a comma for better formatting
+            if (in_array($matches[2], [',', '،'])) {
+                $prefix .= ' ';
+            }
+            $this->$field = $prefix . $value . "\n";
+        } else {
+            // No separator found, replace entire value
+            $this->$field = $value . "\n";
+        }
+
         $suggestionField = $field . 'Suggestions';
-        if ($field === 'history') $suggestionField = 'investigationSuggestions';
-        if ($field === 'treatment_text') $suggestionField = 'treatmentSuggestions';
+        if ($field === 'investigation' || $field === 'history') $suggestionField = 'investigationSuggestions';
+        if ($field === 'treatmentText' || $field === 'treatment_text') $suggestionField = 'treatmentSuggestions';
         
         $this->$suggestionField = [];
     }
@@ -197,6 +210,7 @@ class PatientProfile extends Component
             'template_name' => $this->templateName,
             'complaint' => $this->complaint,
             'diagnosis' => $this->diagnosis,
+            'investigation' => $this->investigation,
             'treatment' => $this->treatmentText,
             'follow_up_notes' => $this->followUpNotes,
             'specialties_data' => $this->dynamicAnswers,
@@ -217,6 +231,7 @@ class PatientProfile extends Component
         if ($template) {
             $this->complaint = $template->complaint;
             $this->diagnosis = $template->diagnosis;
+            $this->investigation = $template->investigation;
             $this->treatmentText = $template->treatment;
             $this->followUpNotes = $template->follow_up_notes;
             

@@ -620,11 +620,16 @@ new class extends Component
             </table>
         </div>
         
-        @if($patients->hasPages())
-        <div class="p-6 border-t border-gray-50 bg-gray-50/50">
-            {{ $patients->links() }}
+        <div class="p-4 border-t border-gray-50 bg-gray-50/50 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="text-sm font-bold text-gray-500">
+                {{ __('Total Search Results:') }} <span class="text-purple-600 bg-purple-100 px-2 py-1 rounded-lg shadow-inner border border-purple-200">{{ $patients->total() }}</span>
+            </div>
+            @if($patients->hasPages())
+            <div class="w-full md:w-auto overflow-x-auto">
+                {{ $patients->links() }}
+            </div>
+            @endif
         </div>
-        @endif
     </div>
 
     <!-- Booking Modal -->

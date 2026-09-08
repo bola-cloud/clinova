@@ -26,9 +26,14 @@
                 </div>
                 <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ __('Booking Confirmed!') }}</h3>
                 <p class="text-gray-600 mb-6">{{ __('Your appointment has been successfully scheduled. We look forward to seeing you.') }}</p>
-                <div class="bg-gray-50 rounded-xl p-4 inline-block text-left mb-6 border border-gray-100">
-                    <p class="text-sm text-gray-500">{{ __('Date & Time') }}</p>
-                    <p class="font-bold text-gray-900 text-lg">{{ \Carbon\Carbon::parse($selectedDate)->format('l, F j, Y') }} - {{ \Carbon\Carbon::parse($selectedTime)->format('h:i A') }}</p>
+                <div class="bg-gray-50 rounded-xl p-6 inline-block text-center mb-6 border border-gray-200">
+                    <p class="text-sm text-gray-500 uppercase tracking-widest font-bold mb-2">{{ __('Your Queue Number') }}</p>
+                    <div class="flex items-center justify-center gap-3">
+                        <span class="text-5xl font-black text-indigo-600">#{{ $queueNumber }}</span>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <p class="text-sm text-gray-500">{{ __('Date') }}: <span class="font-bold text-gray-900">{{ \Carbon\Carbon::parse($selectedDate)->format('l, F j, Y') }}</span></p>
+                    </div>
                 </div>
                 <div>
                     <button wire:click="$set('bookingSuccess', false)" class="text-indigo-600 hover:text-indigo-900 font-medium">
@@ -67,27 +72,14 @@
                                 <input type="date" wire:model.live="selectedDate" min="{{ now()->format('Y-m-d') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('Available Slots') }}</label>
-                                
-                                <div class="flex flex-wrap gap-2 mt-2">
-                                    @forelse($availableSlots as $time)
-                                        <button 
-                                            type="button" 
-                                            wire:click="selectTime('{{ $time }}')"
-                                            class="py-2 px-4 border rounded-md text-sm font-medium focus:outline-none transition-colors min-w-[80px]
-                                            {{ $selectedTime === $time 
-                                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' 
-                                                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-indigo-300' }}">
-                                            {{ \Carbon\Carbon::parse($time)->format('h:i A') }}
-                                        </button>
-                                    @empty
-                                        <div class="w-full text-center py-4 bg-gray-50 rounded-md border border-gray-200">
-                                            <p class="text-sm text-gray-500">{{ __('No available slots on this date.') }}</p>
-                                        </div>
-                                    @endforelse
-                                </div>
-                                @error('selectedTime') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                            <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+                                <h4 class="font-bold text-indigo-800 text-sm mb-2 flex items-center gap-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    {{ __('Queue System') }}
+                                </h4>
+                                <p class="text-xs text-indigo-700">
+                                    {{ __('This clinic operates on a first-come, first-served queue system. You will receive your exact queue number upon completing your booking.') }}
+                                </p>
                             </div>
                         </div>
 
@@ -99,16 +91,32 @@
                             </h3>
                             
                             <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">{{ __('Full Name') }}</label>
-                                    <input type="text" wire:model="patientName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="{{ __('e.g. Ahmed Ali') }}">
-                                    @error('patientName') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">{{ __('Full Name') }}</label>
+                                        <input type="text" wire:model="patientName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="{{ __('e.g. Ahmed Ali') }}">
+                                        @error('patientName') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">{{ __('Age') }} ({{ __('Years') }})</label>
+                                        <input type="number" wire:model="patientAgeYears" min="0" max="150" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="e.g. 30">
+                                        @error('patientAgeYears') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">{{ __('Phone Number') }}</label>
-                                    <input type="tel" wire:model="patientPhone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="{{ __('e.g. 01012345678') }}" dir="ltr">
-                                    @error('patientPhone') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">{{ __('Phone Number') }}</label>
+                                        <input type="tel" wire:model="patientPhone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="{{ __('e.g. 01012345678') }}" dir="ltr">
+                                        @error('patientPhone') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">{{ __('Address') }}</label>
+                                        <input type="text" wire:model="patientAddress" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="{{ __('e.g. Cairo, Nasr City') }}">
+                                        @error('patientAddress') <span class="text-rose-500 text-xs mt-1 block">{{ $message }}</span> @enderror
+                                    </div>
                                 </div>
 
                                 <div>

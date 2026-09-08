@@ -68,10 +68,9 @@
             overflow-wrap: break-word;
             white-space: pre-wrap;
             line-height: 1.5;
-            /* Ensures it never overflows the container width */
             max-width: 100%;
-            /* If an element height exceeds, we hide overflow to respect boundaries */
             overflow: hidden; 
+            text-align: start;
         }
 
         /* Specifically for canvas image to maintain aspect ratio but fit within width */
@@ -98,7 +97,7 @@
     <div class="prescription-container font-sans text-gray-900">
         
         @if(!empty($elements['patient_name']) && $elements['patient_name']['visible'])
-            <div class="print-element font-bold" 
+            <div class="print-element font-bold" dir="auto"
                  style="top: {{ $elements['patient_name']['y'] }}%; 
                         {{ app()->getLocale() === 'ar' ? 'right' : 'left' }}: {{ $elements['patient_name']['x'] }}%; 
                         width: {{ $elements['patient_name']['width'] }}%; 
@@ -108,7 +107,7 @@
         @endif
 
         @if(!empty($elements['patient_age']) && $elements['patient_age']['visible'])
-            <div class="print-element" 
+            <div class="print-element" dir="auto"
                  style="top: {{ $elements['patient_age']['y'] }}%; 
                         {{ app()->getLocale() === 'ar' ? 'right' : 'left' }}: {{ $elements['patient_age']['x'] }}%; 
                         width: {{ $elements['patient_age']['width'] }}%; 
@@ -120,7 +119,7 @@
         @endif
 
         @if(!empty($elements['date']) && $elements['date']['visible'])
-            <div class="print-element" 
+            <div class="print-element" dir="auto"
                  style="top: {{ $elements['date']['y'] }}%; 
                         {{ app()->getLocale() === 'ar' ? 'right' : 'left' }}: {{ $elements['date']['x'] }}%; 
                         width: {{ $elements['date']['width'] }}%; 
@@ -130,7 +129,7 @@
         @endif
 
         @if(!empty($elements['diagnosis']) && $elements['diagnosis']['visible'] && $visit->diagnosis && $visit->visit_mode !== 'canvas')
-            <div class="print-element" 
+            <div class="print-element" dir="auto"
                  style="top: {{ $elements['diagnosis']['y'] }}%; 
                         {{ app()->getLocale() === 'ar' ? 'right' : 'left' }}: {{ $elements['diagnosis']['x'] }}%; 
                         width: {{ $elements['diagnosis']['width'] }}%; 
@@ -140,7 +139,7 @@
         @endif
 
         @if(!empty($elements['treatment']) && $elements['treatment']['visible'] && $visit->treatment_text && $visit->visit_mode !== 'canvas')
-            <div class="print-element" 
+            <div class="print-element" dir="auto"
                  style="top: {{ $elements['treatment']['y'] }}%; 
                         {{ app()->getLocale() === 'ar' ? 'right' : 'left' }}: {{ $elements['treatment']['x'] }}%; 
                         width: {{ $elements['treatment']['width'] }}%; 
@@ -150,7 +149,7 @@
         @endif
 
         @if(!empty($elements['investigations']) && $elements['investigations']['visible'] && $visit->history && $visit->visit_mode !== 'canvas')
-            <div class="print-element" 
+            <div class="print-element" dir="auto"
                  style="top: {{ $elements['investigations']['y'] }}%; 
                         {{ app()->getLocale() === 'ar' ? 'right' : 'left' }}: {{ $elements['investigations']['x'] }}%; 
                         width: {{ $elements['investigations']['width'] }}%; 

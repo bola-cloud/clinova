@@ -16,11 +16,10 @@ new class extends Component
     public $showBookingModal = false;
     public $patientSearch = '';
     public $showCreatePatientForm = false;
-    public $newPatientName = '';
-    public $newPatientPhone = '';
+    public $newPatientAgeYears = '';
+    public $newPatientAddress = '';
     public $selectedPatient = null;
     public $bookingDate = '';
-    public $bookingTime = '';
     public $bookingType = 'checkup';
     public $bookingDoctorId = '';
     public $splitByType = false;
@@ -29,7 +28,6 @@ new class extends Component
     {
         $this->dateFilter = now()->format('Y-m-d');
         $this->bookingDate = now()->format('Y-m-d');
-        $this->bookingTime = now()->addMinutes(15)->format('H:i');
         if (auth()->user()->isDoctor()) {
             $this->bookingDoctorId = auth()->id();
         } elseif (auth()->user()->isSecretary()) {
@@ -69,6 +67,8 @@ new class extends Component
         $this->validate([
             'newPatientName' => 'required|min:3',
             'newPatientPhone' => 'required|numeric',
+            'newPatientAgeYears' => 'nullable|integer|min:0|max:150',
+            'newPatientAddress' => 'nullable|string|max:500',
         ]);
 
         $doctorId = auth()->user()->isDoctor() ? auth()->id() : auth()->user()->doctor_id;
@@ -77,12 +77,16 @@ new class extends Component
             'name' => $this->newPatientName,
             'phone' => $this->newPatientPhone,
             'doctor_id' => $doctorId,
+            'age_years' => $this->newPatientAgeYears,
+            'address' => $this->newPatientAddress,
         ]);
 
         $this->selectedPatient = $patient;
         $this->showCreatePatientForm = false;
         $this->newPatientName = '';
         $this->newPatientPhone = '';
+        $this->newPatientAgeYears = '';
+        $this->newPatientAddress = '';
         $this->patientSearch = '';
     }
 
@@ -103,11 +107,18 @@ new class extends Component
             'selectedPatient.required' => __('Please select a patient'),
         ]);
 
+        $maxQueue = \App\Models\Appointment::where('doctor_id', $this->bookingDoctorId)
+            ->whereDate('scheduled_at', $this->bookingDate)
+            ->max('queue_order') ?? 0;
+            
+        $queueNumber = $maxQueue + 1;
+
         app(\App\Services\AppointmentService::class)->bookAppointment([
             'patient_id' => $this->selectedPatient->id,
             'doctor_id' => $this->bookingDoctorId,
-            'scheduled_at' => Carbon::parse($this->bookingDate . ' ' . $this->bookingTime),
+            'scheduled_at' => Carbon::parse($this->bookingDate)->startOfDay(),
             'type' => $this->bookingType,
+            'queue_order' => $queueNumber,
         ]);
 
         $this->closeBookingModal();
@@ -251,8 +262,20 @@ new class extends Component
                                         </div>
                                         <div class="space-y-1">
                                             <label class="text-[10px] font-black text-purple-600 uppercase tracking-widest">{{ __('Phone Number') }}</label>
-                                            <input type="text" wire:model="newPatientPhone" class="w-full bg-slate-50 border-gray-200 rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-purple-500">
+                                            <input type="text" wire:model="newPatientPhone" class="w-full bg-slate-50 border-gray-200 rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-purple-500" dir="ltr">
                                             @error('newPatientPhone') <span class="text-xs text-red-500 font-bold block">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div class="space-y-1">
+                                                <label class="text-[10px] font-black text-purple-600 uppercase tracking-widest">{{ __('Age') }} ({{ __('Years') }})</label>
+                                                <input type="number" wire:model="newPatientAgeYears" class="w-full bg-slate-50 border-gray-200 rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-purple-500">
+                                                @error('newPatientAgeYears') <span class="text-xs text-red-500 font-bold block">{{ $message }}</span> @enderror
+                                            </div>
+                                            <div class="space-y-1">
+                                                <label class="text-[10px] font-black text-purple-600 uppercase tracking-widest">{{ __('Address') }}</label>
+                                                <input type="text" wire:model="newPatientAddress" class="w-full bg-slate-50 border-gray-200 rounded-xl py-2 px-3 text-sm focus:ring-2 focus:ring-purple-500">
+                                                @error('newPatientAddress') <span class="text-xs text-red-500 font-bold block">{{ $message }}</span> @enderror
+                                            </div>
                                         </div>
                                         <button type="button" wire:click="quickCreateAndSelect" class="w-full py-2 bg-emerald-600 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all">
                                             {{ __('Create & Select') }}
@@ -278,15 +301,9 @@ new class extends Component
                         </div>
                     @endif
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest block">{{ __('Date') }}</label>
-                            <input type="date" wire:model="bookingDate" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-xs font-black text-gray-500 uppercase tracking-widest block">{{ __('Time') }}</label>
-                            <input type="time" wire:model="bookingTime" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
-                        </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-gray-500 uppercase tracking-widest block">{{ __('Date') }}</label>
+                        <input type="date" wire:model="bookingDate" class="w-full bg-slate-50 border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all">
                     </div>
                     <div class="space-y-2">
                         <label class="text-xs font-black text-gray-500 uppercase tracking-widest block">{{ __('Visit Type') }}</label>

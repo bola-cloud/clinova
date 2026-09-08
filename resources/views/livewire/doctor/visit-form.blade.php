@@ -67,7 +67,11 @@
             <div class="space-y-2">
                 <label class="block font-bold text-gray-700">{{ __('Treatment Plan & Prescription') }}</label>
                 <div class="relative">
-                    <textarea wire:model.live="treatment_text" rows="5" placeholder="{{ __('Write medications and dosages here...') }}" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all font-mono leading-relaxed"></textarea>
+                    <textarea wire:model.live="treatment_text" rows="5" placeholder="{{ __('e.g. PANADOL (Oral Pill)') }}" class="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-purple-500 transition-all font-mono leading-relaxed"></textarea>
+                    <p class="text-[10px] text-gray-500 mt-1 mr-1">
+                        <svg class="w-3 h-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        {{ __('Tip: Press Enter to add a new medication, and type usage instructions underneath it.') }}
+                    </p>
                     @if(!empty($treatment_text) && count($treatmentSuggestions) > 0)
                     <div class="absolute z-50 w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto">
                         @foreach($treatmentSuggestions as $suggestion)
